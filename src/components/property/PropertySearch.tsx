@@ -1,19 +1,24 @@
 import React, { useState } from 'react';
 import { Search } from 'lucide-react';
+import { useRetroStore } from '../../store/retroStore';
 
-interface PropertySearchProps {
-  onSearch: (propertyId: string) => Promise<void>;
-}
-
-const PropertySearch: React.FC<PropertySearchProps> = ({ onSearch }) => {
-  const [propertyId, setPropertyId] = useState('');
+const PropertySearch: React.FC = () => {
+  const [searchValue, setSearchValue] = useState('');
+  const { setProperty, setError } = useRetroStore();
 
   const handleSearch = async () => {
-    if (!propertyId.trim()) {
-      alert('נא להזין קוד נכס');
+    if (!searchValue.trim()) {
+      setError('נא להזין קוד נכס');
       return;
     }
-    await onSearch(propertyId);
+
+    try {
+      // TODO: Implement actual search through Access bridge
+      console.log('Searching for property:', searchValue);
+      setError(null);
+    } catch (error) {
+      setError(error.message);
+    }
   };
 
   return (
@@ -22,8 +27,8 @@ const PropertySearch: React.FC<PropertySearchProps> = ({ onSearch }) => {
       <div className="flex gap-2">
         <input 
           type="text"
-          value={propertyId}
-          onChange={(e) => setPropertyId(e.target.value)}
+          value={searchValue}
+          onChange={(e) => setSearchValue(e.target.value)}
           className="flex-1 p-2 border rounded focus:ring-2 focus:ring-blue-500"
           placeholder="הזן קוד נכס..."
         />
