@@ -1,5 +1,6 @@
 import { useRetroStore } from '../store/retroStore';
 import { accessService } from '../services/access-service';
+import { handleError } from '../services/error-handler';
 
 export const useRetroCalculation = () => {
   const {
@@ -27,15 +28,16 @@ export const useRetroCalculation = () => {
 
       setCalculationResults(results);
       setError(null);
-    } catch (error) {
-      setError(error.message);
+    } catch (err) {
+      const errorMessage = handleError(err);
+      setError(errorMessage);
       await accessService.addDbError({
-        user: 'SYSTEM', // TODO: Get actual user
+        user: 'SYSTEM',
         errnum: '0',
-        errdesc: error.message,
+        errdesc: errorMessage,
         modulname: 'RetroCalculator',
         errline: 0,
-        jobnum: Date.now() // TODO: Get actual job number
+        jobnum: Date.now()
       });
     }
   };
@@ -45,8 +47,8 @@ export const useRetroCalculation = () => {
       const propertyData = await accessService.searchProperty(propertyId);
       useRetroStore.getState().setProperty(propertyData);
       setError(null);
-    } catch (error) {
-      setError(error.message);
+    } catch (err) {
+      setError(handleError(err));
     }
   };
 
