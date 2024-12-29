@@ -1,11 +1,11 @@
 import { SqlService } from '../services/sql-service';
+import { config } from '../config/config';
 
 describe('SqlService Tests', () => {
     let sqlService: SqlService;
-    const ODBC_NAME = 'YourODBCName'; // שם ה-ODBC שהגדרת במערכת
 
     beforeEach(() => {
-        sqlService = new SqlService(ODBC_NAME);
+        sqlService = new SqlService(config.odbc.dsn);
     });
 
     afterEach(async () => {
@@ -13,10 +13,9 @@ describe('SqlService Tests', () => {
     });
 
     test('searchProperty should return property details', async () => {
-        const propertyId = '123456'; // שים מספר נכס אמיתי מהמערכת
-        const result = await sqlService.searchProperty(propertyId);
+        const result = await sqlService.searchProperty(config.test.propertyId);
         expect(result).toBeDefined();
-        expect(result.hskod).toBe(propertyId);
+        expect(result.hskod).toBe(config.test.propertyId);
     });
 
     test('getChargeTypes should return charge types list', async () => {
@@ -27,26 +26,29 @@ describe('SqlService Tests', () => {
     });
 
     test('full retro calculation process', async () => {
-        const hs = '123456'; // שים מספר נכס אמיתי
-        const mspkod = 1234;  // שים מספר משלם אמיתי
-
         // 1. הכנת נתונים
-        await sqlService.prepareRetroData({ hs, mspkod });
+        await sqlService.prepareRetroData({
+            hs: config.test.propertyId,
+            mspkod: config.test.mspKod
+        });
 
         // 2. הכפלת שורות
         await sqlService.multiplyTempArnmforatRows({
-            hs,
+            hs: config.test.propertyId,
             sugtsList: '1010,1020',
             isYearlyCharge: false
         });
 
         // 3. קבלת תוצאות
         const results = await sqlService.getRetroResults({
-            hs,
-            jobnum: 1 // שים מספר job אמיתי
+            hs: config.test.propertyId,
+            jobnum: config.test.jobNum
         });
 
         expect(Array.isArray(results)).toBe(true);
         expect(results.length).toBeGreaterThan(0);
+        
+        // הדפסת תוצאות לבדיקה
+        console.log('Retro calculation results:', results);
     });
 });
