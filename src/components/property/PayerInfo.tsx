@@ -18,20 +18,20 @@ const PayerInfo: React.FC = () => {
         <div className="space-y-2">
           <div>
             <label className="block text-sm text-gray-600">מספר משלם</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
+              className="w-full p-1 border rounded"
               value={property.mspkod}
-              readOnly 
-              className="w-full p-1 border rounded bg-gray-50" 
+              readOnly
             />
           </div>
           <div>
-            <label className="block text-sm text-gray-600">שם משלם</label>
-            <input 
-              type="text" 
-              value={property.maintz}
-              readOnly 
-              className="w-full p-1 border rounded bg-gray-50" 
+            <label className="block text-sm text-gray-600">כתובת</label>
+            <input
+              type="text"
+              className="w-full p-1 border rounded"
+              value={property.ktovet}
+              readOnly
             />
           </div>
         </div>

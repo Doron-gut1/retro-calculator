@@ -4,16 +4,9 @@ import { useRetroStore } from '../../store/retroStore';
 const SizesAndTariffs: React.FC = () => {
   const { property } = useRetroStore();
 
-  if (!property) return null;
+  if (!property?.sizes) return null;
 
-  // הכנת הנתונים לטבלה - ממיר את המבנה לפורמט מתאים לתצוגה
-  const rows = Array.from({ length: 8 }, (_, i) => ({
-    id: i + 1,
-    size: property.sizes[`gdl${i + 1}` as keyof typeof property.sizes] || 0,
-    tariffCode: property.tariffs[`trf${i + 1}` as keyof typeof property.tariffs] || 0,
-  })).filter(row => row.size > 0 || row.tariffCode > 0);
-
-  const totalSize = rows.reduce((sum, row) => sum + row.size, 0);
+  const totalSize = property.sizes.reduce((sum, size) => sum + size.size, 0);
 
   return (
     <div className="mt-6 space-y-4">
@@ -28,27 +21,23 @@ const SizesAndTariffs: React.FC = () => {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-gray-600">
             <tr>
-              <th className="p-2 text-right border-b">מס'</th>
+              <th className="p-2 text-right border-b">מס׳</th>
               <th className="p-2 text-right border-b">גודל</th>
               <th className="p-2 text-right border-b">קוד תעריף</th>
               <th className="p-2 text-right border-b">שם תעריף</th>
-              <th className="p-2 text-right border-b">תעריף</th>
               <th className="p-2 text-right border-b">פעולות</th>
             </tr>
           </thead>
           <tbody className="divide-y">
-            {rows.map((row) => (
-              <tr key={row.id} className="hover:bg-gray-50">
-                <td className="p-2">{row.id}</td>
+            {property.sizes.map((size) => (
+              <tr key={size.index} className="hover:bg-gray-50">
+                <td className="p-2">{size.index}</td>
                 <td className="p-2">
                   <input 
                     type="number" 
                     className="w-20 p-1 border rounded" 
-                    value={row.size}
-                    onChange={(e) => {
-                      // TODO: Implement size update logic
-                      console.log('Size updated:', e.target.value);
-                    }}
+                    value={size.size}
+                    readOnly
                   />
                 </td>
                 <td className="p-2">
@@ -56,7 +45,7 @@ const SizesAndTariffs: React.FC = () => {
                     <input 
                       type="text" 
                       className="w-20 p-1 border rounded" 
-                      value={row.tariffCode}
+                      value={size.tariffCode}
                       readOnly
                     />
                     <button className="text-xs bg-gray-100 px-2 py-1 rounded hover:bg-gray-200">
@@ -68,49 +57,18 @@ const SizesAndTariffs: React.FC = () => {
                   <input 
                     type="text" 
                     className="w-full p-1 border rounded bg-gray-50" 
-                    value="" // TODO: Get tariff name from Access
+                    value={size.tariffName}
                     readOnly
                   />
                 </td>
                 <td className="p-2">
-                  <input 
-                    type="text" 
-                    className="w-24 p-1 border rounded bg-gray-50" 
-                    value="" // TODO: Get tariff amount from Access
-                    readOnly
-                  />
-                </td>
-                <td className="p-2">
-                  <button 
-                    className="text-red-600 hover:text-red-800"
-                    onClick={() => {
-                      // TODO: Implement delete logic
-                      console.log('Delete row:', row.id);
-                    }}
-                  >
+                  <button className="text-red-600 hover:text-red-800">
                     מחק
                   </button>
                 </td>
               </tr>
             ))}
           </tbody>
-          {rows.length < 8 && (
-            <tfoot className="bg-gray-50">
-              <tr>
-                <td colSpan={6} className="p-2">
-                  <button 
-                    className="text-sm text-blue-600 hover:text-blue-800"
-                    onClick={() => {
-                      // TODO: Implement add row logic
-                      console.log('Add new row');
-                    }}
-                  >
-                    + הוסף גודל חדש
-                  </button>
-                </td>
-              </tr>
-            </tfoot>
-          )}
         </table>
       </div>
 
