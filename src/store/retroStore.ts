@@ -3,10 +3,10 @@ import { PropertyDetails } from '../types/property';
 
 interface RetroState {
   property: PropertyDetails | null;
-  calculationResults: any[] | null; // TODO: Define proper type
+  calculationResults: any[] | null;
   isCalculating: boolean;
   error: string | null;
-  
+
   setProperty: (property: PropertyDetails | null) => void;
   setCalculationResults: (results: any[] | null) => void;
   setCalculating: (isCalculating: boolean) => void;
