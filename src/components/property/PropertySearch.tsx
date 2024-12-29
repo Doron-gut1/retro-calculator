@@ -1,27 +1,36 @@
 import React, { useState } from 'react';
-import { accessService } from '../../services/access-service';
 import { Search } from 'lucide-react';
+import { PropertyDetails } from '../../types/property';
 
 interface PropertySearchProps {
-  onPropertyFound: (property: any) => void;
+  onPropertyFound: (property: PropertyDetails) => void;
 }
 
-interface CustomError extends Error {
-  message: string;
-}
-
-export const PropertySearch: React.FC<PropertySearchProps> = ({ onPropertyFound }) => {
-  const [propertyId, setPropertyId] = useState('');
-  const [error, setError] = useState<string | null>(null);
+const PropertySearch: React.FC<PropertySearchProps> = ({ onPropertyFound }) => {
+  const [searchValue, setSearchValue] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSearch = async () => {
+    if (!searchValue.trim()) return;
+
+    setIsLoading(true);
     try {
-      setError(null);
-      const property = await accessService.searchProperty(propertyId);
-      onPropertyFound(property);
+      // TODO: Implement actual ODBC search
+      const mockProperty: PropertyDetails = {
+        hskod: searchValue,
+        mspkod: 12345,
+        ktovet: 'כתובת לדוגמה',
+        sizes: [
+          { index: 1, size: 80, tariffCode: 101, tariffName: 'מגורים רגיל' },
+          { index: 2, size: 20, tariffCode: 102, tariffName: 'מרפסת' }
+        ]
+      };
+      
+      onPropertyFound(mockProperty);
     } catch (error) {
-      const err = error as CustomError;
-      setError(err.message);
+      console.error('Property search failed:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -33,19 +42,18 @@ export const PropertySearch: React.FC<PropertySearchProps> = ({ onPropertyFound 
           type="text" 
           className="flex-1 p-2 border rounded focus:ring-2 focus:ring-blue-500"
           placeholder="הזן קוד נכס..."
-          value={propertyId}
-          onChange={(e) => setPropertyId(e.target.value)}
+          value={searchValue}
+          onChange={(e) => setSearchValue(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
         />
         <button 
-          className="p-2 bg-blue-100 text-blue-600 rounded hover:bg-blue-200"
+          className="p-2 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 disabled:opacity-50"
           onClick={handleSearch}
+          disabled={isLoading}
         >
           <Search size={20} />
         </button>
       </div>
-      {error && (
-        <p className="text-red-500 text-sm">{error}</p>
-      )}
     </div>
   );
 };

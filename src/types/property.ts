@@ -1,12 +1,19 @@
-// src/types/property.ts
+export interface PropertySize {
+  index: number;
+  size: number;
+  tariffCode: number;
+  tariffName: string;
+}
+
 export interface PropertyDetails {
-    hs: string;
-    mspkod: number;
-    ktovet?: string;
-    sizes?: any[];
-    tariffs?: any[];
-  }
-  
-  export interface PropertySearchProps {
-    onPropertyFound: (property: PropertyDetails) => void;
-  }
+  hskod: string;
+  mspkod: number;
+  ktovet: string;
+  sizes: PropertySize[];
+}
+
+export interface PayerDetails {
+  mspkod: number;
+  name: string;
+  maintz: string;
+}
