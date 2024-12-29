@@ -1,31 +1,17 @@
-<<<<<<< HEAD
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
-=======
-/* index.css */
-/* Base styles */
-.base {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-/* Component styles */
-.components {
-    /* Add component styles here */
-}
-
-/* Utility classes */
-.utilities {
-    /* Add utility classes here */
-}
->>>>>>> 8d6167d4901ace9a1dc0085777d33f2276a53241
 
 body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-        sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
 }
