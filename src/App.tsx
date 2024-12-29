@@ -6,7 +6,7 @@ import { ChargeTypesSelect } from './components/ChargeTypesSelect';
 import { CalculationButtons } from './components/CalculationButtons';
 import { SizesTable } from './components/SizesTable';
 import { CalculationResults } from './components/CalculationResults';
-import { useCalculationStore } from './stores/calculationStore';
+import { useCalculationStore } from './store';
 
 function App() {
   const { results } = useCalculationStore();
