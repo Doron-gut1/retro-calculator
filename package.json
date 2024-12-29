@@ -20,18 +20,28 @@
     "tailwindcss": "^3.4.0",
     "axios": "^1.6.2",
     "react-query": "^3.39.3",
-    "zustand": "^4.4.7"
+    "zustand": "^4.4.7",
+    "odbc": "^2.4.8"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
+    "test": "jest",
+    "test:watch": "jest --watch",
     "eject": "react-scripts eject",
     "electron:serve": "concurrently -k \"cross-env BROWSER=none npm start\" \"npm run electron:start\"",
     "electron:build": "npm run build && electron-builder -c.extraMetadata.main=build/electron.js",
     "electron:start": "wait-on tcp:3000 && electron .",
     "electron:pack": "electron-builder build --dir",
     "electron:dist": "electron-builder build"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "moduleFileExtensions": ["ts", "tsx", "js", "jsx", "json", "node"],
+    "transform": {
+      "^.+\\.(ts|tsx)$": "ts-jest"
+    }
   },
   "build": {
     "extends": null,
@@ -67,6 +77,9 @@
     "electron-builder": "^24.6.4",
     "concurrently": "^8.2.2",
     "cross-env": "^7.0.3",
-    "wait-on": "^7.0.1"
+    "wait-on": "^7.0.1",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "@types/odbc": "^2.0.4"
   }
 }
