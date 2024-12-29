@@ -1,22 +1,11 @@
-import { SqlService, SqlConfig } from '../services/sql-service';
-
-// קונפיגורציה לטסטים
-const testConfig: SqlConfig = {
-    server: 'localhost',
-    database: 'RetroCalc',
-    user: 'sa',
-    password: 'your-password',
-    options: {
-        encrypt: true,
-        trustServerCertificate: true
-    }
-};
+import { SqlService } from '../services/sql-service';
 
 describe('SqlService Tests', () => {
     let sqlService: SqlService;
+    const ODBC_NAME = 'YourODBCName'; // שם ה-ODBC שהגדרת במערכת
 
     beforeEach(() => {
-        sqlService = new SqlService(testConfig);
+        sqlService = new SqlService(ODBC_NAME);
     });
 
     afterEach(async () => {
