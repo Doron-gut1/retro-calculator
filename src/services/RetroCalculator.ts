@@ -1,7 +1,6 @@
 import { OdbcConnection } from './odbcConnection';
 import { RetroCalculationService } from './RetroCalculationService';
 import { useRetroStore } from '../store/retroStore';
-import { PropertyData, RetroCalculationResults } from '../types/retro';
 
 export class RetroCalculator {
   private odbcConnection: OdbcConnection;
@@ -148,44 +147,6 @@ export class RetroCalculator {
       store.setError('calculation', error instanceof Error ? error.message : 'Failed to cancel calculation');
     } finally {
       store.setIsLoading('calculation', false);
-      await this.odbcConnection.disconnect();
-    }
-  }
-
-  // Utility method to check if property exists
-  async checkPropertyExists(propertyCode: string): Promise<boolean> {
-    try {
-      await this.odbcConnection.connect();
-      const results = await this.odbcConnection.query<{count: number}>(`
-        SELECT COUNT(*) as count 
-        FROM hs 
-        WHERE hskod = ?
-      `, [propertyCode]);
-      
-      return results[0]?.count > 0;
-      
-    } catch (error) {
-      console.error('Error checking property:', error);
-      return false;
-    } finally {
-      await this.odbcConnection.disconnect();
-    }
-  }
-
-  // Utility method to validate dates
-  async validateDates(startDate: Date, endDate: Date): Promise<boolean> {
-    try {
-      await this.odbcConnection.connect();
-      const results = await this.odbcConnection.query<{isValid: number}>(`
-        SELECT dbo.ValidateRetroDate(?, ?) as isValid
-      `, [startDate, endDate]);
-      
-      return results[0]?.isValid === 1;
-      
-    } catch (error) {
-      console.error('Error validating dates:', error);
-      return false;
-    } finally {
       await this.odbcConnection.disconnect();
     }
   }
