@@ -1,70 +1,67 @@
-import sql from 'mssql';
+import odbc from 'odbc';
 
-export interface SqlConfig {
-    server: string;
-    database: string;
+interface DbError {
     user: string;
-    password: string;
-    options: {
-        encrypt: boolean;
-        trustServerCertificate: boolean;
-    };
+    errnum: string;
+    errdesc: string;
+    modulname: string;
+    errline: number;
+    jobnum: number;
 }
 
 export class SqlService {
-    private pool: sql.ConnectionPool | null = null;
-    private poolConnect: Promise<sql.ConnectionPool> | null = null;
-    private readonly config: SqlConfig;
+    private connection: any = null;
+    private readonly odbcName: string;
 
-    constructor(config: SqlConfig) {
-        this.config = config;
+    constructor(odbcName: string) {
+        this.odbcName = odbcName;
     }
 
     private async ensureConnection(): Promise<void> {
-        if (!this.pool) {
-            this.pool = new sql.ConnectionPool(this.config);
-            this.poolConnect = this.pool.connect();
+        if (!this.connection) {
+            try {
+                this.connection = await odbc.connect(`DSN=${this.odbcName}`);
+            } catch (error) {
+                throw new Error(`Failed to connect to ODBC source: ${error.message}`);
+            }
         }
-        await this.poolConnect;
     }
 
     async searchProperty(propertyId: string): Promise<any> {
         await this.ensureConnection();
-        const request = this.pool!.request();
         
-        const result = await request.query(`
+        const query = `
             SELECT h.*, m.maintz, m.fullname
             FROM hs h
             LEFT JOIN msp m ON h.mspkod = m.mspkod
-            WHERE h.hskod = @propertyId
-        `);
+            WHERE h.hskod = ?
+        `;
         
-        return result.recordset[0];
+        const result = await this.connection.query(query, [propertyId]);
+        return result[0];
     }
 
     async getChargeTypes(): Promise<any[]> {
         await this.ensureConnection();
-        const request = this.pool!.request();
         
-        const result = await request.query(`
+        const query = `
             SELECT sugts, sugtsname
             FROM sugts 
             WHERE sugts = 1010 OR payby = 3
             ORDER BY sugts
-        `);
+        `;
         
-        return result.recordset;
+        return await this.connection.query(query);
     }
 
     async prepareRetroData(params: { hs: string; mspkod: number }): Promise<void> {
         try {
             await this.ensureConnection();
-            const request = this.pool!.request();
             
-            request.input('hs', sql.NVarChar(30), params.hs);
-            request.input('mspkod', sql.Int, params.mspkod);
-            
-            await request.execute('PrepareRetroData');
+            await this.connection.query(
+                'EXEC PrepareRetroData @hs=?, @mspkod=?',
+                [params.hs, params.mspkod]
+            );
         } catch (error) {
             console.error('Error in prepareRetroData:', error);
             throw new Error(`נכשל בהכנת נתוני רטרו: ${error.message}`);
@@ -78,13 +75,11 @@ export class SqlService {
     }): Promise<void> {
         try {
             await this.ensureConnection();
-            const request = this.pool!.request();
             
-            request.input('HS', sql.NVarChar(50), params.hs);
-            request.input('NewSugtsList', sql.NVarChar(sql.MAX), params.sugtsList);
-            request.input('IsYearlyCharge', sql.Bit, params.isYearlyCharge);
-            
-            await request.execute('MultiplyTempArnmforatRows');
+            await this.connection.query(
+                'EXEC MultiplyTempArnmforatRows @HS=?, @NewSugtsList=?, @IsYearlyCharge=?',
+                [params.hs, params.sugtsList, params.isYearlyCharge ? 1 : 0]
+            );
         } catch (error) {
             console.error('Error in multiplyTempArnmforatRows:', error);
             throw new Error(`נכשל בהכפלת שורות חיוב: ${error.message}`);
@@ -97,59 +92,45 @@ export class SqlService {
     }): Promise<any[]> {
         try {
             await this.ensureConnection();
-            const request = this.pool!.request();
             
-            const result = await request.query(`
+            const query = `
                 SELECT t.*, s.sugtsname
                 FROM Temparnmforat t
                 LEFT JOIN sugts s ON t.sugts = s.sugts
-                WHERE t.hs = @hs 
-                AND t.jobnum = @jobnum
+                WHERE t.hs = ? 
+                AND t.jobnum = ?
                 ORDER BY t.mnt, t.hdtme, t.IsNewCalculation DESC, t.hnckod
-            `);
+            `;
             
-            return result.recordset;
+            return await this.connection.query(query, [params.hs, params.jobnum]);
         } catch (error) {
             console.error('Error in getRetroResults:', error);
             throw new Error(`נכשל בשליפת תוצאות החישוב: ${error.message}`);
         }
     }
 
-    async addDbError(error: {
-        user: string;
-        errnum: string;
-        errdesc: string;
-        modulname: string;
-        errline: number;
-        jobnum: number;
-    }): Promise<void> {
+    async addDbError(error: DbError): Promise<void> {
         try {
             await this.ensureConnection();
-            const request = this.pool!.request();
             
-            await request.execute('AddDbErrors', {
-                user: error.user,
-                errnum: error.errnum,
-                errdesc: error.errdesc,
-                modulname: error.modulname,
-                errline: error.errline,
-                jobnum: error.jobnum
-            });
+            await this.connection.query(
+                'EXEC AddDbErrors @user=?, @errnum=?, @errdesc=?, @modulname=?, @errline=?, @jobnum=?',
+                [error.user, error.errnum, error.errdesc, error.modulname, error.errline, error.jobnum]
+            );
         } catch (dbError) {
             console.error('Error logging to database:', dbError);
         }
     }
 
     async close(): Promise<void> {
-        if (this.pool) {
-            await this.pool.close();
-            this.pool = null;
-            this.poolConnect = null;
+        if (this.connection) {
+            await this.connection.close();
+            this.connection = null;
         }
     }
 }
 
 // יצירת instance יחיד של השירות
-export const createSqlService = (config: SqlConfig) => {
-    return new SqlService(config);
+export const createSqlService = (odbcName: string) => {
+    return new SqlService(odbcName);
 };
