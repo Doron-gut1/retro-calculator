@@ -1,1 +1,25 @@
-// טיפוסים הקשורים לנכס
+export interface Property {
+  id: string;
+  address: string;
+  type: number;
+  sizes: PropertySize[];
+  validFrom?: Date;
+  validTo?: Date;
+}
+
+export interface PropertySize {
+  index: number;
+  size: number;
+  tariffCode: number;
+  tariffName: string;
+  price: number;
+}
+
+export interface Payer {
+  id: number;
+  name: string;
+}
+
+export interface PropertyDetails extends Property {
+  payer: Payer;
+}
