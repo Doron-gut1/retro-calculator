@@ -9,6 +9,10 @@ interface DbError {
     jobnum: number;
 }
 
+interface OdbcError extends Error {
+    message: string;
+}
+
 export class SqlService {
     private connection: any = null;
     private readonly odbcName: string;
@@ -22,7 +26,8 @@ export class SqlService {
             try {
                 this.connection = await odbc.connect(`DSN=${this.odbcName}`);
             } catch (error) {
-                throw new Error(`Failed to connect to ODBC source: ${error.message}`);
+                const err = error as OdbcError;
+                throw new Error(`Failed to connect to ODBC source: ${err.message}`);
             }
         }
     }
@@ -63,8 +68,9 @@ export class SqlService {
                 [params.hs, params.mspkod]
             );
         } catch (error) {
-            console.error('Error in prepareRetroData:', error);
-            throw new Error(`נכשל בהכנת נתוני רטרו: ${error.message}`);
+            const err = error as OdbcError;
+            console.error('Error in prepareRetroData:', err);
+            throw new Error(`נכשל בהכנת נתוני רטרו: ${err.message}`);
         }
     }
 
@@ -81,8 +87,9 @@ export class SqlService {
                 [params.hs, params.sugtsList, params.isYearlyCharge ? 1 : 0]
             );
         } catch (error) {
-            console.error('Error in multiplyTempArnmforatRows:', error);
-            throw new Error(`נכשל בהכפלת שורות חיוב: ${error.message}`);
+            const err = error as OdbcError;
+            console.error('Error in multiplyTempArnmforatRows:', err);
+            throw new Error(`נכשל בהכפלת שורות חיוב: ${err.message}`);
         }
     }
 
@@ -104,8 +111,9 @@ export class SqlService {
             
             return await this.connection.query(query, [params.hs, params.jobnum]);
         } catch (error) {
-            console.error('Error in getRetroResults:', error);
-            throw new Error(`נכשל בשליפת תוצאות החישוב: ${error.message}`);
+            const err = error as OdbcError;
+            console.error('Error in getRetroResults:', err);
+            throw new Error(`נכשל בשליפת תוצאות החישוב: ${err.message}`);
         }
     }
 
@@ -118,7 +126,8 @@ export class SqlService {
                 [error.user, error.errnum, error.errdesc, error.modulname, error.errline, error.jobnum]
             );
         } catch (dbError) {
-            console.error('Error logging to database:', dbError);
+            const err = dbError as OdbcError;
+            console.error('Error logging to database:', err);
         }
     }
 
