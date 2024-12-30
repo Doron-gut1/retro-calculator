@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Search } from 'lucide-react';
-import { PropertyDetails } from '../../types/property';
+import { PropertyDetails } from '../../types/property.types';
 
 interface PropertySearchProps {
   onPropertyFound: (property: PropertyDetails) => void;
@@ -15,14 +15,17 @@ const PropertySearch: React.FC<PropertySearchProps> = ({ onPropertyFound }) => {
 
     setIsLoading(true);
     try {
-      // TODO: Implement actual ODBC search
       const mockProperty: PropertyDetails = {
-        hskod: searchValue,
-        mspkod: 12345,
-        ktovet: 'כתובת לדוגמה',
+        id: searchValue,
+        address: 'כתובת לדוגמה',
+        type: 1,
+        payer: {
+          id: 12345,
+          name: 'שם משלם לדוגמה'
+        },
         sizes: [
-          { index: 1, size: 80, tariffCode: 101, tariffName: 'מגורים רגיל' },
-          { index: 2, size: 20, tariffCode: 102, tariffName: 'מרפסת' }
+          { index: 1, size: 80, tariffCode: 101, tariffName: 'מגורים רגיל', price: 0 },
+          { index: 2, size: 20, tariffCode: 102, tariffName: 'מרפסת', price: 0 }
         ]
       };
       
