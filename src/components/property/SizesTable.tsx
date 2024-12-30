@@ -1,9 +1,8 @@
-import React from 'react';
-import { usePropertyStore } from '../stores/propertyStore';
-import { PropertySize } from '../types';
+import React, { useState } from 'react';
+import { PropertySize } from '../../types/property.types';
 
 export const SizesTable: React.FC = () => {
-  const { sizes, setSizes } = usePropertyStore();
+  const [sizes, setSizes] = useState<PropertySize[]>([]);
 
   const handleSizeChange = (index: number, newSize: number) => {
     setSizes(
@@ -23,14 +22,15 @@ export const SizesTable: React.FC = () => {
   };
 
   const addNewSize = () => {
-    const newIndex = Math.max(0, ...sizes.map((s) => s.index)) + 1;
+    const newIndex = sizes.length > 0 ? Math.max(...sizes.map((s) => s.index)) + 1 : 1;
     setSizes([
       ...sizes,
       {
         index: newIndex,
         size: 0,
         tariffCode: 0,
-        tariffName: ''
+        tariffName: '',
+        price: 0
       }
     ]);
   };
