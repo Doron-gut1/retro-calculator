@@ -3,8 +3,6 @@ export interface Property {
   address: string;
   type: number;
   sizes: PropertySize[];
-  validFrom?: Date;
-  validTo?: Date;
 }
 
 export interface PropertySize {

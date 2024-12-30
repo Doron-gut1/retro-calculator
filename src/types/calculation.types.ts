@@ -17,8 +17,9 @@ export interface CalculationResult {
   total: number;
 }
 
-export interface CalculationParams {
-  period: CalculationPeriod;
+export interface RetroCalculation {
   propertyId: string;
+  period: CalculationPeriod;
   chargeTypes: number[];
+  results: CalculationResult[];
 }
