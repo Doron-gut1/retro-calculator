@@ -1,11 +1,9 @@
 import React from 'react';
 import { FileText, X } from 'lucide-react';
-import { useRetroStore } from '../../store/retroStore';
+import { useCalculationStore } from '../../store';
 
-const CalculationResults: React.FC = () => {
-  const { calculationResults } = useRetroStore();
-
-  if (!calculationResults) return null;
+export const CalculationResults = () => {
+  const { results } = useCalculationStore();
 
   return (
     <div className="bg-white rounded-lg shadow p-4">
@@ -32,19 +30,25 @@ const CalculationResults: React.FC = () => {
           </tr>
         </thead>
         <tbody className="divide-y">
-          {calculationResults.map((result, index) => (
+          {results.map((row, index) => (
             <tr key={index} className="hover:bg-gray-50">
-              <td className="p-2">{result.period}</td>
-              <td className="p-2">{result.chargeType}</td>
-              <td className="p-2">₪{result.amount}</td>
-              <td className="p-2 text-red-600">-₪{result.discount}</td>
-              <td className="p-2 font-medium">₪{result.total}</td>
+              <td className="p-2">{row.period}</td>
+              <td className="p-2">{row.chargeType}</td>
+              <td className="p-2">₪{row.amount}</td>
+              <td className="p-2 text-red-600">-₪{row.discount}</td>
+              <td className="p-2 font-medium">₪{row.total}</td>
             </tr>
           ))}
         </tbody>
+        <tfoot className="bg-gray-50 font-medium">
+          <tr>
+            <td colSpan={4} className="p-2">סה"כ</td>
+            <td className="p-2">
+              ₪{results.reduce((sum, row) => sum + row.total, 0)}
+            </td>
+          </tr>
+        </tfoot>
       </table>
     </div>
   );
 };
-
-export default CalculationResults;
