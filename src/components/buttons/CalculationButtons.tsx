@@ -1,9 +1,9 @@
 import { FC } from 'react';
-import { useCalculationStore } from '../../store';
+import { useRetroStore } from '../../store';
 import { Calculator, Check } from 'lucide-react';
 
 export const CalculationButtons: FC = () => {
-  const { startCalculation, confirmCalculation } = useCalculationStore();
+  const { startCalculation, confirmCalculation } = useRetroStore();
 
   return (
     <div className="flex flex-col justify-end gap-2">
