@@ -1,32 +1,38 @@
-import { OdbcConfig, PropertyData, PayerData } from './types';
+import odbc from 'odbc';
+import { OdbcConfig } from './types';
 
 class OdbcService {
-  private config: OdbcConfig | null = null;
+  private connection: any = null;
 
-  initialize(config: OdbcConfig) {
-    this.config = config;
-    // TODO: Initialize ODBC connection
-  }
-
-  async getPropertyData(hskod: string): Promise<PropertyData | null> {
+  async initialize() {
     try {
-      // TODO: Implement actual ODBC query
-      console.log('Getting property data for:', hskod);
-      return null;
+      this.connection = await odbc.connect('DSN=brngviadev');
+      console.log('ODBC Connection established successfully');
+      return true;
     } catch (error) {
-      console.error('Error getting property data:', error);
+      console.error('ODBC Connection error:', error);
       throw error;
     }
   }
 
-  async getPayerData(mspkod: number): Promise<PayerData | null> {
+  async testConnection() {
     try {
-      // TODO: Implement actual ODBC query
-      console.log('Getting payer data for:', mspkod);
-      return null;
+      if (!this.connection) {
+        await this.initialize();
+      }
+      const result = await this.connection.query('SELECT @@version as version');
+      console.log('SQL Server version:', result);
+      return result;
     } catch (error) {
-      console.error('Error getting payer data:', error);
+      console.error('Test connection failed:', error);
       throw error;
+    }
+  }
+
+  async disconnect() {
+    if (this.connection) {
+      await this.connection.close();
+      this.connection = null;
     }
   }
 }
