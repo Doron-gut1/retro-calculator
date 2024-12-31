@@ -1,1 +1,1 @@
-// לוגיקת החישובים תוגדר כאן
+export * from './retro.service';
