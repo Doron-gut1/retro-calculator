@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
-import { RetroCalculator } from './components/RetroCalculator';
+import { RetroCalculator } from './components/RetroCalculator/RetroCalculator';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
