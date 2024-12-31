@@ -1,26 +1,25 @@
 import { create } from 'zustand';
-import { PropertyDetails } from '../../types/property.types';
+import { Property } from '../../types';
 
-interface RetroState {
-  property: PropertyDetails | null;
-  calculationResults: any[] | null;
-  isCalculating: boolean;
+type RetroState = {
+  property: Property | null;
+  loading: boolean;
   error: string | null;
+};
 
-  setProperty: (property: PropertyDetails | null) => void;
-  setCalculationResults: (results: any[] | null) => void;
-  setCalculating: (isCalculating: boolean) => void;
+type RetroActions = {
+  setProperty: (property: Property | null) => void;
+  setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
-}
+  clearAll: () => void;
+};
 
-export const useRetroStore = create<RetroState>((set) => ({
+export const useRetroStore = create<RetroState & RetroActions>((set) => ({
   property: null,
-  calculationResults: null,
-  isCalculating: false,
+  loading: false,
   error: null,
-
   setProperty: (property) => set({ property }),
-  setCalculationResults: (results) => set({ calculationResults: results }),
-  setCalculating: (isCalculating) => set({ isCalculating }),
-  setError: (error) => set({ error })
+  setLoading: (loading) => set({ loading }),
+  setError: (error) => set({ error }),
+  clearAll: () => set({ property: null, loading: false, error: null })
 }));
