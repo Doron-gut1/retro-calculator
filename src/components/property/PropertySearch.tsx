@@ -9,9 +9,24 @@ interface PropertySearchProps {
 export const PropertySearch: React.FC<PropertySearchProps> = ({ onPropertySelect }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
-  const handleSearch = () => {
-    // TODO: Implement actual search
-    console.log('Searching for:', searchTerm);
+  const handleSearch = async () => {
+    if (!searchTerm) return;
+
+    try {
+      // TODO: Replace with actual API call
+      const mockProperty: Property = {
+        hskod: searchTerm,
+        ktovet: 'רחוב לדוגמה 1',
+        sughs: 1,
+        mspkod: 12345,
+        sizes: []
+      };
+
+      onPropertySelect?.(mockProperty);
+    } catch (error) {
+      console.error('Error searching property:', error);
+      onPropertySelect?.(null);
+    }
   };
 
   return (
@@ -24,6 +39,7 @@ export const PropertySearch: React.FC<PropertySearchProps> = ({ onPropertySelect
           placeholder="הזן קוד נכס..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
         />
         <button 
           className="p-2 bg-blue-100 text-blue-600 rounded hover:bg-blue-200"
