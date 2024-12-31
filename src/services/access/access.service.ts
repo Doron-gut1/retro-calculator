@@ -1,32 +1,24 @@
-import { getAccessConnection } from './access.bridge';
+import { Record } from '../../types';
 
-export class AccessService {
-  private connection;
+class AccessService {
+  private accessCommands = {
+    openForm: async (formName: string, parameters?: Record) => {
+      // Implementation will be added later when integrating with Access
+      console.log('Opening form:', formName, parameters);
+    },
+    closeForm: async (formName: string) => {
+      // Implementation will be added later when integrating with Access
+      console.log('Closing form:', formName);
+    }
+  };
 
-  constructor() {
-    this.connection = getAccessConnection();
+  async openForm(formName: string, parameters?: Record) {
+    return this.accessCommands.openForm(formName, parameters);
   }
 
-  async openForm(formName: string, parameters?: Record<string, any>): Promise<void> {
-    try {
-      await this.connection.execute(`DoCmd.OpenForm "${formName}"`);
-      if (parameters) {
-        for (const [key, value] of Object.entries(parameters)) {
-          await this.connection.execute(`Forms!${formName}!${key} = ${value}`);
-        }
-      }
-    } catch (error) {
-      console.error('Error opening Access form:', error);
-      throw error;
-    }
-  }
-
-  async closeForm(formName: string): Promise<void> {
-    try {
-      await this.connection.execute(`DoCmd.Close acForm, "${formName}"`);
-    } catch (error) {
-      console.error('Error closing Access form:', error);
-      throw error;
-    }
+  async closeForm(formName: string) {
+    return this.accessCommands.closeForm(formName);
   }
 }
+
+export const accessService = new AccessService();
