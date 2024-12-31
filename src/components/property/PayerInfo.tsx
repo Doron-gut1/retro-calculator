@@ -1,11 +1,11 @@
 import React from 'react';
-import { useRetroStore } from '../../store/retroStore';
+import { PayerInfo as PayerInfoType } from '../../types';
 
-const PayerInfo: React.FC = () => {
-  const { property } = useRetroStore();
+interface PayerInfoProps {
+  data?: PayerInfoType;
+}
 
-  if (!property) return null;
-
+export const PayerInfo: React.FC<PayerInfoProps> = ({ data }) => {
   return (
     <div className="p-4 border rounded bg-blue-50">
       <div className="space-y-3">
@@ -18,20 +18,20 @@ const PayerInfo: React.FC = () => {
         <div className="space-y-2">
           <div>
             <label className="block text-sm text-gray-600">מספר משלם</label>
-            <input
-              type="text"
-              className="w-full p-1 border rounded"
-              value={property.mspkod}
-              readOnly
+            <input 
+              type="text" 
+              className="w-full p-1 border rounded" 
+              value={data?.mspkod || ''}
+              readOnly 
             />
           </div>
           <div>
-            <label className="block text-sm text-gray-600">כתובת</label>
-            <input
-              type="text"
-              className="w-full p-1 border rounded"
-              value={property.ktovet}
-              readOnly
+            <label className="block text-sm text-gray-600">שם משלם</label>
+            <input 
+              type="text" 
+              className="w-full p-1 border rounded" 
+              value={data?.fullname || ''}
+              readOnly 
             />
           </div>
         </div>
@@ -39,5 +39,3 @@ const PayerInfo: React.FC = () => {
     </div>
   );
 };
-
-export default PayerInfo;
