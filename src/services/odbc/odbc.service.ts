@@ -1,38 +1,28 @@
-import { SqlService } from './sql.service';
-import { PropertyDetails, ChargeType } from '../../types';
+interface OdbcConfig {
+  connectionString: string;
+}
 
-export class OdbcService {
-  private sqlService: SqlService;
+class OdbcService {
+  private config: OdbcConfig = {
+    connectionString: ''
+  };
 
-  constructor() {
-    this.sqlService = new SqlService();
+  async connect(connectionString: string) {
+    this.config.connectionString = connectionString;
+    // Implementation will be added
+    console.log('Connecting to:', connectionString);
   }
 
-  async connect(): Promise<void> {
-    await this.sqlService.connect();
+  async query<T = any>(sql: string, params?: any[]): Promise<T[]> {
+    // Implementation will be added
+    console.log('Executing query:', sql, params);
+    return [];
   }
 
-  async disconnect(): Promise<void> {
-    await this.sqlService.disconnect();
-  }
-
-  async searchProperty(propertyId: string): Promise<PropertyDetails> {
-    return this.sqlService.searchProperty(propertyId);
-  }
-
-  async getChargeTypes(): Promise<ChargeType[]> {
-    return this.sqlService.getChargeTypes();
-  }
-
-  async prepareRetroData(params: any): Promise<void> {
-    return this.sqlService.prepareRetroData(params);
-  }
-
-  async multiplyTempArnmforatRows(params: any): Promise<void> {
-    return this.sqlService.multiplyTempArnmforatRows(params);
-  }
-
-  async getRetroResults(params: any): Promise<any[]> {
-    return this.sqlService.getRetroResults(params);
+  async disconnect() {
+    // Implementation will be added
+    console.log('Disconnecting');
   }
 }
+
+export const odbcService = new OdbcService();
