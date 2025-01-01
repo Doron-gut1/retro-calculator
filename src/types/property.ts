@@ -1,11 +1,1 @@
-export interface Property {
-  hskod: string;
-  ktovet: string;
-  mspkod: number;
-  fullname: string;
-  maintz: string;
-}
-
-export interface PropertySearchProps {
-  onPropertySelect: (property: Property) => void;
-}
+ZXhwb3J0IGludGVyZmFjZSBQcm9wZXJ0eSB7CiAgaHNrb2Q6IHN0cmluZzsKICBrdG92ZXQ6IHN0cmluZzsKICBtc3Brb2Q6IG51bWJlcjsKICBmdWxsbmFtZTogc3RyaW5nOwogIG1haW50ejogc3RyaW5nOwp9CgpleHBvcnQgaW50ZXJmYWNlIFByb3BlcnR5U2VhcmNoUHJvcHMgewogIG9uUHJvcGVydHlTZWxlY3Q6IChwcm9wZXJ0eTogUHJvcGVydHkpID0+IHZvaWQ7Cn0=
