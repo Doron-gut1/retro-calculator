@@ -1,7 +1,6 @@
-import React from 'react';
-import PropertySearch from './components/PropertySearch';
-import SizesAndTariffs from './components/SizesAndTariffs';
-import { Property } from './types/property';
+import React, { useState } from 'react';
+import { Property } from './components/Property';
+import { SizesAndTariffs } from './components/SizesAndTariffs';
 
 function App() {
   return (
@@ -15,9 +14,9 @@ function App() {
         {/* Main Form Section */}
         <div className="bg-white rounded-lg shadow p-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Property Search Column */}
+            {/* Property Column */}
             <div className="space-y-4">
-              <PropertySearch onPropertySelect={(property: Property) => console.log(property)} />
+              <Property />
             </div>
 
             {/* Middle Column - Dates & Charge Types */}
