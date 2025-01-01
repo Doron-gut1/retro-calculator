@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Property } from './components/Property';
-import { SizesAndTariffs } from './components/SizesAndTariffs';
+import SizesAndTariffs from './components/SizesAndTariffs';
 
 function App() {
   return (
