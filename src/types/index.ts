@@ -1,20 +1,21 @@
-export interface Tariff {
-  kod: string;
+export interface PayerInfo {
+  id: string;
   name: string;
-  amount: number;
 }
 
-export interface Size {
-  id: number;
+export interface Property {
+  id: string;
+  address: string;
+  payerInfo?: PayerInfo;
+  sizes: PropertySize[];
+}
+
+export interface PropertySize {
+  index: number;
   size: number;
   tariffCode: string;
   tariffName: string;
-  tariffAmount: string;
-}
-
-export interface ValidationError {
-  field: string;
-  message: string;
+  price: number;
 }
 
 export interface CalculationResult {
