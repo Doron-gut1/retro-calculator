@@ -1,6 +1,8 @@
 export interface PayerInfo {
   id: string;
   name: string;
+  mspkod: string;
+  fullname: string;
 }
 
 export interface Property {
@@ -18,10 +20,21 @@ export interface PropertySize {
   price: number;
 }
 
+export interface Tariff {
+  code: string;
+  name: string;
+  price: number;
+}
+
 export interface CalculationResult {
   period: string;
   chargeType: string;
   amount: number;
   discount: number;
   total: number;
+}
+
+export interface ValidationError {
+  field: string;
+  message: string;
 }

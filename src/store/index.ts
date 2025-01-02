@@ -12,6 +12,8 @@ interface RetroState {
   setEndDate: (date: Date | null) => void;
   results: CalculationResult[];
   setResults: (results: CalculationResult[]) => void;
+  startCalculation: () => Promise<void>;
+  confirmCalculation: () => Promise<void>;
 }
 
 export const useRetroStore = create<RetroState>((set) => ({
@@ -24,5 +26,13 @@ export const useRetroStore = create<RetroState>((set) => ({
   endDate: null,
   setEndDate: (date) => set({ endDate: date }),
   results: [],
-  setResults: (results) => set({ results })
+  setResults: (results) => set({ results }),
+  startCalculation: async () => {
+    // TODO: Implement calculation logic
+    console.log('Starting calculation...');
+  },
+  confirmCalculation: async () => {
+    // TODO: Implement confirmation logic
+    console.log('Confirming calculation...');
+  }
 }));
