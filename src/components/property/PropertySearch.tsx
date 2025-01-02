@@ -1,38 +1,34 @@
 import React, { useState } from 'react';
 import { Search } from 'lucide-react';
-import type { Property } from '../../types';
 
-interface PropertySearchProps {
-  onPropertyFound: (property: Property) => void;
+interface PropertyDetails {
+  id: string;
+  address: string;
+  payerCode: string;
+  payerName: string;
 }
 
-const PropertySearch: React.FC<PropertySearchProps> = ({ onPropertyFound }) => {
+interface PropertySearchProps {
+  onPropertyFound: (property: PropertyDetails) => void;
+}
+
+export const PropertySearch: React.FC<PropertySearchProps> = ({ onPropertyFound }) => {
   const [propertyId, setPropertyId] = useState('');
 
-  const handleSearch = async () => {
-    // TODO: Implement actual API call
-    // For now, just simulate finding a property
-    const mockProperty: Property = {
+  const handleSearch = () => {
+    debugger; // נקודת עצירה לבדיקה
+    if (!propertyId) {
+      alert('נא להזין קוד נכס');
+      return;
+    }
+
+    // מוקאפ של נכס לדוגמא
+    onPropertyFound({
       id: propertyId,
       address: 'כתובת לדוגמה 123',
-      payerInfo: {
-        id: '12345',
-        name: 'ישראל ישראלי',
-        mspkod: '67890',
-        fullname: 'ישראל ישראלי'
-      },
-      sizes: [
-        {
-          index: 0,
-          size: 80,
-          tariffCode: '101',
-          tariffName: 'מגורים רגיל',
-          price: 100
-        }
-      ]
-    };
-    
-    onPropertyFound(mockProperty);
+      payerCode: '12345',
+      payerName: 'ישראל ישראלי'
+    });
   };
 
   return (
@@ -57,5 +53,3 @@ const PropertySearch: React.FC<PropertySearchProps> = ({ onPropertyFound }) => {
     </div>
   );
 };
-
-export default PropertySearch;
