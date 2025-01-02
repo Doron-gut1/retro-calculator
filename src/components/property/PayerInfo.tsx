@@ -1,17 +1,21 @@
 import React from 'react';
-import { PayerInfo as PayerInfoType } from '../../types';
 
 interface PayerInfoProps {
-  data?: PayerInfoType;
+  payerCode: string;
+  payerName: string;
+  onChangePayer: () => void;
 }
 
-export const PayerInfo: React.FC<PayerInfoProps> = ({ data }) => {
+const PayerInfo: React.FC<PayerInfoProps> = ({ payerCode, payerName, onChangePayer }) => {
   return (
     <div className="p-4 border rounded bg-blue-50">
       <div className="space-y-3">
         <div className="flex justify-between items-center">
           <h4 className="font-medium">פרטי משלם</h4>
-          <button className="text-blue-600 hover:text-blue-800 text-sm">
+          <button 
+            onClick={onChangePayer}
+            className="text-blue-600 hover:text-blue-800 text-sm"
+          >
             החלף משלם
           </button>
         </div>
@@ -21,8 +25,8 @@ export const PayerInfo: React.FC<PayerInfoProps> = ({ data }) => {
             <input 
               type="text" 
               className="w-full p-1 border rounded" 
-              value={data?.mspkod || ''}
-              readOnly 
+              value={payerCode} 
+              readOnly
             />
           </div>
           <div>
@@ -30,8 +34,8 @@ export const PayerInfo: React.FC<PayerInfoProps> = ({ data }) => {
             <input 
               type="text" 
               className="w-full p-1 border rounded" 
-              value={data?.fullname || ''}
-              readOnly 
+              value={payerName} 
+              readOnly
             />
           </div>
         </div>
@@ -39,3 +43,5 @@ export const PayerInfo: React.FC<PayerInfoProps> = ({ data }) => {
     </div>
   );
 };
+
+export default PayerInfo;

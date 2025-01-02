@@ -1,12 +1,9 @@
 import React from 'react';
-import type { Tariff } from '../../types';
-import TariffSelector from '../inputs/TariffSelector/TariffSelector';
-import { Size } from './SizesAndTariffs';
+import { Size } from './Size';
 
 interface SizesTableProps {
   sizes: Size[];
-  onSizeChange: (index: number, size: number) => void;
-  onTariffChange: (index: number, tariff: Tariff) => void;
+  onSizeChange: (index: number, value: number) => void;
   onDelete: (index: number) => void;
   onAdd: () => void;
 }
@@ -14,7 +11,6 @@ interface SizesTableProps {
 const SizesTable: React.FC<SizesTableProps> = ({ 
   sizes, 
   onSizeChange,
-  onTariffChange, 
   onDelete,
   onAdd 
 }) => {
@@ -58,19 +54,19 @@ const SizesTable: React.FC<SizesTableProps> = ({
                     <input 
                       type="text" 
                       className="w-20 p-1 border rounded" 
-                      value={size.tariff.code}
+                      value={size.code}
                       readOnly
                     />
-                    <TariffSelector 
-                      onSelect={(tariff) => onTariffChange(index, tariff)}
-                    />
+                    <button className="text-xs bg-gray-100 px-2 py-1 rounded hover:bg-gray-200">
+                      בחר
+                    </button>
                   </div>
                 </td>
                 <td className="p-2">
                   <input 
                     type="text" 
                     className="w-full p-1 border rounded bg-gray-50" 
-                    value={size.tariff.name}
+                    value={size.name}
                     readOnly
                   />
                 </td>
@@ -78,7 +74,7 @@ const SizesTable: React.FC<SizesTableProps> = ({
                   <input 
                     type="text" 
                     className="w-24 p-1 border rounded bg-gray-50" 
-                    value={`₪${size.tariff.price}`}
+                    value={`₪${size.price}`}
                     readOnly
                   />
                 </td>
