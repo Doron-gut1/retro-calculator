@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TariffSelector } from '../inputs/TariffSelector';
+import { TariffInput } from '../inputs/TariffInput';
 
 interface Size {
   id: number;
@@ -9,21 +9,26 @@ interface Size {
   tariffAmount: string;
 }
 
-export const SizesAndTariffs: React.FC = () => {
-  const [sizes, setSizes] = useState<Size[]>([
-    { id: 1, size: 80, tariffCode: '101', tariffName: 'מגורים רגיל', tariffAmount: '100' },
-    { id: 2, size: 20, tariffCode: '102', tariffName: 'מרפסת', tariffAmount: '80' },
-    { id: 3, size: 15, tariffCode: '103', tariffName: 'מחסן', tariffAmount: '50' }
-  ]);
+interface SizesAndTariffsProps {
+  sizes: Size[];
+  onSizesChange: (sizes: Size[]) => void;
+}
 
+export const SizesAndTariffs: React.FC<SizesAndTariffsProps> = ({ sizes, onSizesChange }) => {
   const handleSizeChange = (id: number, value: number) => {
-    setSizes(sizes.map(size => 
+    onSizesChange(sizes.map(size => 
       size.id === id ? { ...size, size: value } : size
     ));
   };
 
+  const handleTariffCodeChange = (id: number, code: string) => {
+    onSizesChange(sizes.map(size => 
+      size.id === id ? { ...size, tariffCode: code } : size
+    ));
+  };
+
   const handleTariffSelect = (id: number, tariff: { kod: string; name: string; amount: number }) => {
-    setSizes(sizes.map(size => 
+    onSizesChange(sizes.map(size => 
       size.id === id 
         ? { 
             ...size, 
@@ -36,8 +41,8 @@ export const SizesAndTariffs: React.FC = () => {
   };
 
   const addNewSize = () => {
-    const newId = Math.max(...sizes.map(s => s.id)) + 1;
-    setSizes([...sizes, {
+    const newId = sizes.length > 0 ? Math.max(...sizes.map(s => s.id)) + 1 : 1;
+    onSizesChange([...sizes, {
       id: newId,
       size: 0,
       tariffCode: '',
@@ -47,7 +52,7 @@ export const SizesAndTariffs: React.FC = () => {
   };
 
   const deleteSize = (id: number) => {
-    setSizes(sizes.filter(size => size.id !== id));
+    onSizesChange(sizes.filter(size => size.id !== id));
   };
 
   const totalSize = sizes.reduce((sum, size) => sum + size.size, 0);
@@ -86,22 +91,13 @@ export const SizesAndTariffs: React.FC = () => {
                   />
                 </td>
                 <td className="p-2">
-                  <div className="flex gap-2">
-                    <input 
-                      type="text" 
-                      className="w-20 p-1 border rounded" 
-                      value={row.tariffCode}
-                      readOnly
-                    />
-                    <TariffSelector
-                      currentTariff={{
-                        kod: row.tariffCode,
-                        name: row.tariffName,
-                        amount: Number(row.tariffAmount)
-                      }}
-                      onSelect={(tariff) => handleTariffSelect(row.id, tariff)}
-                    />
-                  </div>
+                  <TariffInput
+                    tariffCode={row.tariffCode}
+                    tariffName={row.tariffName}
+                    tariffAmount={row.tariffAmount}
+                    onTariffSelect={(tariff) => handleTariffSelect(row.id, tariff)}
+                    onTariffCodeChange={(code) => handleTariffCodeChange(row.id, code)}
+                  />
                 </td>
                 <td className="p-2">
                   <input 
