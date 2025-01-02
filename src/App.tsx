@@ -1,13 +1,15 @@
 import React from 'react';
-import RetroCalculator from './components/RetroCalculator';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { RetroForm } from './components/Form/RetroForm';
 
-function App() {
-  console.log('Rendering App component');
+const App: React.FC = () => {
   return (
-    <div dir="rtl">
-      <RetroCalculator />
-    </div>
+    <ErrorBoundary>
+      <div dir="rtl">
+        <RetroForm />
+      </div>
+    </ErrorBoundary>
   );
-}
+};
 
 export default App;
