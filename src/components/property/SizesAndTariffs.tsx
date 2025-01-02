@@ -1,4 +1,6 @@
+import React from 'react';
 import type { Tariff } from '../../types';
+import SizesTable from './SizesTable';
 
 export interface Size {
   index: number;
@@ -22,7 +24,37 @@ const SizesAndTariffs: React.FC<SizesAndTariffsProps> = ({ sizes, onSizeChange }
     onSizeChange(newSizes);
   };
 
-  // Rest of the component...
+  return (
+    <div className="space-y-4">
+      <SizesTable 
+        sizes={sizes}
+        onSizeChange={(index, size) => {
+          const newSizes = [...sizes];
+          newSizes[index].size = size;
+          onSizeChange(newSizes);
+        }}
+        onTariffChange={handleTariffChange}
+        onDelete={(index) => {
+          const newSizes = sizes.filter((_, i) => i !== index);
+          onSizeChange(newSizes);
+        }}
+        onAdd={() => {
+          onSizeChange([
+            ...sizes,
+            {
+              index: sizes.length,
+              size: 0,
+              tariff: {
+                code: '',
+                name: '',
+                price: 0
+              }
+            }
+          ]);
+        }}
+      />
+    </div>
+  );
 };
 
 export default SizesAndTariffs;
