@@ -21,6 +21,15 @@ export interface CalculationResult {
   total: number;
 }
 
+export interface RetroState {
+  property: Property | null;
+  selectedChargeTypes: string[];
+  startDate: Date | null;
+  endDate: Date | null;
+  results: CalculationResult[];
+  isLoading: boolean;
+}
+
 export interface Size {
   id: number;
   size: number;
