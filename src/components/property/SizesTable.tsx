@@ -1,50 +1,33 @@
-import React, { useState } from 'react';
-import { PropertySize } from '../../types/property.types';
+import React from 'react';
+import type { PropertySize } from '../../types';
+import { TariffSelector } from '../inputs/TariffSelector/TariffSelector';
 
-export const SizesTable: React.FC = () => {
-  const [sizes, setSizes] = useState<PropertySize[]>([]);
+interface SizesTableProps {
+  sizes: PropertySize[];
+  onSizeChange: (index: number, value: number) => void;
+  onTariffChange: (index: number, code: string, name: string) => void;
+  onDelete: (index: number) => void;
+  onAdd: () => void;
+}
 
-  const handleSizeChange = (index: number, newSize: number) => {
-    setSizes(
-      sizes.map((size) =>
-        size.index === index ? { ...size, size: newSize } : size
-      )
-    );
-  };
-
-  const handleTariffSelect = async (index: number) => {
-    // TODO: Implement tariff selection dialog
-    console.log('Select tariff for size', index);
-  };
-
-  const handleDeleteSize = (index: number) => {
-    setSizes(sizes.filter((size) => size.index !== index));
-  };
-
-  const addNewSize = () => {
-    const newIndex = sizes.length > 0 ? Math.max(...sizes.map((s) => s.index)) + 1 : 1;
-    setSizes([
-      ...sizes,
-      {
-        index: newIndex,
-        size: 0,
-        tariffCode: 0,
-        tariffName: '',
-        price: 0
-      }
-    ]);
-  };
-
+const SizesTable: React.FC<SizesTableProps> = ({ 
+  sizes, 
+  onSizeChange,
+  onTariffChange, 
+  onDelete,
+  onAdd 
+}) => {
   const totalSize = sizes.reduce((sum, size) => sum + size.size, 0);
+
+  const handleTariffSelect = (index: number, code: string, name: string) => {
+    onTariffChange(index, code, name);
+  };
 
   return (
     <div className="mt-6 space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="font-medium">גדלים ותעריפים</h3>
-        <button 
-          className="text-sm text-blue-600 hover:text-blue-800"
-          onClick={() => console.log('Bulk edit')}
-        >
+        <button className="text-sm text-blue-600 hover:text-blue-800">
           עריכה מרוכזת
         </button>
       </div>
@@ -62,15 +45,15 @@ export const SizesTable: React.FC = () => {
             </tr>
           </thead>
           <tbody className="divide-y">
-            {sizes.map((size) => (
-              <tr key={size.index} className="hover:bg-gray-50">
-                <td className="p-2">{size.index}</td>
+            {sizes.map((size, index) => (
+              <tr key={index} className="hover:bg-gray-50">
+                <td className="p-2">{index + 1}</td>
                 <td className="p-2">
                   <input 
                     type="number" 
                     className="w-20 p-1 border rounded" 
                     value={size.size}
-                    onChange={(e) => handleSizeChange(size.index, parseFloat(e.target.value) || 0)}
+                    onChange={(e) => onSizeChange(index, Number(e.target.value))}
                   />
                 </td>
                 <td className="p-2">
@@ -81,12 +64,9 @@ export const SizesTable: React.FC = () => {
                       value={size.tariffCode}
                       readOnly
                     />
-                    <button 
-                      className="text-xs bg-gray-100 px-2 py-1 rounded hover:bg-gray-200"
-                      onClick={() => handleTariffSelect(size.index)}
-                    >
-                      בחר
-                    </button>
+                    <TariffSelector 
+                      onSelect={(code, name) => handleTariffSelect(index, code, name)}
+                    />
                   </div>
                 </td>
                 <td className="p-2">
@@ -101,14 +81,14 @@ export const SizesTable: React.FC = () => {
                   <input 
                     type="text" 
                     className="w-24 p-1 border rounded bg-gray-50" 
-                    value={`₪${size.tariffCode || 0}`}
+                    value={`₪${size.price}`}
                     readOnly
                   />
                 </td>
                 <td className="p-2">
                   <button 
                     className="text-red-600 hover:text-red-800"
-                    onClick={() => handleDeleteSize(size.index)}
+                    onClick={() => onDelete(index)}
                   >
                     מחק
                   </button>
@@ -121,7 +101,7 @@ export const SizesTable: React.FC = () => {
               <td colSpan={6} className="p-2">
                 <button 
                   className="text-sm text-blue-600 hover:text-blue-800"
-                  onClick={addNewSize}
+                  onClick={onAdd}
                 >
                   + הוסף גודל חדש
                 </button>
@@ -138,3 +118,5 @@ export const SizesTable: React.FC = () => {
     </div>
   );
 };
+
+export default SizesTable;
