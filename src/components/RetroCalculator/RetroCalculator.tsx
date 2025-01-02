@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { PropertySearch } from '../property/PropertySearch';
-import SizesAndTariffs from '../property/SizesAndTariffs';
+import PayerInfo from '../property/PayerInfo';
+import SizesTable from '../property/SizesTable';
 import DateRangeSelect from '../inputs/DateRangeSelect';
 import ChargeTypesSelect from '../inputs/ChargeTypesSelect';
 import CalculationButtons from '../buttons/CalculationButtons';
@@ -21,16 +22,57 @@ interface CalculationResult {
   total: number;
 }
 
+interface Size {
+  index: number;
+  size: number;
+  code: string;
+  name: string;
+  price: number;
+}
+
 const RetroCalculator = () => {
   const [property, setProperty] = useState<PropertyDetails | null>(null);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [selectedChargeTypes, setSelectedChargeTypes] = useState<string[]>([]);
   const [results, setResults] = useState<CalculationResult[]>([]);
+  const [sizes, setSizes] = useState<Size[]>([
+    { index: 1, size: 80, code: '101', name: 'מגורים רגיל', price: 100 },
+    { index: 2, size: 20, code: '102', name: 'מרפסת', price: 80 },
+    { index: 3, size: 15, code: '103', name: 'מחסן', price: 50 }
+  ]);
+
+  const handlePropertySearch = (foundProperty: PropertyDetails) => {
+    console.log('Found property:', foundProperty);
+    setProperty(foundProperty);
+  };
+
+  const handleChangePayer = () => {
+    alert('בשלב זה לא פעיל - יופעל בחיבור ל-DB');
+  };
+
+  const handleSizeChange = (index: number, newSize: number) => {
+    setSizes(sizes.map(size => 
+      size.index === index ? { ...size, size: newSize } : size
+    ));
+  };
+
+  const handleDeleteSize = (index: number) => {
+    setSizes(sizes.filter(size => size.index !== index));
+  };
+
+  const handleAddSize = () => {
+    const newIndex = Math.max(...sizes.map(s => s.index)) + 1;
+    setSizes([...sizes, { 
+      index: newIndex, 
+      size: 0, 
+      code: '', 
+      name: '', 
+      price: 0 
+    }]);
+  };
 
   const handleCalculate = () => {
-    console.log('Starting calculation with:', { property, startDate, endDate, selectedChargeTypes });
-
     if (!property) {
       alert('נא לבחור נכס');
       return;
@@ -55,7 +97,6 @@ const RetroCalculator = () => {
       total: 1350
     }));
 
-    console.log('Setting results:', mockResults);
     setResults(mockResults);
   };
 
@@ -75,9 +116,28 @@ const RetroCalculator = () => {
       
       <div className="flex flex-col p-4 gap-4">
         <div className="bg-white rounded-lg shadow p-4">
-          <PropertySearch onPropertyFound={setProperty} />
+          <PropertySearch onPropertyFound={handlePropertySearch} />
 
-          {property && <SizesAndTariffs />}
+          {property && (
+            <div className="mt-4">
+              <PayerInfo 
+                payerCode={property.payerCode}
+                payerName={property.payerName}
+                onChangePayer={handleChangePayer}
+              />
+            </div>
+          )}
+
+          {property && (
+            <div className="mt-4">
+              <SizesTable 
+                sizes={sizes}
+                onSizeChange={handleSizeChange}
+                onDelete={handleDeleteSize}
+                onAdd={handleAddSize}
+              />
+            </div>
+          )}
 
           <div className="mt-4">
             <DateRangeSelect 
