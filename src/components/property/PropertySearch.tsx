@@ -1,32 +1,36 @@
 import React, { useState } from 'react';
 import { Search } from 'lucide-react';
-import { Property } from '../../types';
+import type { Property } from '../../types';
 
 interface PropertySearchProps {
-  onPropertySelect?: (property: Property | null) => void;
+  onPropertyFound: (property: Property) => void;
 }
 
-export const PropertySearch: React.FC<PropertySearchProps> = ({ onPropertySelect }) => {
-  const [searchTerm, setSearchTerm] = useState('');
+const PropertySearch: React.FC<PropertySearchProps> = ({ onPropertyFound }) => {
+  const [propertyId, setPropertyId] = useState('');
 
   const handleSearch = async () => {
-    if (!searchTerm) return;
-
-    try {
-      // TODO: Replace with actual API call
-      const mockProperty: Property = {
-        hskod: searchTerm,
-        ktovet: 'רחוב לדוגמה 1',
-        sughs: 1,
-        mspkod: 12345,
-        sizes: []
-      };
-
-      onPropertySelect?.(mockProperty);
-    } catch (error) {
-      console.error('Error searching property:', error);
-      onPropertySelect?.(null);
-    }
+    // TODO: Implement actual API call
+    // For now, just simulate finding a property
+    const mockProperty: Property = {
+      id: propertyId,
+      address: 'כתובת לדוגמה 123',
+      payerInfo: {
+        id: '12345',
+        name: 'ישראל ישראלי'
+      },
+      sizes: [
+        {
+          index: 0,
+          size: 80,
+          tariffCode: '101',
+          tariffName: 'מגורים רגיל',
+          price: 100
+        }
+      ]
+    };
+    
+    onPropertyFound(mockProperty);
   };
 
   return (
@@ -37,8 +41,8 @@ export const PropertySearch: React.FC<PropertySearchProps> = ({ onPropertySelect
           type="text" 
           className="flex-1 p-2 border rounded focus:ring-2 focus:ring-blue-500"
           placeholder="הזן קוד נכס..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          value={propertyId}
+          onChange={(e) => setPropertyId(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
         />
         <button 
@@ -51,3 +55,5 @@ export const PropertySearch: React.FC<PropertySearchProps> = ({ onPropertySelect
     </div>
   );
 };
+
+export default PropertySearch;
