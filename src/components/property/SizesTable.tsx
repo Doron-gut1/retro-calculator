@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ChangeEvent } from 'react';
 import { Size } from './Size';
 
 interface SizesTableProps {
@@ -15,6 +15,14 @@ const SizesTable: React.FC<SizesTableProps> = ({
   onAdd 
 }) => {
   const totalSize = sizes.reduce((sum, size) => sum + size.size, 0);
+
+  const handleSizeChange = (index: number, e: ChangeEvent<HTMLInputElement>) => {
+    const newValue = Number(e.target.value);
+    if (!isNaN(newValue) && newValue >= 0) {
+      console.log('Changing size:', index, newValue);
+      onSizeChange(index, newValue);
+    }
+  };
 
   return (
     <div className="mt-6 space-y-4">
@@ -38,15 +46,16 @@ const SizesTable: React.FC<SizesTableProps> = ({
             </tr>
           </thead>
           <tbody className="divide-y">
-            {sizes.map((size, index) => (
-              <tr key={index} className="hover:bg-gray-50">
-                <td className="p-2">{index + 1}</td>
+            {sizes.map((size, idx) => (
+              <tr key={size.index} className="hover:bg-gray-50">
+                <td className="p-2">{size.index}</td>
                 <td className="p-2">
                   <input 
                     type="number" 
                     className="w-20 p-1 border rounded" 
                     value={size.size}
-                    onChange={(e) => onSizeChange(index, Number(e.target.value))}
+                    onChange={(e) => handleSizeChange(idx, e)}
+                    min="0"
                   />
                 </td>
                 <td className="p-2">
@@ -57,7 +66,10 @@ const SizesTable: React.FC<SizesTableProps> = ({
                       value={size.code}
                       readOnly
                     />
-                    <button className="text-xs bg-gray-100 px-2 py-1 rounded hover:bg-gray-200">
+                    <button 
+                      className="text-xs bg-gray-100 px-2 py-1 rounded hover:bg-gray-200"
+                      onClick={() => alert('בחירת תעריף תהיה זמינה בחיבור ל-DB')}
+                    >
                       בחר
                     </button>
                   </div>
@@ -81,7 +93,7 @@ const SizesTable: React.FC<SizesTableProps> = ({
                 <td className="p-2">
                   <button 
                     className="text-red-600 hover:text-red-800"
-                    onClick={() => onDelete(index)}
+                    onClick={() => onDelete(idx)}
                   >
                     מחק
                   </button>
