@@ -17,7 +17,9 @@ const PropertySearch: React.FC<PropertySearchProps> = ({ onPropertyFound }) => {
       address: 'כתובת לדוגמה 123',
       payerInfo: {
         id: '12345',
-        name: 'ישראל ישראלי'
+        name: 'ישראל ישראלי',
+        mspkod: '67890',
+        fullname: 'ישראל ישראלי'
       },
       sizes: [
         {
