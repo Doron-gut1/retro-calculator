@@ -1,28 +1,30 @@
+import React from 'react';
 import { FileText, X } from 'lucide-react';
-import type { CalculationResult } from '../../types';
-import { useRetroStore } from '../../store';
 
-interface CalculationResultsProps {
-  onClose?: () => void;
+export interface CalculationResult {
+  period: string;
+  chargeType: string;
+  amount: number;
+  discount: number;
+  total: number;
 }
 
-const CalculationResults: React.FC<CalculationResultsProps> = ({ onClose }) => {
-  const results = useRetroStore(state => state.results);
-  
+interface CalculationResultsProps {
+  results: CalculationResult[];
+}
+
+const CalculationResults: React.FC<CalculationResultsProps> = ({ results }) => {
   const totalSum = results.reduce((sum, row) => sum + row.total, 0);
 
   return (
-    <div className="bg-white rounded-lg shadow p-4">
+    <div className="bg-white rounded-lg shadow p-4 mt-4">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-medium">תוצאות החישוב</h2>
         <div className="flex gap-2">
           <button className="p-2 text-blue-600 hover:bg-blue-50 rounded">
             <FileText size={20} />
           </button>
-          <button 
-            className="p-2 text-red-600 hover:bg-red-50 rounded"
-            onClick={onClose}
-          >
+          <button className="p-2 text-red-600 hover:bg-red-50 rounded">
             <X size={20} />
           </button>
         </div>
