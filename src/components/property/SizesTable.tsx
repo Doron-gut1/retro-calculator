@@ -19,7 +19,7 @@ const SizesTable: React.FC<SizesTableProps> = ({
   const handleSizeChange = (index: number, e: ChangeEvent<HTMLInputElement>) => {
     const newValue = Number(e.target.value);
     if (!isNaN(newValue) && newValue >= 0) {
-      console.log('Changing size:', index, newValue);
+      console.log('Size change in SizesTable:', index, newValue);
       onSizeChange(index, newValue);
     }
   };
@@ -33,7 +33,7 @@ const SizesTable: React.FC<SizesTableProps> = ({
         </button>
       </div>
       
-      <div className="border rounded">
+      <div className="border rounded overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-gray-50 text-gray-600">
             <tr>
@@ -47,8 +47,8 @@ const SizesTable: React.FC<SizesTableProps> = ({
           </thead>
           <tbody className="divide-y">
             {sizes.map((size, idx) => (
-              <tr key={size.index} className="hover:bg-gray-50">
-                <td className="p-2">{size.index}</td>
+              <tr key={`size-${idx}`} className="hover:bg-gray-50">
+                <td className="p-2">{idx + 1}</td>
                 <td className="p-2">
                   <input 
                     type="number" 
