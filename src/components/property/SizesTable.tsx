@@ -1,11 +1,11 @@
 import React from 'react';
-import type { PropertySize } from '../../types';
+import type { PropertySize, Tariff } from '../../types';
 import { TariffSelector } from '../inputs/TariffSelector/TariffSelector';
 
 interface SizesTableProps {
   sizes: PropertySize[];
   onSizeChange: (index: number, value: number) => void;
-  onTariffChange: (index: number, code: string, name: string) => void;
+  onTariffChange: (index: number, tariff: Tariff) => void;
   onDelete: (index: number) => void;
   onAdd: () => void;
 }
@@ -19,8 +19,8 @@ const SizesTable: React.FC<SizesTableProps> = ({
 }) => {
   const totalSize = sizes.reduce((sum, size) => sum + size.size, 0);
 
-  const handleTariffSelect = (index: number, code: string, name: string) => {
-    onTariffChange(index, code, name);
+  const handleTariffSelect = (index: number, tariff: Tariff) => {
+    onTariffChange(index, tariff);
   };
 
   return (
@@ -65,7 +65,7 @@ const SizesTable: React.FC<SizesTableProps> = ({
                       readOnly
                     />
                     <TariffSelector 
-                      onSelect={(code, name) => handleTariffSelect(index, code, name)}
+                      onSelect={(tariff) => handleTariffSelect(index, tariff)}
                     />
                   </div>
                 </td>
