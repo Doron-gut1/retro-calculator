@@ -1,5 +1,5 @@
 import React from 'react';
-import RetroCalculator from './components/RetroCalculator/RetroCalculator';
+import RetroCalculator from './components/RetroCalculator';
 
 function App() {
   console.log('Rendering App component');
