@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { PropertySearch } from '../property/PropertySearch';
-import { SizesAndTariffs } from '../property/SizesAndTariffs';
+import SizesAndTariffs from '../property/SizesAndTariffs';
 import DateRangeSelect from '../inputs/DateRangeSelect';
 import ChargeTypesSelect from '../inputs/ChargeTypesSelect';
 import CalculationButtons from '../buttons/CalculationButtons';
@@ -29,7 +29,6 @@ const RetroCalculator = () => {
   const [results, setResults] = useState<CalculationResult[]>([]);
 
   const handleCalculate = () => {
-    debugger; // נקודת עצירה לבדיקה
     console.log('Starting calculation with:', { property, startDate, endDate, selectedChargeTypes });
 
     if (!property) {
@@ -76,10 +75,8 @@ const RetroCalculator = () => {
       
       <div className="flex flex-col p-4 gap-4">
         <div className="bg-white rounded-lg shadow p-4">
-          {/* חיפוש נכס */}
           <PropertySearch onPropertyFound={setProperty} />
 
-          {/* גדלים ותעריפים מוצגים רק אחרי בחירת נכס */}
           {property && <SizesAndTariffs />}
 
           <div className="mt-4">
