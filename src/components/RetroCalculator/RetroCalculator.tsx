@@ -1,8 +1,17 @@
 import React, { useState } from 'react';
+import { PropertySearch } from '../property/PropertySearch';
+import { SizesAndTariffs } from '../property/SizesAndTariffs';
 import DateRangeSelect from '../inputs/DateRangeSelect';
 import ChargeTypesSelect from '../inputs/ChargeTypesSelect';
 import CalculationButtons from '../buttons/CalculationButtons';
 import CalculationResults from '../results/CalculationResults';
+
+interface PropertyDetails {
+  id: string;
+  address: string;
+  payerCode: string;
+  payerName: string;
+}
 
 interface CalculationResult {
   period: string;
@@ -13,54 +22,46 @@ interface CalculationResult {
 }
 
 const RetroCalculator = () => {
+  const [property, setProperty] = useState<PropertyDetails | null>(null);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [selectedChargeTypes, setSelectedChargeTypes] = useState<string[]>([]);
   const [results, setResults] = useState<CalculationResult[]>([]);
-  const [showResults, setShowResults] = useState(false);
 
   const handleCalculate = () => {
-    console.log('Calculate button clicked');
-    console.log('Start date:', startDate);
-    console.log('End date:', endDate);
-    console.log('Selected charge types:', selectedChargeTypes);
+    debugger; // נקודת עצירה לבדיקה
+    console.log('Starting calculation with:', { property, startDate, endDate, selectedChargeTypes });
 
-    if (!startDate || !endDate) {
-      console.log('Missing dates');
-      alert('נא להזין תאריכי התחלה וסיום');
+    if (!property) {
+      alert('נא לבחור נכס');
       return;
     }
-    
+
+    if (!startDate || !endDate) {
+      alert('נא לבחור תאריכי התחלה וסיום');
+      return;
+    }
+
     if (selectedChargeTypes.length === 0) {
-      console.log('No charge types selected');
       alert('נא לבחור לפחות סוג חיוב אחד');
       return;
     }
 
-    // מוקאפ לתוצאות חישוב
-    const mockResults = selectedChargeTypes.map(type => {
-      const result = {
-        period: startDate.toLocaleDateString('he-IL', { month: '2-digit', year: 'numeric' }),
-        chargeType: type === '1010' ? 'ארנונה' : type === '1020' ? 'מים' : 'ביוב',
-        amount: 1500,
-        discount: 150,
-        total: 1350
-      };
-      console.log('Generated mock result:', result);
-      return result;
-    });
+    // מוקאפ לתוצאות
+    const mockResults = selectedChargeTypes.map(type => ({
+      period: startDate.toLocaleDateString('he-IL', { month: '2-digit', year: 'numeric' }),
+      chargeType: type === '1010' ? 'ארנונה' : type === '1020' ? 'מים' : 'ביוב',
+      amount: 1500,
+      discount: 150,
+      total: 1350
+    }));
 
     console.log('Setting results:', mockResults);
     setResults(mockResults);
-    setShowResults(true);
   };
 
   const handleConfirm = () => {
-    console.log('Confirm button clicked');
-    console.log('Current results:', results);
-
     if (results.length === 0) {
-      console.log('No results to confirm');
       alert('יש לבצע חישוב לפני אישור');
       return;
     }
@@ -75,34 +76,38 @@ const RetroCalculator = () => {
       
       <div className="flex flex-col p-4 gap-4">
         <div className="bg-white rounded-lg shadow p-4">
-          <DateRangeSelect 
-            onChange={(start, end) => {
-              console.log('Date range changed:', { start, end });
-              setStartDate(start);
-              setEndDate(end);
-              setShowResults(false);
-            }} 
-          />
+          {/* חיפוש נכס */}
+          <PropertySearch onPropertyFound={setProperty} />
+
+          {/* גדלים ותעריפים מוצגים רק אחרי בחירת נכס */}
+          {property && <SizesAndTariffs />}
+
+          <div className="mt-4">
+            <DateRangeSelect 
+              onChange={(start, end) => {
+                setStartDate(start);
+                setEndDate(end);
+              }} 
+            />
+          </div>
+
           <div className="mt-4">
             <ChargeTypesSelect 
               selected={selectedChargeTypes}
-              onChange={(types) => {
-                console.log('Charge types changed:', types);
-                setSelectedChargeTypes(types);
-                setShowResults(false);
-              }}
+              onChange={setSelectedChargeTypes}
             />
           </div>
+
           <div className="mt-4">
             <CalculationButtons
               onCalculate={handleCalculate}
               onConfirm={handleConfirm}
-              disabled={!startDate || !endDate || selectedChargeTypes.length === 0}
+              disabled={!property || !startDate || !endDate || selectedChargeTypes.length === 0}
             />
           </div>
         </div>
 
-        {showResults && results.length > 0 && (
+        {results.length > 0 && (
           <CalculationResults results={results} />
         )}
       </div>
