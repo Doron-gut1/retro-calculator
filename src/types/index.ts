@@ -1,22 +1,26 @@
-export * from './calculation.types';
-export * from './property.types';
-export * from './discount.types';
-
-// Common types used across the application
-export interface DateRange {
-  startDate: Date;
-  endDate: Date;
+export interface Tariff {
+  kod: string;
+  name: string;
+  amount: number;
 }
 
-export interface SelectOption<T = string | number> {
-  value: T;
-  label: string;
-  disabled?: boolean;
+export interface Size {
+  id: number;
+  size: number;
+  tariffCode: string;
+  tariffName: string;
+  tariffAmount: string;
 }
 
-export interface ApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
+export interface ValidationError {
+  field: string;
+  message: string;
+}
+
+export interface CalculationResult {
+  period: string;
+  chargeType: string;
+  amount: number;
+  discount: number;
+  total: number;
 }
