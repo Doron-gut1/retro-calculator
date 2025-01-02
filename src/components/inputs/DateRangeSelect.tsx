@@ -9,36 +9,26 @@ const DateRangeSelect: React.FC<DateRangeSelectProps> = ({ onChange }) => {
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
 
-  const validateDate = (dateStr: string) => {
-    console.log('Validating date:', dateStr);
-    const date = new Date(dateStr);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  const validateDateInput = (dateStr: string): boolean => {
+    // בדיקה שהשנה היא בת 4 ספרות בדיוק
+    const yearMatch = dateStr.match(/^\d{4}-\d{2}-\d{2}$/);
+    if (!yearMatch) {
+      alert('פורמט תאריך לא תקין. השנה חייבת להיות בת 4 ספרות בדיוק');
+      return false;
+    }
 
-    console.log('Parsed date:', date);
-    console.log('Is valid date?', !isNaN(date.getTime()));
+    const today = new Date();
+    const date = new Date(dateStr);
+
+    // בדיקה שהתאריך לא עתידי
+    if (date > today) {
+      alert('לא ניתן לבחור תאריך עתידי');
+      return false;
+    }
 
     // בדיקת תאריך תקין
     if (isNaN(date.getTime())) {
-      console.log('Invalid date format');
       alert('תאריך לא תקין');
-      return false;
-    }
-
-    // בדיקת שנה בת 4 ספרות
-    const year = date.getFullYear();
-    console.log('Year:', year);
-    if (year.toString().length !== 4) {
-      console.log('Invalid year length');
-      alert('שנה חייבת להיות בת 4 ספרות');
-      return false;
-    }
-
-    // בדיקה שהתאריך לא עתידי
-    console.log('Comparing with today:', today);
-    if (date > today) {
-      console.log('Future date detected');
-      alert('לא ניתן להזין תאריך עתידי');
       return false;
     }
 
@@ -46,20 +36,21 @@ const DateRangeSelect: React.FC<DateRangeSelectProps> = ({ onChange }) => {
   };
 
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('Start date changed:', e.target.value);
     const newDate = e.target.value;
-    if (validateDate(newDate)) {
+    console.log('Start date input:', newDate);
+    
+    if (!newDate || validateDateInput(newDate)) {
       setStartDate(newDate);
-      onChange(new Date(newDate), endDate ? new Date(endDate) : null);
+      onChange(newDate ? new Date(newDate) : null, endDate ? new Date(endDate) : null);
     }
   };
 
   const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('End date changed:', e.target.value);
     const newDate = e.target.value;
-    if (validateDate(newDate)) {
+    console.log('End date input:', newDate);
+
+    if (!newDate || validateDateInput(newDate)) {
       if (startDate && new Date(newDate) < new Date(startDate)) {
-        console.log('End date before start date');
         alert('תאריך סיום חייב להיות אחרי תאריך התחלה');
         return;
       }
@@ -68,9 +59,10 @@ const DateRangeSelect: React.FC<DateRangeSelectProps> = ({ onChange }) => {
     }
   };
 
-  // הגבלת ערכים מקסימליים לתאריך
-  const today = new Date().toISOString().split('T')[0];
-  console.log('Max date:', today);
+  // הגבלת ערך מקסימלי
+  const maxDate = new Date();
+  maxDate.setHours(0, 0, 0, 0);
+  const maxDateString = maxDate.toISOString().split('T')[0];
 
   return (
     <div className="space-y-4">
@@ -82,7 +74,7 @@ const DateRangeSelect: React.FC<DateRangeSelectProps> = ({ onChange }) => {
             className="flex-1 p-2 border rounded" 
             value={startDate}
             onChange={handleStartDateChange}
-            max={today}
+            max={maxDateString}
           />
           <button className="p-2 bg-blue-100 text-blue-600 rounded hover:bg-blue-200">
             <Calendar size={20} />
@@ -99,7 +91,7 @@ const DateRangeSelect: React.FC<DateRangeSelectProps> = ({ onChange }) => {
             value={endDate}
             onChange={handleEndDateChange}
             min={startDate}
-            max={today}
+            max={maxDateString}
           />
           <button className="p-2 bg-blue-100 text-blue-600 rounded hover:bg-blue-200">
             <Calendar size={20} />
