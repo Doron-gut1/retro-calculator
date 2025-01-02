@@ -11,7 +11,7 @@ export const CalculationButtons: React.FC<CalculationButtonsProps> = ({
   onCalculate,
   disabled = false 
 }) => {
-  const { canUndo, canRedo, undo, redo } = useRetroStore();
+  const { undo, redo } = useRetroStore();
 
   return (
     <div className="space-y-2">
@@ -20,7 +20,7 @@ export const CalculationButtons: React.FC<CalculationButtonsProps> = ({
         <button
           className="p-2 text-gray-600 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={undo}
-          disabled={!canUndo() || disabled}
+          disabled={disabled}
           title="בטל"
         >
           <Undo2 size={20} />
@@ -28,7 +28,7 @@ export const CalculationButtons: React.FC<CalculationButtonsProps> = ({
         <button
           className="p-2 text-gray-600 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={redo}
-          disabled={!canRedo() || disabled}
+          disabled={disabled}
           title="בצע שוב"
         >
           <Redo2 size={20} />
