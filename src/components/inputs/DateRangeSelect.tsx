@@ -11,14 +11,28 @@ const DateRangeSelect: React.FC<DateRangeSelectProps> = ({ onChange }) => {
 
   const validateDate = (dateStr: string) => {
     const date = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // בדיקת תאריך תקין
     if (isNaN(date.getTime())) {
       alert('תאריך לא תקין');
       return false;
     }
-    if (date.getFullYear() > new Date().getFullYear() + 1) {
-      alert('תאריך לא יכול להיות מעבר לשנה מהיום');
+
+    // בדיקת שנה בת 4 ספרות
+    const year = date.getFullYear();
+    if (year.toString().length !== 4) {
+      alert('שנה חייבת להיות בת 4 ספרות');
       return false;
     }
+
+    // בדיקה שהתאריך לא עתידי
+    if (date > today) {
+      alert('לא ניתן להזין תאריך עתידי');
+      return false;
+    }
+
     return true;
   };
 
@@ -42,6 +56,9 @@ const DateRangeSelect: React.FC<DateRangeSelectProps> = ({ onChange }) => {
     }
   };
 
+  // הגבלת ערכים מקסימליים לתאריך
+  const today = new Date().toISOString().split('T')[0];
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -52,7 +69,7 @@ const DateRangeSelect: React.FC<DateRangeSelectProps> = ({ onChange }) => {
             className="flex-1 p-2 border rounded" 
             value={startDate}
             onChange={handleStartDateChange}
-            max={endDate}
+            max={today}
           />
           <button className="p-2 bg-blue-100 text-blue-600 rounded hover:bg-blue-200">
             <Calendar size={20} />
@@ -69,6 +86,7 @@ const DateRangeSelect: React.FC<DateRangeSelectProps> = ({ onChange }) => {
             value={endDate}
             onChange={handleEndDateChange}
             min={startDate}
+            max={today}
           />
           <button className="p-2 bg-blue-100 text-blue-600 rounded hover:bg-blue-200">
             <Calendar size={20} />

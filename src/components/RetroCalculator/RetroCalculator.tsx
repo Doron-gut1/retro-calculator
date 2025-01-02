@@ -17,6 +17,7 @@ const RetroCalculator = () => {
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [selectedChargeTypes, setSelectedChargeTypes] = useState<string[]>([]);
   const [results, setResults] = useState<CalculationResult[]>([]);
+  const [showResults, setShowResults] = useState(false);
 
   const handleCalculate = () => {
     if (!startDate || !endDate) {
@@ -29,16 +30,17 @@ const RetroCalculator = () => {
       return;
     }
 
-    // כרגע - מציג מידע לדוגמה
-    setResults([
-      { 
-        period: '01/2024', 
-        chargeType: 'ארנונה', 
-        amount: 1500, 
-        discount: 150, 
-        total: 1350 
-      }
-    ]);
+    // מוקאפ לתוצאות חישוב
+    const mockResults = selectedChargeTypes.map(type => ({
+      period: startDate.toLocaleDateString('he-IL', { month: '2-digit', year: 'numeric' }),
+      chargeType: type === '1010' ? 'ארנונה' : type === '1020' ? 'מים' : 'ביוב',
+      amount: 1500,
+      discount: 150,
+      total: 1350
+    }));
+
+    setResults(mockResults);
+    setShowResults(true);
   };
 
   const handleConfirm = () => {
@@ -61,20 +63,28 @@ const RetroCalculator = () => {
             onChange={(start, end) => {
               setStartDate(start);
               setEndDate(end);
+              setShowResults(false);
             }} 
           />
-          <ChargeTypesSelect 
-            selected={selectedChargeTypes}
-            onChange={setSelectedChargeTypes}
-          />
-          <CalculationButtons
-            onCalculate={handleCalculate}
-            onConfirm={handleConfirm}
-            disabled={!startDate || !endDate || selectedChargeTypes.length === 0}
-          />
+          <div className="mt-4">
+            <ChargeTypesSelect 
+              selected={selectedChargeTypes}
+              onChange={(types) => {
+                setSelectedChargeTypes(types);
+                setShowResults(false);
+              }}
+            />
+          </div>
+          <div className="mt-4">
+            <CalculationButtons
+              onCalculate={handleCalculate}
+              onConfirm={handleConfirm}
+              disabled={!startDate || !endDate || selectedChargeTypes.length === 0}
+            />
+          </div>
         </div>
 
-        {results.length > 0 && (
+        {showResults && results.length > 0 && (
           <CalculationResults results={results} />
         )}
       </div>
