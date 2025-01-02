@@ -7,16 +7,31 @@ interface RetroState {
   selectedChargeTypes: string[];
   setSelectedChargeTypes: (types: string[]) => void;
   startDate: Date | null;
-  setStartDate: (date: Date | null) => void;
+  setStartDate: (dateStr: string) => void;
   endDate: Date | null;
-  setEndDate: (date: Date | null) => void;
+  setEndDate: (dateStr: string) => void;
   results: CalculationResult[];
   setResults: (results: CalculationResult[]) => void;
   errors: ValidationError[];
-  validateDates: (start: Date | null, end: Date | null) => boolean;
-  startCalculation: () => Promise<void>;
-  confirmCalculation: () => Promise<void>;
 }
+
+const isValidDate = (dateStr: string): boolean => {
+  // בדיקה שהפורמט נכון (YYYY-MM-DD)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false;
+
+  const [year, month, day] = dateStr.split('-').map(Number);
+
+  // בדיקת טווח שנים הגיוני (1900-2100)
+  if (year < 1900 || year > 2100) return false;
+
+  // יצירת אובייקט תאריך
+  const date = new Date(year, month - 1, day);
+
+  // בדיקה שהתאריך תקין (למשל לא 31 בפברואר)
+  return date.getFullYear() === year &&
+         date.getMonth() === month - 1 &&
+         date.getDate() === day;
+};
 
 export const useRetroStore = create<RetroState>((set, get) => ({
   property: null,
@@ -24,84 +39,76 @@ export const useRetroStore = create<RetroState>((set, get) => ({
   selectedChargeTypes: [],
   setSelectedChargeTypes: (types) => set({ selectedChargeTypes: types }),
   startDate: null,
-  setStartDate: (date) => {
-    if (get().validateDates(date, get().endDate)) {
-      set({ startDate: date, errors: [] });
+  setStartDate: (dateStr) => {
+    const errors: ValidationError[] = [...get().errors.filter(e => e.field !== 'startDate')];
+    
+    if (!isValidDate(dateStr)) {
+      errors.push({
+        field: 'startDate',
+        message: 'תאריך התחלה לא תקין'
+      });
+      set({ errors });
+      return;
     }
+
+    const newDate = new Date(dateStr);
+    const endDate = get().endDate;
+
+    if (endDate && newDate > endDate) {
+      errors.push({
+        field: 'startDate',
+        message: 'תאריך התחלה חייב להיות לפני תאריך סיום'
+      });
+    }
+
+    const oneYearFromNow = new Date();
+    oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+    
+    if (newDate > oneYearFromNow) {
+      errors.push({
+        field: 'startDate',
+        message: 'תאריך התחלה לא יכול להיות מעבר לשנה מהיום'
+      });
+    }
+
+    set({ startDate: errors.length === 0 ? newDate : null, errors });
   },
   endDate: null,
-  setEndDate: (date) => {
-    if (get().validateDates(get().startDate, date)) {
-      set({ endDate: date, errors: [] });
+  setEndDate: (dateStr) => {
+    const errors: ValidationError[] = [...get().errors.filter(e => e.field !== 'endDate')];
+    
+    if (!isValidDate(dateStr)) {
+      errors.push({
+        field: 'endDate',
+        message: 'תאריך סיום לא תקין'
+      });
+      set({ errors });
+      return;
     }
+
+    const newDate = new Date(dateStr);
+    const startDate = get().startDate;
+
+    if (startDate && newDate < startDate) {
+      errors.push({
+        field: 'endDate',
+        message: 'תאריך סיום חייב להיות אחרי תאריך התחלה'
+      });
+    }
+
+    const oneYearFromNow = new Date();
+    oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+    
+    if (newDate > oneYearFromNow) {
+      errors.push({
+        field: 'endDate',
+        message: 'תאריך סיום לא יכול להיות מעבר לשנה מהיום'
+      });
+    }
+
+    set({ endDate: errors.length === 0 ? newDate : null, errors });
   },
   results: [],
   setResults: (results) => set({ results }),
-  errors: [],
-  validateDates: (start, end) => {
-    const errors: ValidationError[] = [];
-    
-    if (start && end) {
-      const today = new Date();
-      const oneYearFromNow = new Date(today.getFullYear() + 1, today.getMonth(), today.getDate());
-
-      if (start > end) {
-        errors.push({
-          field: 'dates',
-          message: 'תאריך התחלה חייב להיות לפני תאריך סיום'
-        });
-      }
-
-      if (end > oneYearFromNow) {
-        errors.push({
-          field: 'dates',
-          message: 'תאריך סיום לא יכול להיות מעבר לשנה מהיום'
-        });
-      }
-    }
-
-    set({ errors });
-    return errors.length === 0;
-  },
-  startCalculation: async () => {
-    const { property, startDate, endDate, selectedChargeTypes } = get();
-    
-    // Validate all required fields
-    if (!property || !startDate || !endDate || selectedChargeTypes.length === 0) {
-      set({
-        errors: [{
-          field: 'calculation',
-          message: 'חובה למלא את כל השדות לפני החישוב'
-        }]
-      });
-      return;
-    }
-
-    // For now, set mock results
-    const mockResults: CalculationResult[] = [
-      {
-        period: '01/2024',
-        chargeType: 'ארנונה',
-        amount: 1500,
-        discount: 150,
-        total: 1350
-      }
-    ];
-
-    set({ results: mockResults });
-  },
-  confirmCalculation: async () => {
-    const { results } = get();
-    if (results.length === 0) {
-      set({
-        errors: [{
-          field: 'confirmation',
-          message: 'אין תוצאות לאישור'
-        }]
-      });
-      return;
-    }
-    // In future: send to server
-    console.log('Confirming calculation:', results);
-  }
+  errors: []
 }));
