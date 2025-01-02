@@ -20,31 +20,47 @@ const RetroCalculator = () => {
   const [showResults, setShowResults] = useState(false);
 
   const handleCalculate = () => {
+    console.log('Calculate button clicked');
+    console.log('Start date:', startDate);
+    console.log('End date:', endDate);
+    console.log('Selected charge types:', selectedChargeTypes);
+
     if (!startDate || !endDate) {
+      console.log('Missing dates');
       alert('נא להזין תאריכי התחלה וסיום');
       return;
     }
     
     if (selectedChargeTypes.length === 0) {
+      console.log('No charge types selected');
       alert('נא לבחור לפחות סוג חיוב אחד');
       return;
     }
 
     // מוקאפ לתוצאות חישוב
-    const mockResults = selectedChargeTypes.map(type => ({
-      period: startDate.toLocaleDateString('he-IL', { month: '2-digit', year: 'numeric' }),
-      chargeType: type === '1010' ? 'ארנונה' : type === '1020' ? 'מים' : 'ביוב',
-      amount: 1500,
-      discount: 150,
-      total: 1350
-    }));
+    const mockResults = selectedChargeTypes.map(type => {
+      const result = {
+        period: startDate.toLocaleDateString('he-IL', { month: '2-digit', year: 'numeric' }),
+        chargeType: type === '1010' ? 'ארנונה' : type === '1020' ? 'מים' : 'ביוב',
+        amount: 1500,
+        discount: 150,
+        total: 1350
+      };
+      console.log('Generated mock result:', result);
+      return result;
+    });
 
+    console.log('Setting results:', mockResults);
     setResults(mockResults);
     setShowResults(true);
   };
 
   const handleConfirm = () => {
+    console.log('Confirm button clicked');
+    console.log('Current results:', results);
+
     if (results.length === 0) {
+      console.log('No results to confirm');
       alert('יש לבצע חישוב לפני אישור');
       return;
     }
@@ -61,6 +77,7 @@ const RetroCalculator = () => {
         <div className="bg-white rounded-lg shadow p-4">
           <DateRangeSelect 
             onChange={(start, end) => {
+              console.log('Date range changed:', { start, end });
               setStartDate(start);
               setEndDate(end);
               setShowResults(false);
@@ -70,6 +87,7 @@ const RetroCalculator = () => {
             <ChargeTypesSelect 
               selected={selectedChargeTypes}
               onChange={(types) => {
+                console.log('Charge types changed:', types);
                 setSelectedChargeTypes(types);
                 setShowResults(false);
               }}

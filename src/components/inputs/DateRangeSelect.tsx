@@ -10,25 +10,34 @@ const DateRangeSelect: React.FC<DateRangeSelectProps> = ({ onChange }) => {
   const [endDate, setEndDate] = useState<string>('');
 
   const validateDate = (dateStr: string) => {
+    console.log('Validating date:', dateStr);
     const date = new Date(dateStr);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
+    console.log('Parsed date:', date);
+    console.log('Is valid date?', !isNaN(date.getTime()));
+
     // בדיקת תאריך תקין
     if (isNaN(date.getTime())) {
+      console.log('Invalid date format');
       alert('תאריך לא תקין');
       return false;
     }
 
     // בדיקת שנה בת 4 ספרות
     const year = date.getFullYear();
+    console.log('Year:', year);
     if (year.toString().length !== 4) {
+      console.log('Invalid year length');
       alert('שנה חייבת להיות בת 4 ספרות');
       return false;
     }
 
     // בדיקה שהתאריך לא עתידי
+    console.log('Comparing with today:', today);
     if (date > today) {
+      console.log('Future date detected');
       alert('לא ניתן להזין תאריך עתידי');
       return false;
     }
@@ -37,6 +46,7 @@ const DateRangeSelect: React.FC<DateRangeSelectProps> = ({ onChange }) => {
   };
 
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('Start date changed:', e.target.value);
     const newDate = e.target.value;
     if (validateDate(newDate)) {
       setStartDate(newDate);
@@ -45,9 +55,11 @@ const DateRangeSelect: React.FC<DateRangeSelectProps> = ({ onChange }) => {
   };
 
   const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('End date changed:', e.target.value);
     const newDate = e.target.value;
     if (validateDate(newDate)) {
       if (startDate && new Date(newDate) < new Date(startDate)) {
+        console.log('End date before start date');
         alert('תאריך סיום חייב להיות אחרי תאריך התחלה');
         return;
       }
@@ -58,6 +70,7 @@ const DateRangeSelect: React.FC<DateRangeSelectProps> = ({ onChange }) => {
 
   // הגבלת ערכים מקסימליים לתאריך
   const today = new Date().toISOString().split('T')[0];
+  console.log('Max date:', today);
 
   return (
     <div className="space-y-4">
