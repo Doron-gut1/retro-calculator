@@ -1,8 +1,13 @@
 import React from 'react';
-import { RetroCalculator } from './components/RetroCalculator';
+import RetroCalculator from './components/RetroCalculator/RetroCalculator';
 
 function App() {
-  return <RetroCalculator />;
+  console.log('Rendering App component');
+  return (
+    <div dir="rtl">
+      <RetroCalculator />
+    </div>
+  );
 }
 
 export default App;
