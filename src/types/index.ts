@@ -10,6 +10,7 @@ export interface ValidationError {
   field: string;
   message: string;
   type?: 'error' | 'warning' | 'info';
+  timestamp?: number;
 }
 
 export interface CalculationResult {
@@ -28,7 +29,7 @@ export interface Size {
   tariffAmount: string;
 }
 
-export interface TariffInfo {
+export interface Tariff {
   code: string;
   name: string;
   amount: number;
