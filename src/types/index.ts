@@ -1,29 +1,15 @@
-export interface PayerInfo {
-  id: string;
-  name: string;
-  mspkod: string;
-  fullname: string;
-}
-
 export interface Property {
   id: string;
   address: string;
-  payerInfo?: PayerInfo;
-  sizes: PropertySize[];
+  type: string;
+  payerId: string;
+  payerName: string;
 }
 
-export interface PropertySize {
-  index: number;
-  size: number;
-  tariffCode: string;
-  tariffName: string;
-  price: number;
-}
-
-export interface Tariff {
-  code: string;
-  name: string;
-  price: number;
+export interface ValidationError {
+  field: string;
+  message: string;
+  type?: 'error' | 'warning' | 'info';
 }
 
 export interface CalculationResult {
@@ -34,7 +20,16 @@ export interface CalculationResult {
   total: number;
 }
 
-export interface ValidationError {
-  field: string;
-  message: string;
+export interface Size {
+  id: number;
+  size: number;
+  tariffCode: string;
+  tariffName: string;
+  tariffAmount: string;
+}
+
+export interface TariffInfo {
+  code: string;
+  name: string;
+  amount: number;
 }
