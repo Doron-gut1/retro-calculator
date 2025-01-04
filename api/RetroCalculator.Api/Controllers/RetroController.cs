@@ -27,7 +27,6 @@ public class RetroController : ControllerBase
     {
         try
         {
-            // Check if property is locked
             var isLocked = await _propertyService.IsPropertyLockedAsync(calculation.PropertyId);
             if (isLocked)
             {
@@ -44,19 +43,18 @@ public class RetroController : ControllerBase
         }
     }
 
-    [HttpPost("{propertyId}/approve")]
-    public async Task<ActionResult> Approve(string propertyId, [FromBody] List<RetroCalculationResultDto> results)
+    [HttpPost("approve")]
+    public async Task<ActionResult> Approve(RetroApprovalDto approval)
     {
         try
         {
-            // Check if property is locked
-            var isLocked = await _propertyService.IsPropertyLockedAsync(propertyId);
+            var isLocked = await _propertyService.IsPropertyLockedAsync(approval.PropertyId);
             if (isLocked)
             {
                 return BadRequest("Property is currently locked by another calculation");
             }
 
-            var success = await _retroService.ApproveRetroAsync(propertyId, results);
+            var success = await _retroService.ApproveRetroAsync(approval);
             if (!success)
             {
                 return BadRequest("Failed to approve retro calculation");
@@ -65,7 +63,7 @@ public class RetroController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error approving retro for property {PropertyId}", propertyId);
+            _logger.LogError(ex, "Error approving retro for property {PropertyId}", approval.PropertyId);
             return StatusCode(500, "Internal server error");
         }
     }
