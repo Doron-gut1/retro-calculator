@@ -1,4 +1,4 @@
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using RetroCalculator.Api.Models.DTOs;
 using RetroCalculator.Api.Services.Interfaces;
 
@@ -30,7 +30,7 @@ public class RetroService : IRetroService
             await _calculationService.InitializeCalculationAsync(calculation.PropertyId, calculation.JobNumber);
 
             // 2. Run SQL procedures to create period rows
-            using var connection = new SqlConnection(_connectionString);
+            await using var connection = new SqlConnection(_connectionString);
             await connection.OpenAsync();
 
             using (var command = new SqlCommand("SELECT dbo.GetMntByDate(@date)", connection))
@@ -99,24 +99,26 @@ public class RetroService : IRetroService
 
     public async Task<bool> ApproveRetroAsync(RetroApprovalDto approval)
     {
-        using var connection = new SqlConnection(_connectionString);
+        await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync();
 
-        using var transaction = await connection.BeginTransactionAsync();
+        await using var transaction = await connection.BeginTransactionAsync();
 
         try
         {
             // 1. InsertFromTemparnmforatToArnmforat
-            using (var command = new SqlCommand("[dbo].[InsertFromTemparnmforatToArnmforat]", connection, transaction))
+            using (var command = new SqlCommand("[dbo].[InsertFromTemparnmforatToArnmforat]", connection))
             {
+                command.Transaction = transaction;
                 command.CommandType = System.Data.CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@hskod", approval.PropertyId);
                 await command.ExecuteNonQueryAsync();
             }
 
             // 2. InsertFromTemparnmforatToTash
-            using (var command = new SqlCommand("[dbo].[InsertFromTemparnmforatToTash]", connection, transaction))
+            using (var command = new SqlCommand("[dbo].[InsertFromTemparnmforatToTash]", connection))
             {
+                command.Transaction = transaction;
                 command.CommandType = System.Data.CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@hskod", approval.PropertyId);
                 command.Parameters.AddWithValue("@history", approval.IsHistorical);
@@ -128,8 +130,9 @@ public class RetroService : IRetroService
             }
 
             // 3. UpdateArnFromTemparnmforat
-            using (var command = new SqlCommand("[dbo].[UpdateArnFromTemparnmforat]", connection, transaction))
+            using (var command = new SqlCommand("[dbo].[UpdateArnFromTemparnmforat]", connection))
             {
+                command.Transaction = transaction;
                 command.CommandType = System.Data.CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@hskod", approval.PropertyId);
                 command.Parameters.AddWithValue("@dtstart", approval.StartDate);
@@ -140,8 +143,9 @@ public class RetroService : IRetroService
             // 4. UpdateHsFromRetro (only if needed)
             if (approval.Results.Any(r => r.CollectionDate == null))
             {
-                using (var command = new SqlCommand("[dbo].[UpdateHsFromRetro]", connection, transaction))
+                using (var command = new SqlCommand("[dbo].[UpdateHsFromRetro]", connection))
                 {
+                    command.Transaction = transaction;
                     command.CommandType = System.Data.CommandType.StoredProcedure;
                     command.Parameters.AddWithValue("@jobnum", approval.JobNumber);
                     command.Parameters.AddWithValue("@dtstart", approval.StartDate);
@@ -150,8 +154,9 @@ public class RetroService : IRetroService
             }
 
             // 5. Clean up Temparnmforat
-            using (var command = new SqlCommand("DELETE FROM Temparnmforat WHERE jobnum = @jobnum", connection, transaction))
+            using (var command = new SqlCommand("DELETE FROM Temparnmforat WHERE jobnum = @jobnum", connection))
             {
+                command.Transaction = transaction;
                 command.Parameters.AddWithValue("@jobnum", approval.JobNumber);
                 await command.ExecuteNonQueryAsync();
             }
