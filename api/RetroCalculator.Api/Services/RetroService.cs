@@ -18,7 +18,7 @@ public class RetroService : IRetroService
     {
         _calculationService = calculationService;
         _logger = logger;
-        _connectionString = configuration.GetConnectionString("DefaultConnection");
+        _connectionString = configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string is missing");
         _currentUser = configuration["RetroCalculation:DefaultUser"] ?? "system";
     }
 
@@ -26,13 +26,13 @@ public class RetroService : IRetroService
     {
         try
         {
-            // 1. Initialize calculation in Temparnmforat
+            // Initialize calculation in Temparnmforat
             await _calculationService.InitializeCalculationAsync(calculation.PropertyId, calculation.JobNumber);
 
-            // 2. Run SQL procedures to create period rows
             await using var connection = new SqlConnection(_connectionString);
             await connection.OpenAsync();
-
+            
+            // Check closed periods
             using (var command = new SqlCommand("SELECT dbo.GetMntByDate(@date)", connection))
             {
                 command.Parameters.AddWithValue("@date", calculation.StartDate);
@@ -41,7 +41,6 @@ public class RetroService : IRetroService
                 command.Parameters[0].Value = calculation.EndDate;
                 var lastMonth = (int)await command.ExecuteScalarAsync();
 
-                // Check for open periods
                 using var checkCommand = new SqlCommand(
                     "SELECT COUNT(*) FROM sagur WHERE mnt BETWEEN @firstMonth AND @lastMonth", connection);
                 checkCommand.Parameters.AddWithValue("@firstMonth", firstMonth);
@@ -54,14 +53,14 @@ public class RetroService : IRetroService
                 }
             }
 
-            // 3. Run DLL calculation
+            // Run DLL calculation
             var success = await _calculationService.RunRetroCalculationAsync(calculation.JobNumber, _connectionString);
             if (!success)
             {
                 throw new Exception("DLL calculation failed");
             }
 
-            // 4. Fetch results
+            // Fetch results
             var results = new List<RetroCalculationResultDto>();
             using (var command = new SqlCommand(@"
                 SELECT mnt, sugts, paysum, sumhan, dtval, dtgv 
@@ -102,23 +101,23 @@ public class RetroService : IRetroService
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync();
 
-        await using var transaction = await connection.BeginTransactionAsync();
+        using var transaction = await connection.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted);
 
         try
         {
-            // 1. InsertFromTemparnmforatToArnmforat
+            // InsertFromTemparnmforatToArnmforat
             using (var command = new SqlCommand("[dbo].[InsertFromTemparnmforatToArnmforat]", connection))
             {
-                command.Transaction = transaction;
+                command.Transaction = transaction as SqlTransaction;
                 command.CommandType = System.Data.CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@hskod", approval.PropertyId);
                 await command.ExecuteNonQueryAsync();
             }
 
-            // 2. InsertFromTemparnmforatToTash
+            // InsertFromTemparnmforatToTash
             using (var command = new SqlCommand("[dbo].[InsertFromTemparnmforatToTash]", connection))
             {
-                command.Transaction = transaction;
+                command.Transaction = transaction as SqlTransaction;
                 command.CommandType = System.Data.CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@hskod", approval.PropertyId);
                 command.Parameters.AddWithValue("@history", approval.IsHistorical);
@@ -129,10 +128,10 @@ public class RetroService : IRetroService
                 await command.ExecuteNonQueryAsync();
             }
 
-            // 3. UpdateArnFromTemparnmforat
+            // UpdateArnFromTemparnmforat
             using (var command = new SqlCommand("[dbo].[UpdateArnFromTemparnmforat]", connection))
             {
-                command.Transaction = transaction;
+                command.Transaction = transaction as SqlTransaction;
                 command.CommandType = System.Data.CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@hskod", approval.PropertyId);
                 command.Parameters.AddWithValue("@dtstart", approval.StartDate);
@@ -140,12 +139,12 @@ public class RetroService : IRetroService
                 await command.ExecuteNonQueryAsync();
             }
 
-            // 4. UpdateHsFromRetro (only if needed)
+            // UpdateHsFromRetro (only if needed)
             if (approval.Results.Any(r => r.CollectionDate == null))
             {
                 using (var command = new SqlCommand("[dbo].[UpdateHsFromRetro]", connection))
                 {
-                    command.Transaction = transaction;
+                    command.Transaction = transaction as SqlTransaction;
                     command.CommandType = System.Data.CommandType.StoredProcedure;
                     command.Parameters.AddWithValue("@jobnum", approval.JobNumber);
                     command.Parameters.AddWithValue("@dtstart", approval.StartDate);
@@ -153,10 +152,10 @@ public class RetroService : IRetroService
                 }
             }
 
-            // 5. Clean up Temparnmforat
+            // Clean up Temparnmforat
             using (var command = new SqlCommand("DELETE FROM Temparnmforat WHERE jobnum = @jobnum", connection))
             {
-                command.Transaction = transaction;
+                command.Transaction = transaction as SqlTransaction;
                 command.Parameters.AddWithValue("@jobnum", approval.JobNumber);
                 await command.ExecuteNonQueryAsync();
             }
@@ -167,7 +166,10 @@ public class RetroService : IRetroService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error approving retro for property {PropertyId}", approval.PropertyId);
-            await transaction.RollbackAsync();
+            if (transaction != null)
+            {
+                await transaction.RollbackAsync();
+            }
             return false;
         }
     }
