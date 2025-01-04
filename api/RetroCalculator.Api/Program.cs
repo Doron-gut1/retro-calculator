@@ -1,26 +1,33 @@
+using RetroCalculator.Api.Services;
+using RetroCalculator.Api.Services.Interfaces;
+
 var builder = WebApplication.CreateBuilder(args);
 
+// Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// CORS configuration
+// Add CORS
 builder.Services.AddCors(options =>
 {
+    var origins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>();
     options.AddPolicy("ReactApp",
         builder => builder
-            .WithOrigins(builder.Configuration.GetSection("Cors:Origins").Get<string[]>())
+            .WithOrigins(origins ?? Array.Empty<string>())
             .AllowAnyMethod()
             .AllowAnyHeader());
 });
 
-// Add services
+// Register services
 builder.Services.AddScoped<IPropertyService, PropertyService>();
 builder.Services.AddScoped<IRetroService, RetroService>();
 builder.Services.AddScoped<ICalculationService, CalculationService>();
+builder.Services.AddSingleton<IRetroCalculationDllFactory, RetroCalculationDllFactory>();
 
 var app = builder.Build();
 
+// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
