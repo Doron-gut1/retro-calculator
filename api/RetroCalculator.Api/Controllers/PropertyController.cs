@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using RetroCalculator.Api.Models;
+using RetroCalculator.Api.Models.DTOs;
 using RetroCalculator.Api.Services.Interfaces;
 
 namespace RetroCalculator.Api.Controllers;
@@ -27,6 +27,14 @@ public class PropertyController : ControllerBase
             {
                 return NotFound();
             }
+
+            // Check if property is locked
+            var isLocked = await _propertyService.IsPropertyLockedAsync(id);
+            if (isLocked)
+            {
+                return BadRequest("Property is currently locked by another calculation");
+            }
+
             return Ok(property);
         }
         catch (Exception ex)

@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using RetroCalculator.Api.Models;
+using RetroCalculator.Api.Models.DTOs;
 using RetroCalculator.Api.Services.Interfaces;
 
 namespace RetroCalculator.Api.Controllers;
@@ -9,19 +9,31 @@ namespace RetroCalculator.Api.Controllers;
 public class RetroController : ControllerBase
 {
     private readonly IRetroService _retroService;
+    private readonly IPropertyService _propertyService;
     private readonly ILogger<RetroController> _logger;
 
-    public RetroController(IRetroService retroService, ILogger<RetroController> logger)
+    public RetroController(
+        IRetroService retroService,
+        IPropertyService propertyService,
+        ILogger<RetroController> logger)
     {
         _retroService = retroService;
+        _propertyService = propertyService;
         _logger = logger;
     }
 
     [HttpPost("calculate")]
-    public async Task<ActionResult<List<RetroResultDto>>> Calculate(RetroCalculationDto calculation)
+    public async Task<ActionResult<List<RetroCalculationResultDto>>> Calculate(RetroCalculationRequestDto calculation)
     {
         try
         {
+            // Check if property is locked
+            var isLocked = await _propertyService.IsPropertyLockedAsync(calculation.PropertyId);
+            if (isLocked)
+            {
+                return BadRequest("Property is currently locked by another calculation");
+            }
+
             var results = await _retroService.CalculateRetroAsync(calculation);
             return Ok(results);
         }
@@ -33,10 +45,17 @@ public class RetroController : ControllerBase
     }
 
     [HttpPost("{propertyId}/approve")]
-    public async Task<ActionResult> Approve(string propertyId, [FromBody] List<RetroResultDto> results)
+    public async Task<ActionResult> Approve(string propertyId, [FromBody] List<RetroCalculationResultDto> results)
     {
         try
         {
+            // Check if property is locked
+            var isLocked = await _propertyService.IsPropertyLockedAsync(propertyId);
+            if (isLocked)
+            {
+                return BadRequest("Property is currently locked by another calculation");
+            }
+
             var success = await _retroService.ApproveRetroAsync(propertyId, results);
             if (!success)
             {
