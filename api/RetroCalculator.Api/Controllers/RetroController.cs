@@ -23,7 +23,7 @@ public class RetroController : ControllerBase
 
     [HttpPost("calculate")]
     public async Task<ActionResult<IEnumerable<TempArnmforat>>> CalculateRetro(
-        [FromBody] RetroCalculationRequest request)
+        [FromBody] RetroCalculationRequestDto request)
     {
         try
         {
