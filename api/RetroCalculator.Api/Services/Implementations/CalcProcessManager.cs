@@ -13,8 +13,8 @@ public class CalcProcessManager : ICalcProcessManager
         _logger = logger;
     }
 
-    [DllImport("CalcArnProcess.dll", CallingConvention = CallingConvention.StdCall, EntryPoint = "CalcArnProcessManager")]
-    private static extern bool CalcRetroProcessManager(
+    [DllImport("CalcArnProcess", CallingConvention = CallingConvention.StdCall, EntryPoint = "CalcArnProcessManager")]
+    private static extern bool CalcArnProcessManager(
         int moazaCode,
         [MarshalAs(UnmanagedType.LPStr)] string userName,
         [MarshalAs(UnmanagedType.LPStr)] string odbcName,
@@ -31,12 +31,8 @@ public class CalcProcessManager : ICalcProcessManager
     {
         try
         {
-            _logger.LogInformation(
-                "Starting retro calculation: ODBC={OdbcName}, Job={JobNum}, Property={PropertyId}",
-                odbcName, jobNum, propertyId);
-
             return await Task.Run(() =>
-                CalcRetroProcessManager(
+                CalcArnProcessManager(
                     MOAZA_CODE,
                     userName,
                     odbcName,
@@ -47,7 +43,8 @@ public class CalcProcessManager : ICalcProcessManager
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing DLL function");
+            _logger.LogError(ex, "Error calculating retro: ODBC={OdbcName}, Job={JobNum}, Property={PropertyId}",
+                odbcName, jobNum, propertyId);
             throw;
         }
     }
