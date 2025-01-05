@@ -1,15 +1,11 @@
 namespace RetroCalculator.Api.Services.Interfaces;
 
-public interface IRetroCalculationDll
+public interface IRetroCalculationDll : IDisposable
 {
     (bool Success, string ErrorDescription) CalculateRetro();
-    void Dispose();
 }
 
 public interface IRetroCalculationDllFactory
 {
-    IRetroCalculationDll Create(
-        string odbcConnectionString,
-        int jobNumber,
-        string propertyId = "");
+    IRetroCalculationDll Create(string odbcConnectionString, int jobNumber, string propertyId = "");
 }
