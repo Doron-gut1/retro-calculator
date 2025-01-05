@@ -12,9 +12,9 @@ public class CalcProcessManager : ICalcProcessManager
         _logger = logger;
     }
 
-    // מייבא את הפונקציה מה-DLL
-    [DllImport("CalcArnProcess.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
-    private static extern bool CalcRetroProcessManager(
+    // הפונקציה ב-DLL החיצוני
+    [DllImport("CalcArnProcess.dll", EntryPoint = "CalcRetroProcessManager", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Ansi)]
+    private static extern bool CalcRetroProcessManagerInternal(
         int moazaCode,
         string userName,
         string odbcName,
@@ -32,12 +32,11 @@ public class CalcProcessManager : ICalcProcessManager
         try
         {
             _logger.LogInformation(
-                "Starting calculation with parameters: ODBC={OdbcName}, User={UserName}, Job={JobNum}, Property={PropertyId}",
-                odbcName, userName, jobNum, propertyId);
+                "Starting retro calculation: ODBC={OdbcName}, Job={JobNum}, Property={PropertyId}",
+                odbcName, jobNum, propertyId);
 
-            // הרצת החישוב ב-thread נפרד
-            var result = await Task.Run(() =>
-                CalcRetroProcessManager(
+            return await Task.Run(() =>
+                CalcRetroProcessManagerInternal(
                     90, // קוד מועצה קבוע
                     userName,
                     odbcName,
@@ -45,16 +44,10 @@ public class CalcProcessManager : ICalcProcessManager
                     processType,
                     propertyId
                 ));
-
-            _logger.LogInformation(
-                "Calculation completed for property {PropertyId} with result: {Result}",
-                propertyId, result);
-
-            return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to execute calculation for property {PropertyId}", propertyId);
+            _logger.LogError(ex, "Error executing DLL function");
             throw;
         }
     }
