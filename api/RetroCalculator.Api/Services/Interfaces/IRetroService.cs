@@ -5,5 +5,6 @@ namespace RetroCalculator.Api.Services.Interfaces;
 public interface IRetroService
 {
     Task<List<RetroCalculationResultDto>> CalculateRetroAsync(RetroCalculationRequestDto calculation);
-    Task<bool> ApproveRetroAsync(RetroApprovalDto approval);
+    // TODO: Approval process will be implemented later
+    // Task<bool> ApproveRetroAsync(...);
 }
