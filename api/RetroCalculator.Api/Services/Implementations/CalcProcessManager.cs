@@ -3,31 +3,24 @@ using RetroCalculator.Api.Services.Interfaces;
 
 namespace RetroCalculator.Api.Services.Implementations;
 
-// המחלקה שמייצגת את ClsReturn
-public class RetroResult
-{
-    public int StatusCode { get; set; }
-    public string StatusText { get; set; }
-    public object Data { get; set; }
-    public object Error { get; set; }
-}
-
 public class CalcProcessManager : ICalcProcessManager
 {
     private readonly ILogger<CalcProcessManager> _logger;
-    private readonly string _dllPath;
-    private dynamic _retroInstance;
 
-    public CalcProcessManager(ILogger<CalcProcessManager> logger, IWebHostEnvironment environment)
+    public CalcProcessManager(ILogger<CalcProcessManager> logger)
     {
         _logger = logger;
-        _dllPath = Path.Combine(environment.ContentRootPath, "CalcArnProcess.dll");
-        
-        if (!File.Exists(_dllPath))
-        {
-            throw new FileNotFoundException($"DLL not found at {_dllPath}");
-        }
     }
+
+    // הפונקציה ב-DLL החיצוני
+    [DllImport("CalcArnProcess.dll", CallingConvention = CallingConvention.StdCall)]
+    private static extern bool CalculateRetro(
+        int moazaCode,
+        [MarshalAs(UnmanagedType.LPStr)] string userName,
+        [MarshalAs(UnmanagedType.LPStr)] string odbcName,
+        int jobNum,
+        int processType,
+        [MarshalAs(UnmanagedType.LPStr)] string propertyId);
 
     public async Task<bool> CalculateRetroAsync(
         string odbcName,
@@ -42,39 +35,19 @@ public class CalcProcessManager : ICalcProcessManager
                 "Starting retro calculation: ODBC={OdbcName}, Job={JobNum}, Property={PropertyId}",
                 odbcName, jobNum, propertyId);
 
-            // טעינת ה-DLL באופן דינמי
-            var assembly = System.Reflection.Assembly.LoadFrom(_dllPath);
-            var retroType = assembly.GetType("CalcArnProcess.Retro");
-            
-            if (retroType == null)
-            {
-                throw new InvalidOperationException("Could not find Retro type in DLL");
-            }
-
-            // יצירת מופע חדש
-            _retroInstance = Activator.CreateInstance(retroType, 
-                90, // moazaCode
-                userName,
-                odbcName,
-                jobNum,
-                processType,
-                propertyId);
-
-            // קריאה לפונקציה CalculateRetro
-            dynamic result = _retroInstance.CalculateRetro();
-
-            // בדיקת התוצאה
-            bool success = result.Success;
-            if (!success)
-            {
-                _logger.LogError("Retro calculation failed: {Error}", result.ErrorDescription);
-            }
-
-            return success;
+            return await Task.Run(() =>
+                CalculateRetro(
+                    90,
+                    userName,
+                    odbcName,
+                    jobNum,
+                    processType,
+                    propertyId
+                ));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing retro calculation");
+            _logger.LogError(ex, "Error executing DLL function");
             throw;
         }
     }
