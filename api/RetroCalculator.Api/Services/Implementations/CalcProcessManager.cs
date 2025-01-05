@@ -12,9 +12,8 @@ public class CalcProcessManager : ICalcProcessManager
         _logger = logger;
     }
 
-    // הפונקציה ב-DLL החיצוני
     [DllImport("CalcArnProcess.dll", CallingConvention = CallingConvention.StdCall)]
-    private static extern bool CalculateRetro(
+    private static extern bool CalcRetroProcessManager(
         int moazaCode,
         [MarshalAs(UnmanagedType.LPStr)] string userName,
         [MarshalAs(UnmanagedType.LPStr)] string odbcName,
@@ -36,7 +35,7 @@ public class CalcProcessManager : ICalcProcessManager
                 odbcName, jobNum, propertyId);
 
             return await Task.Run(() =>
-                CalculateRetro(
+                CalcRetroProcessManager(
                     90,
                     userName,
                     odbcName,
