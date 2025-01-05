@@ -19,7 +19,6 @@ public class RetroService : IRetroService
         _logger = logger;
         _calcProcessManager = calcProcessManager;
         
-        // יצירת מופע דינמי של OdbcConverter
         var type = Type.GetType("OdbcConverter.OdbcConverter, OdbcConverter");
         if (type == null)
         {
@@ -28,24 +27,38 @@ public class RetroService : IRetroService
         _odbcConverter = Activator.CreateInstance(type);
     }
 
-    private void SetConnectionString(string odbcName)
+    private async Task<SqlConnection> GetConnectionAsync(string odbcName)
     {
-        try
+        if (string.IsNullOrEmpty(_connectionString))
         {
-            _connectionString = _odbcConverter.GetSqlConnectionString(odbcName, "", "");
-            
-            if (string.IsNullOrEmpty(_connectionString))
+            try 
             {
-                throw new InvalidOperationException($"Failed to get connection string for ODBC: {odbcName}");
+                _connectionString = _odbcConverter.GetSqlConnectionString(odbcName, "", "");
+                if (string.IsNullOrEmpty(_connectionString))
+                {
+                    throw new InvalidOperationException($"Failed to get connection string for ODBC: {odbcName}");
+                }
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting connection string for ODBC: {OdbcName}", odbcName);
+                throw;
+            }
+        }
 
-            _logger.LogInformation($"Connection string set successfully for ODBC: {odbcName}");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error setting connection string for ODBC: {OdbcName}", odbcName);
-            throw;
-        }
+        var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+        return connection;
+    }
+
+    private async Task CleanupTempData(SqlConnection connection, string propertyId, int jobNum)
+    {
+        var cleanupCommand = new SqlCommand(
+            "DELETE FROM Temparnmforat WHERE jobnum = @jobnum OR (hs = @hs AND jobnum = 0)",
+            connection);
+        cleanupCommand.Parameters.AddWithValue("@jobnum", jobNum);
+        cleanupCommand.Parameters.AddWithValue("@hs", propertyId);
+        await cleanupCommand.ExecuteNonQueryAsync();
     }
 
     public async Task<IEnumerable<TempArnmforat>> CalculateRetroAsync(
@@ -56,40 +69,25 @@ public class RetroService : IRetroService
             "Starting retro calculation for property {PropertyId} from {StartDate} to {EndDate}",
             request.PropertyId, request.StartDate, request.EndDate);
 
-        SetConnectionString(odbcName);
-        using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync();
-
-        // בדיקת נעילה
-        var lockCheckCommand = new SqlCommand(
-            @"SELECT 1 
-              FROM Temparnmforat 
-              WHERE hs = @hskod 
-              AND moneln <> 0", connection);
-
-        lockCheckCommand.Parameters.AddWithValue("@hskod", request.PropertyId);
-        var isLocked = await lockCheckCommand.ExecuteScalarAsync() != null;
-
-        if (isLocked)
-        {
-            _logger.LogWarning("Property {PropertyId} is locked", request.PropertyId);
-            throw new InvalidOperationException("Property is locked by another process");
-        }
-
+        using var connection = await GetConnectionAsync(odbcName);
         var jobNum = new Random().Next(1000000, 9999999);
-        _logger.LogInformation("Generated job number: {JobNum}", jobNum);
 
         try
         {
-            // מחיקת נתונים ישנים
-            var cleanupCommand = new SqlCommand(
-                "DELETE FROM Temparnmforat WHERE jobnum = @jobnum OR (hs = @hs AND jobnum = 0)",
-                connection);
-            cleanupCommand.Parameters.AddWithValue("@jobnum", jobNum);
-            cleanupCommand.Parameters.AddWithValue("@hs", request.PropertyId);
-            await cleanupCommand.ExecuteNonQueryAsync();
+            // Check if property is locked
+            var lockCheckCommand = new SqlCommand(
+                "SELECT 1 FROM Temparnmforat WHERE hs = @hskod AND moneln <> 0", connection);
+            lockCheckCommand.Parameters.AddWithValue("@hskod", request.PropertyId);
+            var isLocked = await lockCheckCommand.ExecuteScalarAsync() != null;
 
-            // הכנסת שורה בסיסית
+            if (isLocked)
+            {
+                throw new InvalidOperationException("Property is locked by another process");
+            }
+
+            await CleanupTempData(connection, request.PropertyId, jobNum);
+
+            // Insert initial data
             var insertCommand = new SqlCommand(@"
                 INSERT INTO Temparnmforat (
                     hs, mspkod, sugts, 
@@ -105,7 +103,7 @@ public class RetroService : IRetroService
 
             insertCommand.Parameters.AddWithValue("@hs", request.PropertyId);
             insertCommand.Parameters.AddWithValue("@mspkod", 0);
-            insertCommand.Parameters.AddWithValue("@sugts", 1010); // סוג חיוב קבוע
+            insertCommand.Parameters.AddWithValue("@sugts", 1010);
             insertCommand.Parameters.AddWithValue("@hdtme", request.StartDate);
             insertCommand.Parameters.AddWithValue("@hdtad", request.EndDate);
             insertCommand.Parameters.AddWithValue("@jobnum", jobNum);
@@ -121,19 +119,15 @@ public class RetroService : IRetroService
 
             await insertCommand.ExecuteNonQueryAsync();
 
-            // הפעלת פרוצדורות הכנה
-            var preparationCommand = new SqlCommand(
-                $"EXEC [dbo].[PrepareRetroData] '{request.PropertyId}', 0",
-                connection);
-            await preparationCommand.ExecuteNonQueryAsync();
+            // Execute preparation procedures
+            await connection.ExecuteCommandAsync(
+                $"EXEC [dbo].[PrepareRetroData] '{request.PropertyId}', 0");
 
             var chargeTypesStr = string.Join(", ", request.ChargeTypes);
-            var multiplyCommand = new SqlCommand(
-                $"EXEC [dbo].[MultiplyTempArnmforatRows] '{request.PropertyId}', '{chargeTypesStr}', 0",
-                connection);
-            await multiplyCommand.ExecuteNonQueryAsync();
+            await connection.ExecuteCommandAsync(
+                $"EXEC [dbo].[MultiplyTempArnmforatRows] '{request.PropertyId}', '{chargeTypesStr}', 0");
 
-            // הפעלת החישוב
+            // Calculate using DLL
             _logger.LogInformation("Starting DLL calculation");
             var success = await _calcProcessManager.CalculateRetroAsync(
                 odbcName,
@@ -152,13 +146,7 @@ public class RetroService : IRetroService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during retro calculation");
-            
-            var cleanupCommand = new SqlCommand(
-                "DELETE FROM Temparnmforat WHERE jobnum = @jobnum",
-                connection);
-            cleanupCommand.Parameters.AddWithValue("@jobnum", jobNum);
-            await cleanupCommand.ExecuteNonQueryAsync();
-            
+            await CleanupTempData(connection, request.PropertyId, jobNum);
             throw;
         }
     }
@@ -168,12 +156,10 @@ public class RetroService : IRetroService
         int jobNum,
         string odbcName)
     {
-        SetConnectionString(odbcName);
-        using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync();
-
+        using var connection = await GetConnectionAsync(odbcName);
         var results = new List<TempArnmforat>();
-        var command = new SqlCommand(@"
+
+        using var command = new SqlCommand(@"
             SELECT *
             FROM Temparnmforat
             WHERE hs = @propertyId
@@ -220,5 +206,14 @@ public class RetroService : IRetroService
         }
 
         return results;
+    }
+}
+
+public static class SqlConnectionExtensions
+{
+    public static async Task ExecuteCommandAsync(this SqlConnection connection, string commandText)
+    {
+        using var command = new SqlCommand(commandText, connection);
+        await command.ExecuteNonQueryAsync();
     }
 }

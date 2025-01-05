@@ -6,13 +6,14 @@ namespace RetroCalculator.Api.Services.Implementations;
 public class CalcProcessManager : ICalcProcessManager
 {
     private readonly ILogger<CalcProcessManager> _logger;
+    private const int MOAZA_CODE = 90;
 
     public CalcProcessManager(ILogger<CalcProcessManager> logger)
     {
         _logger = logger;
     }
 
-    [DllImport("CalcArnProcess.dll", CallingConvention = CallingConvention.StdCall)]
+    [DllImport("CalcArnProcess.dll", CallingConvention = CallingConvention.StdCall, EntryPoint = "CalcArnProcessManager")]
     private static extern bool CalcRetroProcessManager(
         int moazaCode,
         [MarshalAs(UnmanagedType.LPStr)] string userName,
@@ -36,7 +37,7 @@ public class CalcProcessManager : ICalcProcessManager
 
             return await Task.Run(() =>
                 CalcRetroProcessManager(
-                    90,
+                    MOAZA_CODE,
                     userName,
                     odbcName,
                     jobNum,
