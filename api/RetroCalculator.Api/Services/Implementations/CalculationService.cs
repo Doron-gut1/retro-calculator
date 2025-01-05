@@ -37,12 +37,8 @@ public class CalculationService : ICalculationService
             SELECT mspkod FROM hs WHERE hskod = @propertyId", connection))
         {
             command.Parameters.AddWithValue("@propertyId", propertyId);
-            var mspkod = await command.ExecuteScalarAsync();
-
-            if (mspkod == null)
-            {
-                throw new InvalidOperationException($"Property {propertyId} not found");
-            }
+            var result = await command.ExecuteScalarAsync();
+            var mspkod = result != null ? Convert.ToInt32(result) : throw new InvalidOperationException($"Property {propertyId} not found");
 
             // Initialize calculation
             using var initCommand = new SqlCommand(@"
@@ -94,7 +90,8 @@ public class CalculationService : ICalculationService
         command.Parameters.AddWithValue("@startDate", startDate);
         command.Parameters.AddWithValue("@endDate", endDate);
 
-        var count = (int)await command.ExecuteScalarAsync();
+        var result = await command.ExecuteScalarAsync();
+        var count = result != null ? Convert.ToInt32(result) : 0;
         return count > 0;
     }
 }
