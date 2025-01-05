@@ -1,1 +1,0 @@
-rm api/RetroCalculator.Api/Models/DTOs/RetroApprovalDto.cs

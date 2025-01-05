@@ -1,6 +1,6 @@
 using RetroCalculator.Api.Services.Interfaces;
 
-namespace RetroCalculator.Api.Services;
+namespace RetroCalculator.Api.Services.Implementations;
 
 public class RetroCalculationDllWrapper : IRetroCalculationDll
 {

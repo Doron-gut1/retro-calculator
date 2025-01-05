@@ -3,7 +3,7 @@ using RetroCalculator.Api.Models;
 using RetroCalculator.Api.Models.DTOs;
 using RetroCalculator.Api.Services.Interfaces;
 
-namespace RetroCalculator.Api.Services;
+namespace RetroCalculator.Api.Services.Implementations;
 
 public class PropertyService : IPropertyService
 {
