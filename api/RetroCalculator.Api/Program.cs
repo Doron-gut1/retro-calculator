@@ -3,7 +3,7 @@ using RetroCalculator.Api.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -13,7 +13,7 @@ builder.Services.AddCors(options =>
 {
     var origins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>();
     options.AddPolicy("ReactApp",
-        builder => builder
+        policyBuilder => policyBuilder
             .WithOrigins(origins ?? Array.Empty<string>())
             .AllowAnyMethod()
             .AllowAnyHeader());
@@ -27,7 +27,7 @@ builder.Services.AddSingleton<IRetroCalculationDllFactory, RetroCalculationDllFa
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
