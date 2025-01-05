@@ -42,7 +42,7 @@ public class PropertyService : IPropertyService
         var command = new SqlCommand(
             @"SELECT 1 
               FROM Temparnmforat 
-              WHERE hs = @hskod 
+              WHERE hs = '@hskod' 
               AND moneln <> 0", connection);
 
         command.Parameters.AddWithValue("@hskod", id);
@@ -65,7 +65,7 @@ public class PropertyService : IPropertyService
                      m.maintz, m.fullname
               FROM hs h
               LEFT JOIN msp m ON h.mspkod = m.mspkod
-              WHERE h.hskod = @hskod", connection);
+              WHERE h.hskod = '@hskod'", connection);
 
         propertyCommand.Parameters.AddWithValue("@hskod", id);
 
@@ -119,7 +119,7 @@ public class PropertyService : IPropertyService
         await connection.OpenAsync();
 
         var command = new SqlCommand(
-            "SELECT 1 FROM hs WHERE hskod = @hskod", 
+            "SELECT 1 FROM hs WHERE hskod = '@hskod'", 
             connection);
 
         command.Parameters.AddWithValue("@hskod", id);
