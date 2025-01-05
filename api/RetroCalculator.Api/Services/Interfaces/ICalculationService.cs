@@ -2,5 +2,7 @@ namespace RetroCalculator.Api.Services.Interfaces;
 
 public interface ICalculationService
 {
-    Task<bool> PerformCalculation(string propertyId);
+    Task InitializeCalculationAsync(string propertyId, int jobNumber);
+    Task<bool> RunRetroCalculationAsync(int jobNumber, string odbcConnectionString);
+    Task<bool> ValidatePeriodAsync(DateTime startDate, DateTime endDate);
 }
