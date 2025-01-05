@@ -58,4 +58,9 @@ public class PropertyService : IPropertyService
         // TODO: Implement actual validation logic
         return true;
     }
+
+    public Task<bool>? IsPropertyLockedAsync(string propertyId)
+    {
+        throw new NotImplementedException();
+    }
 }

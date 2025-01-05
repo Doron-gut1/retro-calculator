@@ -3,10 +3,10 @@ namespace RetroCalculator.Api.Models.DTOs;
 public class PropertyDto
 {
     public string PropertyId { get; set; } = string.Empty;
-    public PayerDto? Payer { get; set; }
-    public List<SizeAndTariffDto> SizesAndTariffs { get; set; } = new();
-    public DateTime? ValidFrom { get; set; }
-    public DateTime? ValidTo { get; set; }
+    public string Address { get; set; } = string.Empty;
+    public decimal Size { get; set; }
+    public string PayerId { get; set; } = string.Empty;
+    public string PayerName { get; set; } = string.Empty;
 }
 
 public class PayerDto
