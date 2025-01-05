@@ -13,12 +13,32 @@ public class CalcProcessManager : ICalcProcessManager
         _logger = logger;
         _dllPath = Path.Combine(environment.ContentRootPath, "lib", "CalcRetroProcessManager.dll");
 
+        // בדוק אם הקובץ קיים
         if (!File.Exists(_dllPath))
         {
             throw new FileNotFoundException($"DLL not found at {_dllPath}");
         }
 
-        _logger.LogInformation("DLL found at {Path}", _dllPath);
+        // נסה לטעון את ה-DLL לבדיקה
+        try
+        {
+            var handle = LoadLibrary(_dllPath);
+            if (handle == IntPtr.Zero)
+            {
+                var error = Marshal.GetLastWin32Error();
+                throw new InvalidOperationException(
+                    $"Failed to load DLL. Error: {error}. " +
+                    $"This might indicate missing dependencies. " +
+                    $"Current directory: {Directory.GetCurrentDirectory()}");
+            }
+            FreeLibrary(handle);
+            _logger.LogInformation("Successfully validated DLL loading at startup");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error validating DLL at startup");
+            throw;
+        }
     }
 
     [DllImport("kernel32.dll", SetLastError = true)]
@@ -58,6 +78,7 @@ public class CalcProcessManager : ICalcProcessManager
             if (dllHandle == IntPtr.Zero)
             {
                 var error = Marshal.GetLastWin32Error();
+                _logger.LogError("Failed to load DLL. Win32 Error: {Error}", error);
                 throw new InvalidOperationException($"Failed to load DLL. Error: {error}");
             }
 
@@ -65,14 +86,16 @@ public class CalcProcessManager : ICalcProcessManager
             var procAddress = GetProcAddress(dllHandle, "CalcRetroProcessManager");
             if (procAddress == IntPtr.Zero)
             {
+                _logger.LogError("Failed to get function address");
                 throw new InvalidOperationException("Failed to get function address");
             }
 
             // יצירת delegate לפונקציה
             var calcDelegate = Marshal.GetDelegateForFunctionPointer<CalcRetroProcessManagerDelegate>(procAddress);
 
+            _logger.LogInformation("Starting calculation with DLL");
             // הפעלת החישוב
-            return await Task.Run(() =>
+            var result = await Task.Run(() =>
                 calcDelegate(
                     90, // קוד מועצה קבוע
                     userName,
@@ -81,6 +104,9 @@ public class CalcProcessManager : ICalcProcessManager
                     processType,
                     propertyId
                 ));
+
+            _logger.LogInformation("DLL calculation completed with result: {Result}", result);
+            return result;
         }
         catch (Exception ex)
         {
