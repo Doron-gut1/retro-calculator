@@ -1,4 +1,4 @@
-using Microsoft.Data.SqlClient;
+using System.Data.SqlClient;
 using RetroCalculator.Api.Services.Interfaces;
 
 namespace RetroCalculator.Api.Services.Implementations;

@@ -12,9 +12,11 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.0" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
-  </ItemGroup>
-
   <ItemGroup>
+    <None Update="CalcArnProcess.dll;OdbcConverter.dll">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+</ItemGroup>
     <Reference Include="CalcArnProcess">
       <HintPath>$(ProjectDir)CalcArnProcess.dll</HintPath>
       <Private>True</Private>

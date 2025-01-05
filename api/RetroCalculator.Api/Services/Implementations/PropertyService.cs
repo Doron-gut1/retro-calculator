@@ -1,4 +1,4 @@
-using Microsoft.Data.SqlClient;
+using System.Data.SqlClient;
 using RetroCalculator.Api.Models.DTOs;
 using RetroCalculator.Api.Services.Interfaces;
 
