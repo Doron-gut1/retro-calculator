@@ -1,3 +1,4 @@
+using RetroCalculator.Api.Models.DTOs;
 using RetroCalculator.Api.Services.Interfaces;
 using System.Data.SqlClient;
 
@@ -6,7 +7,7 @@ namespace RetroCalculator.Api.Services.Implementations;
 public class PropertyService : IPropertyService
 {
     private readonly ILogger<PropertyService> _logger;
-    private string _connectionString;
+    private string? _connectionString;
     private readonly OdbcConverter.OdbcConverter _odbcConverter;
 
     public PropertyService(ILogger<PropertyService> logger)

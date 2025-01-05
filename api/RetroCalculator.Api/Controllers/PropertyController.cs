@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using RetroCalculator.Api.Models.DTOs;
 using RetroCalculator.Api.Services.Interfaces;
 
 namespace RetroCalculator.Api.Controllers;
