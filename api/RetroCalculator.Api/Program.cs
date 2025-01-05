@@ -7,7 +7,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new() { Title = "RetroCalculator API", Version = "v1" });
+});
 
 // Add CORS
 builder.Services.AddCors(options =>
@@ -29,11 +32,12 @@ builder.Services.AddSingleton<IRetroCalculationDllFactory, RetroCalculationDllFa
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "RetroCalculator API V1");
+    c.RoutePrefix = string.Empty; // This makes Swagger UI the root page
+});
 
 app.UseHttpsRedirection();
 app.UseCors("ReactApp");
