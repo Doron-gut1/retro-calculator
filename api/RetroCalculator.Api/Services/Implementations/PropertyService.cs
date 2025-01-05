@@ -28,6 +28,28 @@ public class PropertyService : IPropertyService
         _logger.LogInformation($"Connection string set successfully for ODBC: {odbcName}");
     }
 
+    public async Task<bool> IsPropertyLockedAsync(string id)
+    {
+        if (_connectionString == null)
+        {
+            throw new InvalidOperationException("Connection string not set. Call method with ODBC first.");
+        }
+
+        using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        // בדיקה אם הנכס נעול
+        var command = new SqlCommand(
+            @"SELECT 1 
+              FROM Temparnmforat 
+              WHERE hs = @hskod 
+              AND moneln <> 0", connection);
+
+        command.Parameters.AddWithValue("@hskod", id);
+        var result = await command.ExecuteScalarAsync();
+        return result != null;
+    }
+
     public async Task<PropertyDto> GetPropertyAsync(string id, string odbcName)
     {
         SetConnectionString(odbcName);
