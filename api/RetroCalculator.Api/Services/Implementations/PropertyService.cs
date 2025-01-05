@@ -35,7 +35,6 @@ public class PropertyService : IPropertyService
         using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync();
 
-        // שליפת פרטי הנכס מHS
         var propertyCommand = new SqlCommand(
             @"SELECT h.hskod, h.mspkod, h.godel, h.mas, h.gdl2, h.mas2, 
                      h.gdl3, h.mas3, h.gdl4, h.mas4, h.gdl5, h.mas5, 
@@ -105,10 +104,5 @@ public class PropertyService : IPropertyService
 
         var result = await command.ExecuteScalarAsync();
         return result != null;
-    }
-
-    public Task<bool>? IsPropertyLockedAsync(string propertyId)
-    {
-        throw new NotImplementedException();
     }
 }
