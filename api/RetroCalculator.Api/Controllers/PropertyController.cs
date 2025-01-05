@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using RetroCalculator.Api.Models.DTOs;
 using RetroCalculator.Api.Services.Interfaces;
 
 namespace RetroCalculator.Api.Controllers;
@@ -18,44 +17,34 @@ public class PropertyController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<PropertyDto>> GetProperty(string id)
+    public async Task<ActionResult<PropertyDto>> Get(string id, [FromQuery] string odbcName)
     {
         try
         {
-            var property = await _propertyService.GetPropertyByIdAsync(id);
-            if (property == null)
-            {
-                return NotFound();
-            }
-
-            // Check if property is locked
-            var isLocked = await _propertyService.IsPropertyLockedAsync(id);
-            if (isLocked)
-            {
-                return BadRequest("Property is currently locked by another calculation");
-            }
-
+            _logger.LogInformation($"Getting property {id} with ODBC {odbcName}");
+            var property = await _propertyService.GetPropertyAsync(id, odbcName);
             return Ok(property);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting property {Id}", id);
-            return StatusCode(500, "Internal server error");
+            _logger.LogError(ex, $"Error getting property {id} with ODBC {odbcName}");
+            return StatusCode(500, "Internal Server Error");
         }
     }
 
     [HttpGet("{id}/validate")]
-    public async Task<ActionResult<bool>> ValidateProperty(string id)
+    public async Task<ActionResult<bool>> Validate(string id, [FromQuery] string odbcName)
     {
         try
         {
-            var isValid = await _propertyService.ValidatePropertyAsync(id);
+            _logger.LogInformation($"Validating property {id} with ODBC {odbcName}");
+            var isValid = await _propertyService.ValidatePropertyAsync(id, odbcName);
             return Ok(isValid);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error validating property {Id}", id);
-            return StatusCode(500, "Internal server error");
+            _logger.LogError(ex, $"Error validating property {id} with ODBC {odbcName}");
+            return StatusCode(500, "Internal Server Error");
         }
     }
 }

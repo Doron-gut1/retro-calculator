@@ -1,120 +1,57 @@
-using Microsoft.Data.SqlClient;
-using RetroCalculator.Api.Models.DTOs;
 using RetroCalculator.Api.Services.Interfaces;
+using System.Data.SqlClient;
 
 namespace RetroCalculator.Api.Services.Implementations;
 
 public class PropertyService : IPropertyService
 {
     private readonly ILogger<PropertyService> _logger;
-    private readonly string _connectionString;
+    private string _connectionString;
+    private readonly OdbcConverter.OdbcConverter _odbcConverter;
 
-    public PropertyService(ILogger<PropertyService> logger, IConfiguration configuration)
+    public PropertyService(ILogger<PropertyService> logger)
     {
         _logger = logger;
-        _connectionString = configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string is missing");
+        _odbcConverter = new OdbcConverter.OdbcConverter();
     }
 
-    public async Task<PropertyDto?> GetPropertyByIdAsync(string id)
+    private void SetConnectionString(string odbcName)
     {
-        try
+        _connectionString = _odbcConverter.GetSqlConnectionString(odbcName, "", "");
+        
+        if (string.IsNullOrEmpty(_connectionString))
         {
-            await using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync();
-
-            using var command = new SqlCommand(@"
-                SELECT h.hskod, h.mspkod, m.maintz, m.fullname,
-                       h.godel, h.mas, h.gdl2, h.mas2, h.valdate, h.valdatesof
-                FROM hs h
-                JOIN msp m ON h.mspkod = m.mspkod
-                WHERE h.hskod = @id", connection);
-
-            command.Parameters.AddWithValue("@id", id);
-
-            using var reader = await command.ExecuteReaderAsync();
-            if (!await reader.ReadAsync())
-            {
-                return null;
-            }
-
-            return new PropertyDto
-            {
-                PropertyId = reader.GetString(0),
-                Payer = new PayerDto
-                {
-                    PayerId = reader.GetInt32(1),
-                    PayerNumber = reader.GetDouble(2),
-                    FullName = reader.GetString(3)
-                },
-                SizesAndTariffs = new List<SizeAndTariffDto>
-                {
-                    new() { 
-                        Index = 1, 
-                        Size = reader.IsDBNull(4) ? null : (float)reader.GetDouble(4),
-                        TariffId = reader.IsDBNull(5) ? null : reader.GetInt32(5)
-                    },
-                    new() {
-                        Index = 2,
-                        Size = reader.IsDBNull(6) ? null : (float)reader.GetDouble(6),
-                        TariffId = reader.IsDBNull(7) ? null : reader.GetInt32(7)
-                    }
-                },
-                ValidFrom = reader.IsDBNull(8) ? null : reader.GetDateTime(8),
-                ValidTo = reader.IsDBNull(9) ? null : reader.GetDateTime(9)
-            };
+            throw new InvalidOperationException($"Failed to get connection string for ODBC: {odbcName}");
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting property {Id}", id);
-            throw;
-        }
+
+        _logger.LogInformation($"Connection string set successfully for ODBC: {odbcName}");
     }
 
-    public async Task<bool> ValidatePropertyAsync(string id)
+    public async Task<PropertyDto> GetPropertyAsync(string id, string odbcName)
     {
-        try
+        SetConnectionString(odbcName);
+        
+        using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        // TODO: Implement actual property retrieval logic
+        var property = new PropertyDto
         {
-            await using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync();
+            PropertyId = id,
+            // ... other properties
+        };
 
-            using var command = new SqlCommand(
-                "SELECT COUNT(*) FROM hs WHERE hskod = @id", connection);
-
-            command.Parameters.AddWithValue("@id", id);
-            var result = await command.ExecuteScalarAsync();
-            var count = result != null ? Convert.ToInt32(result) : 0;
-
-            return count > 0;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error validating property {Id}", id);
-            return false;
-        }
+        return property;
     }
 
-    public async Task<bool> IsPropertyLockedAsync(string propertyId)
+    public async Task<bool> ValidatePropertyAsync(string id, string odbcName)
     {
-        try
-        {
-            await using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync();
+        SetConnectionString(odbcName);
 
-            using var command = new SqlCommand(@"
-                SELECT COUNT(*) 
-                FROM Temparnmforat 
-                WHERE hs = @propertyId", connection);
+        using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
 
-            command.Parameters.AddWithValue("@propertyId", propertyId);
-            var result = await command.ExecuteScalarAsync();
-            var count = result != null ? Convert.ToInt32(result) : 0;
-
-            return count > 0;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error checking if property {PropertyId} is locked", propertyId);
-            return false;
-        }
+        // TODO: Implement actual validation logic
+        return true;
     }
 }
