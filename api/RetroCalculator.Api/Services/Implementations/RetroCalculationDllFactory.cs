@@ -27,13 +27,20 @@ public class RetroCalculationDllFactory : IRetroCalculationDllFactory
                 throw new InvalidOperationException("Could not find Retro type in assembly");
             }
 
-            var instance = Activator.CreateInstance(retroType,
-                moazaCode: _configuration.GetValue<int>("RetroCalculation:MoazaCode"),
-                userName: "system",
-                odbcName: odbcConnectionString,
-                Jobnum: jobNumber,
-                processType: 1,
-                Hskod: propertyId);
+            var moazaCode = _configuration.GetValue<int>("RetroCalculation:MoazaCode");
+            var instance = Activator.CreateInstance(retroType, 
+                moazaCode,                 // moazaCode
+                "system",                   // userName
+                odbcConnectionString,       // odbcName
+                jobNumber,                 // Jobnum
+                1,                         // processType
+                propertyId                 // Hskod
+            );
+
+            if (instance == null)
+            {
+                throw new InvalidOperationException("Failed to create instance of Retro class");
+            }
 
             return new RetroCalculationDllWrapper(instance);
         }
