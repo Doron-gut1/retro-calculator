@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using RetroCalculator.Api.Models;
 using RetroCalculator.Api.Models.DTOs;
 using RetroCalculator.Api.Services.Interfaces;
 
@@ -21,8 +22,8 @@ public class RetroController : ControllerBase
     }
 
     [HttpPost("calculate")]
-    public async Task<ActionResult<IEnumerable<RetroCalculationResultDto>>> CalculateRetro(
-        [FromBody] RetroCalculationRequestDto request)
+    public async Task<ActionResult<IEnumerable<TempArnmforat>>> CalculateRetro(
+        [FromBody] RetroCalculationRequest request)
     {
         try
         {
@@ -37,7 +38,7 @@ public class RetroController : ControllerBase
     }
 
     [HttpGet("{propertyId}/results/{jobNum}")]
-    public async Task<ActionResult<IEnumerable<RetroCalculationResultDto>>> GetRetroResults(
+    public async Task<ActionResult<IEnumerable<TempArnmforat>>> GetRetroResults(
         string propertyId,
         int jobNum)
     {
