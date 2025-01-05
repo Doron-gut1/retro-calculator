@@ -26,34 +26,17 @@ public class RetroService : IRetroService
     {
         try
         {
-            // Initialize calculation in Temparnmforat
+            // Initialize calculation
             await _calculationService.InitializeCalculationAsync(calculation.PropertyId, calculation.JobNumber);
 
-            await using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync();
-            
-            // Check closed periods
-            using (var command = new SqlCommand("SELECT dbo.GetMntByDate(@date)", connection))
+            // Validate period
+            var isValid = await _calculationService.ValidatePeriodAsync(calculation.StartDate, calculation.EndDate);
+            if (!isValid)
             {
-                command.Parameters.AddWithValue("@date", calculation.StartDate);
-                var firstMonth = (int)await command.ExecuteScalarAsync();
-
-                command.Parameters[0].Value = calculation.EndDate;
-                var lastMonth = (int)await command.ExecuteScalarAsync();
-
-                using var checkCommand = new SqlCommand(
-                    "SELECT COUNT(*) FROM sagur WHERE mnt BETWEEN @firstMonth AND @lastMonth", connection);
-                checkCommand.Parameters.AddWithValue("@firstMonth", firstMonth);
-                checkCommand.Parameters.AddWithValue("@lastMonth", lastMonth);
-
-                var closedPeriodsCount = (int)await checkCommand.ExecuteScalarAsync();
-                if (closedPeriodsCount < (lastMonth - firstMonth + 1))
-                {
-                    throw new InvalidOperationException("Cannot calculate retro for open periods");
-                }
+                throw new InvalidOperationException("Cannot calculate retro for open periods");
             }
 
-            // Run DLL calculation
+            // Run calculation
             var success = await _calculationService.RunRetroCalculationAsync(calculation.JobNumber, _connectionString);
             if (!success)
             {
@@ -61,30 +44,33 @@ public class RetroService : IRetroService
             }
 
             // Fetch results
+            await using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync();
+
             var results = new List<RetroCalculationResultDto>();
-            using (var command = new SqlCommand(@"
+
+            using var command = new SqlCommand(@"
                 SELECT mnt, sugts, paysum, sumhan, dtval, dtgv 
                 FROM Temparnmforat 
                 WHERE hs = @propertyId 
                 AND (paysum != 0 OR sumhan != 0)
-                ORDER BY mnt", connection))
-            {
-                command.Parameters.AddWithValue("@propertyId", calculation.PropertyId);
+                ORDER BY mnt", connection);
 
-                using var reader = await command.ExecuteReaderAsync();
-                while (await reader.ReadAsync())
+            command.Parameters.AddWithValue("@propertyId", calculation.PropertyId);
+
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                results.Add(new RetroCalculationResultDto
                 {
-                    results.Add(new RetroCalculationResultDto
-                    {
-                        Period = reader.GetInt32(0),
-                        ChargeTypeId = reader.GetInt32(1),
-                        PaymentAmount = reader.GetDecimal(2),
-                        DiscountAmount = reader.GetDecimal(3),
-                        ValueDate = reader.IsDBNull(4) ? null : reader.GetDateTime(4),
-                        CollectionDate = reader.IsDBNull(5) ? null : reader.GetDateTime(5),
-                        Total = reader.GetDecimal(2) - reader.GetDecimal(3)
-                    });
-                }
+                    Period = reader.GetInt32(0),
+                    ChargeTypeId = reader.GetInt32(1),
+                    PaymentAmount = reader.GetDecimal(2),
+                    DiscountAmount = reader.GetDecimal(3),
+                    ValueDate = reader.IsDBNull(4) ? null : reader.GetDateTime(4),
+                    CollectionDate = reader.IsDBNull(5) ? null : reader.GetDateTime(5),
+                    Total = reader.GetDecimal(2) - reader.GetDecimal(3)
+                });
             }
 
             return results;
@@ -101,23 +87,21 @@ public class RetroService : IRetroService
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync();
 
-        using var transaction = await connection.BeginTransactionAsync(System.Data.IsolationLevel.ReadCommitted);
+        using SqlTransaction transaction = (SqlTransaction)await connection.BeginTransactionAsync();
 
         try
         {
             // InsertFromTemparnmforatToArnmforat
-            using (var command = new SqlCommand("[dbo].[InsertFromTemparnmforatToArnmforat]", connection))
+            using (var command = new SqlCommand("[dbo].[InsertFromTemparnmforatToArnmforat]", connection, transaction))
             {
-                command.Transaction = transaction as SqlTransaction;
                 command.CommandType = System.Data.CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@hskod", approval.PropertyId);
                 await command.ExecuteNonQueryAsync();
             }
 
             // InsertFromTemparnmforatToTash
-            using (var command = new SqlCommand("[dbo].[InsertFromTemparnmforatToTash]", connection))
+            using (var command = new SqlCommand("[dbo].[InsertFromTemparnmforatToTash]", connection, transaction))
             {
-                command.Transaction = transaction as SqlTransaction;
                 command.CommandType = System.Data.CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@hskod", approval.PropertyId);
                 command.Parameters.AddWithValue("@history", approval.IsHistorical);
@@ -129,9 +113,8 @@ public class RetroService : IRetroService
             }
 
             // UpdateArnFromTemparnmforat
-            using (var command = new SqlCommand("[dbo].[UpdateArnFromTemparnmforat]", connection))
+            using (var command = new SqlCommand("[dbo].[UpdateArnFromTemparnmforat]", connection, transaction))
             {
-                command.Transaction = transaction as SqlTransaction;
                 command.CommandType = System.Data.CommandType.StoredProcedure;
                 command.Parameters.AddWithValue("@hskod", approval.PropertyId);
                 command.Parameters.AddWithValue("@dtstart", approval.StartDate);
@@ -142,9 +125,8 @@ public class RetroService : IRetroService
             // UpdateHsFromRetro (only if needed)
             if (approval.Results.Any(r => r.CollectionDate == null))
             {
-                using (var command = new SqlCommand("[dbo].[UpdateHsFromRetro]", connection))
+                using (var command = new SqlCommand("[dbo].[UpdateHsFromRetro]", connection, transaction))
                 {
-                    command.Transaction = transaction as SqlTransaction;
                     command.CommandType = System.Data.CommandType.StoredProcedure;
                     command.Parameters.AddWithValue("@jobnum", approval.JobNumber);
                     command.Parameters.AddWithValue("@dtstart", approval.StartDate);
@@ -153,9 +135,8 @@ public class RetroService : IRetroService
             }
 
             // Clean up Temparnmforat
-            using (var command = new SqlCommand("DELETE FROM Temparnmforat WHERE jobnum = @jobnum", connection))
+            using (var command = new SqlCommand("DELETE FROM Temparnmforat WHERE jobnum = @jobnum", connection, transaction))
             {
-                command.Transaction = transaction as SqlTransaction;
                 command.Parameters.AddWithValue("@jobnum", approval.JobNumber);
                 await command.ExecuteNonQueryAsync();
             }
@@ -166,10 +147,7 @@ public class RetroService : IRetroService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error approving retro for property {PropertyId}", approval.PropertyId);
-            if (transaction != null)
-            {
-                await transaction.RollbackAsync();
-            }
+            await transaction.RollbackAsync();
             return false;
         }
     }
