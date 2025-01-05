@@ -29,21 +29,27 @@ public class RetroService : IRetroService
         {
             throw new InvalidOperationException($"Failed to get connection string for ODBC: {odbcName}");
         }
+
+        _logger.LogInformation($"Connection string set successfully for ODBC: {odbcName}");
     }
 
     public async Task<IEnumerable<TempArnmforat>> CalculateRetroAsync(
         RetroCalculationRequest request,
         string odbcName)
     {
+        _logger.LogInformation(
+            "Starting retro calculation for property {PropertyId} from {StartDate} to {EndDate}",
+            request.PropertyId, request.StartDate, request.EndDate);
+
         SetConnectionString(odbcName);
         using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync();
-        
+
         // בדיקת נעילה
         var lockCheckCommand = new SqlCommand(
             @"SELECT 1 
               FROM Temparnmforat 
-              WHERE hs = '@hskod' 
+              WHERE hs = @hskod 
               AND moneln <> 0", connection);
 
         lockCheckCommand.Parameters.AddWithValue("@hskod", request.PropertyId);
@@ -51,24 +57,29 @@ public class RetroService : IRetroService
 
         if (isLocked)
         {
+            _logger.LogWarning("Property {PropertyId} is locked", request.PropertyId);
             throw new InvalidOperationException("Property is locked by another process");
         }
 
         var jobNum = new Random().Next(1000000, 9999999);
+        _logger.LogInformation("Generated job number: {JobNum}", jobNum);
 
         try
         {
             // מחיקת נתונים ישנים
             var cleanupCommand = new SqlCommand(
-                "DELETE FROM Temparnmforat WHERE jobnum = @jobnum OR (hs = '@hs' AND jobnum = 0)",
+                "DELETE FROM Temparnmforat WHERE jobnum = @jobnum OR (hs = @hs AND jobnum = 0)",
                 connection);
             cleanupCommand.Parameters.AddWithValue("@jobnum", jobNum);
             cleanupCommand.Parameters.AddWithValue("@hs", request.PropertyId);
             await cleanupCommand.ExecuteNonQueryAsync();
+            _logger.LogInformation("Cleaned up old data");
 
             // הכנסת שורה בסיסית לכל סוג חיוב
             foreach (var sugts in request.ChargeTypes)
             {
+                _logger.LogInformation("Processing charge type: {ChargeType}", sugts);
+
                 var insertCommand = new SqlCommand(@"
                     INSERT INTO Temparnmforat (
                         hs, mspkod, sugts, 
@@ -76,14 +87,14 @@ public class RetroService : IRetroService
                         gdl5, trf5, gdl6, trf6, gdl7, trf7, gdl8, trf8,
                         hdtme, hdtad, jobnum, valdate, valdatesof
                     ) VALUES (
-                        '@hs', @mspkod, @sugts,
+                        @hs, @mspkod, @sugts,
                         @gdl1, @trf1, @gdl2, @trf2, @gdl3, @trf3, @gdl4, @trf4,
                         @gdl5, @trf5, @gdl6, @trf6, @gdl7, @trf7, @gdl8, @trf8,
                         @hdtme, @hdtad, @jobnum, @valdate, @valdatesof
                     )", connection);
 
                 insertCommand.Parameters.AddWithValue("@hs", request.PropertyId);
-                insertCommand.Parameters.AddWithValue("@mspkod", 0); // יתעדכן בפרוצדורה
+                insertCommand.Parameters.AddWithValue("@mspkod", 0);
                 insertCommand.Parameters.AddWithValue("@sugts", sugts);
                 insertCommand.Parameters.AddWithValue("@hdtme", request.StartDate);
                 insertCommand.Parameters.AddWithValue("@hdtad", request.EndDate);
@@ -91,7 +102,6 @@ public class RetroService : IRetroService
                 insertCommand.Parameters.AddWithValue("@valdate", DBNull.Value);
                 insertCommand.Parameters.AddWithValue("@valdatesof", DBNull.Value);
 
-                // אתחול הערכים
                 for (var i = 1; i <= 8; i++)
                 {
                     var size = request.SizesAndTariffs.FirstOrDefault(s => s.Index == i);
@@ -100,22 +110,30 @@ public class RetroService : IRetroService
                 }
 
                 await insertCommand.ExecuteNonQueryAsync();
+                _logger.LogInformation("Inserted base row for charge type {ChargeType}", sugts);
             }
 
             // הפעלת פרוצדורות הכנה
+            _logger.LogInformation("Running preparation procedures");
+            
             var preparationCommand = new SqlCommand(
-                $"EXEC [dbo].[PrepareRetroData] '@{request.PropertyId}', 0",
+                $"EXEC [dbo].[PrepareRetroData] @hs, 0",
                 connection);
+            preparationCommand.Parameters.AddWithValue("@hs", request.PropertyId);
             await preparationCommand.ExecuteNonQueryAsync();
+            _logger.LogInformation("PrepareRetroData completed");
 
-            // הפעלת פרוצדורת הכפלת השורות
             var chargeTypesStr = string.Join(", ", request.ChargeTypes);
             var multiplyCommand = new SqlCommand(
-                $"EXEC [dbo].[MultiplyTempArnmforatRows] '@{request.PropertyId}', '{chargeTypesStr}', 0",
+                $"EXEC [dbo].[MultiplyTempArnmforatRows] @hs, @chargeTypes, 0",
                 connection);
+            multiplyCommand.Parameters.AddWithValue("@hs", request.PropertyId);
+            multiplyCommand.Parameters.AddWithValue("@chargeTypes", chargeTypesStr);
             await multiplyCommand.ExecuteNonQueryAsync();
+            _logger.LogInformation("MultiplyTempArnmforatRows completed");
 
             // הפעלת החישוב
+            _logger.LogInformation("Starting DLL calculation");
             var success = await _calcProcessManager.CalculateRetroAsync(
                 odbcName,
                 "RetroWeb",
@@ -125,19 +143,25 @@ public class RetroService : IRetroService
 
             if (!success)
             {
+                _logger.LogError("DLL calculation failed");
                 throw new InvalidOperationException("DLL calculation failed");
             }
 
+            _logger.LogInformation("DLL calculation completed successfully");
             return await GetRetroResultsAsync(request.PropertyId, jobNum, odbcName);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error during retro calculation");
+            
             // ניקוי במקרה של שגיאה
             var cleanupCommand = new SqlCommand(
                 "DELETE FROM Temparnmforat WHERE jobnum = @jobnum",
                 connection);
             cleanupCommand.Parameters.AddWithValue("@jobnum", jobNum);
             await cleanupCommand.ExecuteNonQueryAsync();
+            _logger.LogInformation("Cleaned up after error");
+            
             throw;
         }
     }
@@ -147,6 +171,10 @@ public class RetroService : IRetroService
         int jobNum,
         string odbcName)
     {
+        _logger.LogInformation(
+            "Getting retro results for property {PropertyId}, job {JobNum}",
+            propertyId, jobNum);
+
         SetConnectionString(odbcName);
         using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync();
@@ -155,7 +183,7 @@ public class RetroService : IRetroService
         var command = new SqlCommand(@"
             SELECT *
             FROM Temparnmforat
-            WHERE hs = '@propertyId'
+            WHERE hs = @propertyId
             AND jobnum = @jobNum
             AND (ISNULL(paysum, 0) <> 0 OR ISNULL(sumhan, 0) <> 0)
             ORDER BY mnt, hdtme, IsNewCalculation, hnckod", connection);
@@ -166,6 +194,7 @@ public class RetroService : IRetroService
         using var reader = await command.ExecuteReaderAsync();
         while (await reader.ReadAsync())
         {
+            _logger.LogDebug("Found result row for property {PropertyId}", propertyId);
             results.Add(new TempArnmforat
             {
                 Hs = reader["hs"].ToString() ?? string.Empty,
@@ -198,6 +227,7 @@ public class RetroService : IRetroService
             });
         }
 
+        _logger.LogInformation("Found {Count} results", results.Count);
         return results;
     }
 }
