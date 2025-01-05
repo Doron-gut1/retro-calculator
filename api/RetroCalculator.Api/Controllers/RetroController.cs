@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using RetroCalculator.Api.Models;
 using RetroCalculator.Api.Models.DTOs;
 using RetroCalculator.Api.Services.Interfaces;
 
@@ -9,41 +10,48 @@ namespace RetroCalculator.Api.Controllers;
 public class RetroController : ControllerBase
 {
     private readonly IRetroService _retroService;
-    private readonly IPropertyService _propertyService;
     private readonly ILogger<RetroController> _logger;
+    private const string DefaultOdbcName = "EprArnona";
 
     public RetroController(
         IRetroService retroService,
-        IPropertyService propertyService,
         ILogger<RetroController> logger)
     {
         _retroService = retroService;
-        _propertyService = propertyService;
         _logger = logger;
     }
 
     [HttpPost("calculate")]
-    public async Task<ActionResult<List<RetroCalculationResultDto>>> Calculate(RetroCalculationRequestDto calculation)
+    public async Task<ActionResult<IEnumerable<TempArnmforat>>> CalculateRetro(
+        [FromBody] RetroCalculationRequest request)
     {
         try
         {
-            var isLocked = await _propertyService.IsPropertyLockedAsync(calculation.PropertyId);
-            if (isLocked)
-            {
-                return BadRequest("Property is currently locked by another calculation");
-            }
-
-            var results = await _retroService.CalculateRetroAsync(calculation);
+            var results = await _retroService.CalculateRetroAsync(request, DefaultOdbcName);
             return Ok(results);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error calculating retro for property {PropertyId}", calculation.PropertyId);
-            return StatusCode(500, "Internal server error");
+            _logger.LogError(ex, "Error calculating retro for property {PropertyId}", request.PropertyId);
+            return StatusCode(500, new { error = "Failed to calculate retro", details = ex.Message });
         }
     }
 
-    // TODO: Approval process will be implemented later
-    // [HttpPost("approve")]
-    // public async Task<ActionResult> Approve(...)
+    [HttpGet("{propertyId}/results/{jobNum}")]
+    public async Task<ActionResult<IEnumerable<TempArnmforat>>> GetRetroResults(
+        string propertyId,
+        int jobNum)
+    {
+        try
+        {
+            var results = await _retroService.GetRetroResultsAsync(propertyId, jobNum, DefaultOdbcName);
+            return Ok(results);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting retro results for property {PropertyId}, job {JobNum}",
+                propertyId, jobNum);
+            return StatusCode(500, new { error = "Failed to get retro results", details = ex.Message });
+        }
+    }
 }
