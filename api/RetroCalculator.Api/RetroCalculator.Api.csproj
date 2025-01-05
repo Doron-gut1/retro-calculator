@@ -15,8 +15,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="CalcRetroProcessManager">
-      <HintPath>$(ProjectDir)CalcRetroProcessManager.dll</HintPath>
+    <Reference Include="CalcArnProcess">
+      <HintPath>$(ProjectDir)CalcArnProcess.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="OdbcConverter">
@@ -26,7 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="CalcRetroProcessManager.dll">
+    <None Update="CalcArnProcess.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="OdbcConverter.dll">
