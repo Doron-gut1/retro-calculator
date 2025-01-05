@@ -29,8 +29,7 @@ builder.Services.AddCors(options =>
 // Register services
 builder.Services.AddScoped<IPropertyService, PropertyService>();
 builder.Services.AddScoped<IRetroService, RetroService>();
-builder.Services.AddScoped<ICalculationService, CalculationService>();
-builder.Services.AddSingleton<IRetroCalculationDllFactory, RetroCalculationDllFactory>();
+builder.Services.AddScoped<ICalcProcessManager, CalcProcessManager>();
 
 var app = builder.Build();
 
