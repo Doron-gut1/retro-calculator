@@ -1,5 +1,5 @@
+using System.Data;
 using System.Data.SqlClient;
-using RetroCalculator.Api.Models;
 using RetroCalculator.Api.Models.DTOs;
 using RetroCalculator.Api.Services.Interfaces;
 
@@ -61,150 +61,86 @@ public class RetroService : IRetroService
         await cleanupCommand.ExecuteNonQueryAsync();
     }
 
-    public async Task<IEnumerable<TempArnmforat>> CalculateRetroAsync(
-        RetroCalculationRequest request,
+    public async Task<DataTable> CalculateRetroAsync(
+        RetroCalculationRequestDto request,
         string odbcName)
     {
         _logger.LogInformation(
-            "Starting retro calculation for property {PropertyId} from {StartDate} to {EndDate}",
-            request.PropertyId, request.StartDate, request.EndDate);
+            "Starting retro calculation for property {PropertyId}",
+            request.PropertyId);
 
         using var connection = await GetConnectionAsync(odbcName);
-        var jobNum = new Random().Next(1000000, 9999999);
 
-        try
+        // Check if property is locked
+        var lockCheckCommand = new SqlCommand(
+            "SELECT 1 FROM Temparnmforat WHERE hs = @hskod AND moneln <> 0", connection);
+        lockCheckCommand.Parameters.AddWithValue("@hskod", request.PropertyId);
+        var isLocked = await lockCheckCommand.ExecuteScalarAsync() != null;
+
+        if (isLocked)
         {
-            // Check if property is locked
-            var lockCheckCommand = new SqlCommand(
-                "SELECT 1 FROM Temparnmforat WHERE hs = @hskod AND moneln <> 0", connection);
-            lockCheckCommand.Parameters.AddWithValue("@hskod", request.PropertyId);
-            var isLocked = await lockCheckCommand.ExecuteScalarAsync() != null;
-
-            if (isLocked)
-            {
-                throw new InvalidOperationException("Property is locked by another process");
-            }
-
-            await CleanupTempData(connection, request.PropertyId, jobNum);
-
-            // Insert initial data
-            var insertCommand = new SqlCommand(@"
-                INSERT INTO Temparnmforat (
-                    hs, mspkod, sugts, 
-                    gdl1, trf1, gdl2, trf2, gdl3, trf3, gdl4, trf4,
-                    gdl5, trf5, gdl6, trf6, gdl7, trf7, gdl8, trf8,
-                    hdtme, hdtad, jobnum, valdate, valdatesof
-                ) VALUES (
-                    @hs, @mspkod, @sugts,
-                    @gdl1, @trf1, @gdl2, @trf2, @gdl3, @trf3, @gdl4, @trf4,
-                    @gdl5, @trf5, @gdl6, @trf6, @gdl7, @trf7, @gdl8, @trf8,
-                    @hdtme, @hdtad, @jobnum, @valdate, @valdatesof
-                )", connection);
-
-            insertCommand.Parameters.AddWithValue("@hs", request.PropertyId);
-            insertCommand.Parameters.AddWithValue("@mspkod", 0);
-            insertCommand.Parameters.AddWithValue("@sugts", 1010);
-            insertCommand.Parameters.AddWithValue("@hdtme", request.StartDate);
-            insertCommand.Parameters.AddWithValue("@hdtad", request.EndDate);
-            insertCommand.Parameters.AddWithValue("@jobnum", jobNum);
-            insertCommand.Parameters.AddWithValue("@valdate", DBNull.Value);
-            insertCommand.Parameters.AddWithValue("@valdatesof", DBNull.Value);
-
-            for (var i = 1; i <= 8; i++)
-            {
-                var size = request.SizesAndTariffs.FirstOrDefault(s => s.Index == i);
-                insertCommand.Parameters.AddWithValue($"@gdl{i}", size?.Size ?? 0);
-                insertCommand.Parameters.AddWithValue($"@trf{i}", size?.TariffCode ?? 0);
-            }
-
-            await insertCommand.ExecuteNonQueryAsync();
-
-            // Execute preparation procedures
-            await connection.ExecuteCommandAsync(
-                $"EXEC [dbo].[PrepareRetroData] '{request.PropertyId}', 0");
-
-            var chargeTypesStr = string.Join(", ", request.ChargeTypes);
-            await connection.ExecuteCommandAsync(
-                $"EXEC [dbo].[MultiplyTempArnmforatRows] '{request.PropertyId}', '{chargeTypesStr}', 0");
-
-            // Calculate using DLL
-            _logger.LogInformation("Starting DLL calculation");
-            var success = await _calcProcessManager.CalculateRetroAsync(
-                odbcName,
-                "RetroWeb",
-                jobNum,
-                1,
-                request.PropertyId);
-
-            if (!success)
-            {
-                throw new InvalidOperationException("DLL calculation failed");
-            }
-
-            return await GetRetroResultsAsync(request.PropertyId, jobNum, odbcName);
+            throw new InvalidOperationException("Property is locked by another process");
         }
-        catch (Exception ex)
+
+        await CleanupTempData(connection, request.PropertyId, request.JobNumber);
+
+        // Insert initial calculation request
+        await connection.ExecuteCommandAsync($"""
+            EXEC [dbo].[PrepareRetroData] '{request.PropertyId}', 0;
+            EXEC [dbo].[MultiplyTempArnmforatRows] '{request.PropertyId}', '{string.Join(", ", request.ChargeTypes)}', 0;
+        """);
+
+        // Run calculation
+        _logger.LogInformation("Starting DLL calculation");
+        var success = await _calcProcessManager.CalculateRetroAsync(
+            odbcName,
+            "RetroWeb",  // Username
+            request.JobNumber,
+            1,            // ProcessType
+            request.PropertyId);
+
+        if (!success)
         {
-            _logger.LogError(ex, "Error during retro calculation");
-            await CleanupTempData(connection, request.PropertyId, jobNum);
-            throw;
+            throw new InvalidOperationException("DLL calculation failed");
         }
+
+        return await GetRetroResultsAsync(request.PropertyId, request.JobNumber, odbcName);
     }
 
-    public async Task<IEnumerable<TempArnmforat>> GetRetroResultsAsync(
+    public async Task<DataTable> GetRetroResultsAsync(
         string propertyId,
         int jobNum,
         string odbcName)
     {
         using var connection = await GetConnectionAsync(odbcName);
-        var results = new List<TempArnmforat>();
-
-        using var command = new SqlCommand(@"
-            SELECT *
+        var query = @"
+            SELECT 
+                hs AS PropertyId,
+                dbo.mntname(mnt) AS Period,
+                sugts AS ChargeTypeId,
+                paysum AS PaymentAmount,
+                sumhan AS DiscountAmount,
+                paysum - sumhan AS Total,
+                dtgv AS CollectionDate,
+                dtval AS ValueDate
             FROM Temparnmforat
             WHERE hs = @propertyId
             AND jobnum = @jobNum
             AND (ISNULL(paysum, 0) <> 0 OR ISNULL(sumhan, 0) <> 0)
-            ORDER BY mnt, hdtme, IsNewCalculation, hnckod", connection);
+            ORDER BY mnt, hdtme, IsNewCalculation, hnckod";
 
-        command.Parameters.AddWithValue("@propertyId", propertyId);
-        command.Parameters.AddWithValue("@jobNum", jobNum);
-
-        using var reader = await command.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
-        {
-            results.Add(new TempArnmforat
+        var adapter = new SqlDataAdapter(
+            new SqlCommand(query, connection)
             {
-                Hs = reader["hs"].ToString() ?? string.Empty,
-                Mspkod = Convert.ToInt32(reader["mspkod"]),
-                Sugts = Convert.ToInt32(reader["sugts"]),
-                Gdl1 = Convert.ToDouble(reader["gdl1"]),
-                Trf1 = Convert.ToInt32(reader["trf1"]),
-                Gdl2 = Convert.ToDouble(reader["gdl2"]),
-                Trf2 = Convert.ToInt32(reader["trf2"]),
-                Gdl3 = Convert.ToDouble(reader["gdl3"]),
-                Trf3 = Convert.ToInt32(reader["trf3"]),
-                Gdl4 = Convert.ToDouble(reader["gdl4"]),
-                Trf4 = Convert.ToInt32(reader["trf4"]),
-                Gdl5 = Convert.ToDouble(reader["gdl5"]),
-                Trf5 = Convert.ToInt32(reader["trf5"]),
-                Gdl6 = Convert.ToDouble(reader["gdl6"]),
-                Trf6 = Convert.ToInt32(reader["trf6"]),
-                Gdl7 = Convert.ToDouble(reader["gdl7"]),
-                Trf7 = Convert.ToInt32(reader["trf7"]),
-                Gdl8 = Convert.ToDouble(reader["gdl8"]),
-                Trf8 = Convert.ToInt32(reader["trf8"]),
-                Hdtme = reader.GetDateTime(reader.GetOrdinal("hdtme")),
-                Hdtad = reader.GetDateTime(reader.GetOrdinal("hdtad")),
-                Jobnum = Convert.ToInt32(reader["jobnum"]),
-                Valdate = reader.IsDBNull(reader.GetOrdinal("valdate")) ? null : reader.GetDateTime(reader.GetOrdinal("valdate")),
-                Valdatesof = reader.IsDBNull(reader.GetOrdinal("valdatesof")) ? null : reader.GetDateTime(reader.GetOrdinal("valdatesof")),
-                Hkarn = reader.IsDBNull(reader.GetOrdinal("hkarn")) ? 0 : Convert.ToInt32(reader["hkarn"]),
-                Dtgv = reader.IsDBNull(reader.GetOrdinal("dtgv")) ? null : reader.GetDateTime(reader.GetOrdinal("dtgv")),
-                Dtval = reader.IsDBNull(reader.GetOrdinal("dtval")) ? null : reader.GetDateTime(reader.GetOrdinal("dtval"))
+                Parameters =
+                {
+                    new SqlParameter("@propertyId", propertyId),
+                    new SqlParameter("@jobNum", jobNum)
+                }
             });
-        }
 
+        var results = new DataTable();
+        adapter.Fill(results);
         return results;
     }
 }
