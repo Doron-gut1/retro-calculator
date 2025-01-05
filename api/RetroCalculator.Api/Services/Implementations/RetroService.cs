@@ -10,7 +10,7 @@ public class RetroService : IRetroService
     private readonly ILogger<RetroService> _logger;
     private readonly ICalcProcessManager _calcProcessManager;
     private string? _connectionString;
-    private readonly dynamic _odbcConverter;
+    private readonly dynamic? _odbcConverter;
 
     public RetroService(
         ILogger<RetroService> logger,
@@ -19,12 +19,20 @@ public class RetroService : IRetroService
         _logger = logger;
         _calcProcessManager = calcProcessManager;
         
-        var type = Type.GetType("OdbcConverter.OdbcConverter, OdbcConverter");
-        if (type == null)
+        try
         {
-            throw new InvalidOperationException("Could not load OdbcConverter type");
+            var type = Type.GetType("OdbcConverter.OdbcConverter, OdbcConverter");
+            if (type == null)
+            {
+                throw new InvalidOperationException("Could not load OdbcConverter type");
+            }
+            _odbcConverter = Activator.CreateInstance(type);
         }
-        _odbcConverter = Activator.CreateInstance(type);
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error initializing OdbcConverter");
+            throw;
+        }
     }
 
     private async Task<SqlConnection> GetConnectionAsync(string odbcName)
@@ -33,6 +41,11 @@ public class RetroService : IRetroService
         {
             try 
             {
+                if (_odbcConverter == null)
+                {
+                    throw new InvalidOperationException("OdbcConverter not initialized");
+                }
+
                 _connectionString = _odbcConverter.GetSqlConnectionString(odbcName, "", "");
                 if (string.IsNullOrEmpty(_connectionString))
                 {
