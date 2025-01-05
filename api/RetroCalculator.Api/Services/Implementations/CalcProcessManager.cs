@@ -6,21 +6,21 @@ namespace RetroCalculator.Api.Services.Implementations;
 public class CalcProcessManager : ICalcProcessManager
 {
     private readonly ILogger<CalcProcessManager> _logger;
-    private const int MOAZA_CODE = 90;
 
     public CalcProcessManager(ILogger<CalcProcessManager> logger)
     {
         _logger = logger;
     }
 
-    [DllImport("CalcArnProcess", CallingConvention = CallingConvention.StdCall, EntryPoint = "CalcArnProcessManager")]
-    private static extern bool CalcArnProcessManager(
+    // מייבא את הפונקציה מה-DLL
+    [DllImport("CalcArnProcess.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+    private static extern bool CalcRetroProcessManager(
         int moazaCode,
-        [MarshalAs(UnmanagedType.LPStr)] string userName,
-        [MarshalAs(UnmanagedType.LPStr)] string odbcName,
+        string userName,
+        string odbcName,
         int jobNum,
         int processType,
-        [MarshalAs(UnmanagedType.LPStr)] string propertyId);
+        string propertyId);
 
     public async Task<bool> CalculateRetroAsync(
         string odbcName,
@@ -31,20 +31,30 @@ public class CalcProcessManager : ICalcProcessManager
     {
         try
         {
-            return await Task.Run(() =>
-                CalcArnProcessManager(
-                    MOAZA_CODE,
+            _logger.LogInformation(
+                "Starting calculation with parameters: ODBC={OdbcName}, User={UserName}, Job={JobNum}, Property={PropertyId}",
+                odbcName, userName, jobNum, propertyId);
+
+            // הרצת החישוב ב-thread נפרד
+            var result = await Task.Run(() =>
+                CalcRetroProcessManager(
+                    90, // קוד מועצה קבוע
                     userName,
                     odbcName,
                     jobNum,
                     processType,
                     propertyId
                 ));
+
+            _logger.LogInformation(
+                "Calculation completed for property {PropertyId} with result: {Result}",
+                propertyId, result);
+
+            return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error calculating retro: ODBC={OdbcName}, Job={JobNum}, Property={PropertyId}",
-                odbcName, jobNum, propertyId);
+            _logger.LogError(ex, "Failed to execute calculation for property {PropertyId}", propertyId);
             throw;
         }
     }
