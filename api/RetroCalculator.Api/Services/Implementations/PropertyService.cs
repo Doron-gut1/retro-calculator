@@ -1,6 +1,6 @@
+using Microsoft.Data.SqlClient;
 using RetroCalculator.Api.Models.DTOs;
 using RetroCalculator.Api.Services.Interfaces;
-using System.Data.SqlClient;
 
 namespace RetroCalculator.Api.Services.Implementations;
 
@@ -39,7 +39,10 @@ public class PropertyService : IPropertyService
         var property = new PropertyDto
         {
             PropertyId = id,
-            // ... other properties
+            Address = "Test Address",
+            Size = 100,
+            PayerId = "1",
+            PayerName = "Test Payer"
         };
 
         return property;
