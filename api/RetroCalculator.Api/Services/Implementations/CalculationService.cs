@@ -58,15 +58,19 @@ public class CalculationService : ICalculationService
     {
         try
         {
-            using var dll = _dllFactory.Create(odbcConnectionString, jobNumber);
-            var (success, error) = dll.CalculateRetro();
-
-            if (!success)
+            // Run DLL operation in a background thread since it's a CPU-bound operation
+            var result = await Task.Run(() =>
             {
-                _logger.LogError("DLL calculation failed: {Error}", error);
+                using var dll = _dllFactory.Create(odbcConnectionString, jobNumber);
+                return dll.CalculateRetro();
+            });
+
+            if (!result.Success)
+            {
+                _logger.LogError("DLL calculation failed: {Error}", result.ErrorDescription);
             }
 
-            return success;
+            return result.Success;
         }
         catch (Exception ex)
         {
