@@ -117,34 +117,42 @@ public class RetroService : IRetroService
             _logger.LogInformation("Running preparation procedures");
             
             var preparationCommand = new SqlCommand(
-                $"EXEC [dbo].[PrepareRetroData] @hs, 0",
+                $"EXEC [dbo].[PrepareRetroData] '{request.PropertyId}', 0",
                 connection);
-            preparationCommand.Parameters.AddWithValue("@hs", request.PropertyId);
             await preparationCommand.ExecuteNonQueryAsync();
             _logger.LogInformation("PrepareRetroData completed");
 
             var chargeTypesStr = string.Join(", ", request.ChargeTypes);
             var multiplyCommand = new SqlCommand(
-                $"EXEC [dbo].[MultiplyTempArnmforatRows] @hs, @chargeTypes, 0",
+                $"EXEC [dbo].[MultiplyTempArnmforatRows] '{request.PropertyId}', '{chargeTypesStr}', 0",
                 connection);
-            multiplyCommand.Parameters.AddWithValue("@hs", request.PropertyId);
-            multiplyCommand.Parameters.AddWithValue("@chargeTypes", chargeTypesStr);
             await multiplyCommand.ExecuteNonQueryAsync();
             _logger.LogInformation("MultiplyTempArnmforatRows completed");
 
             // הפעלת החישוב
             _logger.LogInformation("Starting DLL calculation");
-            var success = await _calcProcessManager.CalculateRetroAsync(
-                odbcName,
-                "RetroWeb",
-                jobNum,
-                1,
-                request.PropertyId);
+            
+            try {
+                var success = await Task.Run(() =>
+                    CalcRetroProcessManager(
+                        90, // קוד מועצה קבוע
+                        "RetroWeb", // שם משתמש קבוע
+                        odbcName,
+                        jobNum,
+                        1, // סוג תהליך קבוע
+                        request.PropertyId
+                    ));
 
-            if (!success)
+                if (!success)
+                {
+                    _logger.LogError("DLL calculation failed");
+                    throw new InvalidOperationException("DLL calculation failed");
+                }
+            }
+            catch (Exception ex)
             {
-                _logger.LogError("DLL calculation failed");
-                throw new InvalidOperationException("DLL calculation failed");
+                _logger.LogError(ex, "Error in DLL calculation");
+                throw new InvalidOperationException("Error executing DLL calculation", ex);
             }
 
             _logger.LogInformation("DLL calculation completed successfully");
