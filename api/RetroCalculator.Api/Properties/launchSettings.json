@@ -1,21 +1,11 @@
 {
-<<<<<<< HEAD
-  "profiles": {
-    "RetroCalculator.Api": {
-      "commandName": "Project",
-      "launchBrowser": true,
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
-      },
-      "applicationUrl": "https://localhost:57648;http://localhost:57649"
-=======
   "$schema": "https://json.schemastore.org/launchsettings.json",
   "iisSettings": {
     "windowsAuthentication": false,
     "anonymousAuthentication": true,
     "iisExpress": {
-      "applicationUrl": "http://localhost:57648",
-      "sslPort": 44357
+      "applicationUrl": "http://localhost:5000",
+      "sslPort": 5001
     }
   },
   "profiles": {
@@ -23,7 +13,8 @@
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,
-      "applicationUrl": "https://localhost:57648;http://localhost:57649",
+      "launchUrl": "swagger",
+      "applicationUrl": "https://localhost:5001;http://localhost:5000",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
@@ -31,10 +22,10 @@
     "IIS Express": {
       "commandName": "IISExpress",
       "launchBrowser": true,
+      "launchUrl": "swagger",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
->>>>>>> 2c00ec944c9ccdeaecc44bee41cdd52d17c2fc3a
     }
   }
 }

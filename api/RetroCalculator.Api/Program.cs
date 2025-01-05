@@ -12,13 +12,16 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new() { Title = "RetroCalculator API", Version = "v1" });
 });
 
-// Add CORS
+// Add health checks
+builder.Services.AddHealthChecks();
+
+// Add CORS with multiple origins support
 builder.Services.AddCors(options =>
 {
     var origins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>();
     options.AddPolicy("ReactApp",
         policyBuilder => policyBuilder
-            .WithOrigins(origins ?? Array.Empty<string>())
+            .WithOrigins(origins ?? new[] { "http://localhost:5173", "http://localhost:3000" })
             .AllowAnyMethod()
             .AllowAnyHeader());
 });
@@ -31,12 +34,16 @@ builder.Services.AddSingleton<IRetroCalculationDllFactory, RetroCalculationDllFa
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline
+// Basic diagnostics route
+app.MapGet("/", () => "RetroCalculator API is running");
+app.MapHealthChecks("/health");
+
+// Swagger UI at /swagger instead of root
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "RetroCalculator API V1");
-    c.RoutePrefix = string.Empty; // This makes Swagger UI the root page
+    c.RoutePrefix = "swagger";
 });
 
 app.UseHttpsRedirection();
