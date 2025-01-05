@@ -49,7 +49,7 @@ public class RetroCalculationRequestDto
 public class RetroCalculationResultDto
 {
     public string PropertyId { get; set; } = string.Empty;
-    public DateTime Period { get; set; }
+    public string Period { get; set; } = string.Empty;  // dbo.mntname(MNT)
     public int ChargeTypeId { get; set; }     // SUGTS
     public decimal PaymentAmount { get; set; } // PAYSUM
     public decimal DiscountAmount { get; set; } // SUMHAN
@@ -58,9 +58,4 @@ public class RetroCalculationResultDto
     public DateTime? ValueDate { get; set; }    // DTVAL
 }
 
-public class RetroApprovalDto
-{
-    public required string PropertyId { get; set; }
-    public required string Remarks { get; set; }    // HESBER
-    public int JobNumber { get; set; }             // JOBNUM
-}
+// TODO: RetroApprovalDto removed - will handle direct DB operations later
