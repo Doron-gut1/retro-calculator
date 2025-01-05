@@ -30,22 +30,6 @@ public class PropertyDto
     public DateTime? ValidTo { get; set; }      // valdatesof
 }
 
-public class PayerDto
-{
-    public int PayerId { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public double MainTz { get; set; }
-}
-
-public class RetroCalculationRequestDto
-{
-    public required string PropertyId { get; set; }
-    public required DateTime StartDate { get; set; }
-    public required DateTime EndDate { get; set; }
-    public List<int> ChargeTypes { get; set; } = new();
-    public int JobNumber { get; set; }        // JOBNUM
-}
-
 public class RetroCalculationResultDto
 {
     public string PropertyId { get; set; } = string.Empty;
@@ -53,9 +37,16 @@ public class RetroCalculationResultDto
     public int ChargeTypeId { get; set; }     // SUGTS
     public decimal PaymentAmount { get; set; } // PAYSUM
     public decimal DiscountAmount { get; set; } // SUMHAN
-    public decimal Total { get; set; }
+    public decimal Total { get; set; }          // PAYSUM - SUMHAN
     public DateTime? CollectionDate { get; set; } // DTGV
     public DateTime? ValueDate { get; set; }    // DTVAL
 }
 
-// TODO: RetroApprovalDto removed - will handle direct DB operations later
+public class RetroCalculationRequestDto
+{
+    public string PropertyId { get; set; } = string.Empty;
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
+    public List<int> ChargeTypes { get; set; } = new();
+    public int JobNumber { get; set; }        // JOBNUM
+}
