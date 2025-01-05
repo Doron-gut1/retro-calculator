@@ -74,6 +74,52 @@ public class RetroService : IRetroService
         await cleanupCommand.ExecuteNonQueryAsync();
     }
 
+    private async Task InsertInitialData(SqlConnection connection, RetroCalculationRequestDto request, PropertyDto propertyData)
+    {
+        // Insert initial row with jobnum and sugts 1010
+        var insertCommand = new SqlCommand(@"
+            INSERT INTO Temparnmforat (
+                hs, mspkod, sugts, 
+                gdl1, trf1, gdl2, trf2, gdl3, trf3, gdl4, trf4,
+                gdl5, trf5, gdl6, trf6, gdl7, trf7, gdl8, trf8,
+                hdtme, hdtad, jobnum, valdate, valdatesof
+            ) VALUES (
+                @hs, @mspkod, @sugts,
+                @gdl1, @trf1, @gdl2, @trf2, @gdl3, @trf3, @gdl4, @trf4,
+                @gdl5, @trf5, @gdl6, @trf6, @gdl7, @trf7, @gdl8, @trf8,
+                @hdtme, @hdtad, @jobnum, @valdate, @valdatesof
+            )", connection);
+
+        insertCommand.Parameters.AddWithValue("@hs", request.PropertyId);
+        insertCommand.Parameters.AddWithValue("@mspkod", propertyData.PayerId);
+        insertCommand.Parameters.AddWithValue("@sugts", 1010); // קוד קבוע לרטרו
+        insertCommand.Parameters.AddWithValue("@hdtme", request.StartDate);
+        insertCommand.Parameters.AddWithValue("@hdtad", request.EndDate);
+        insertCommand.Parameters.AddWithValue("@jobnum", request.JobNumber);
+        insertCommand.Parameters.AddWithValue("@valdate", propertyData.ValidFrom ?? (object)DBNull.Value);
+        insertCommand.Parameters.AddWithValue("@valdatesof", propertyData.ValidTo ?? (object)DBNull.Value);
+
+        // Add sizes and tariffs
+        insertCommand.Parameters.AddWithValue("@gdl1", propertyData.Size1);
+        insertCommand.Parameters.AddWithValue("@trf1", propertyData.Tariff1);
+        insertCommand.Parameters.AddWithValue("@gdl2", propertyData.Size2);
+        insertCommand.Parameters.AddWithValue("@trf2", propertyData.Tariff2);
+        insertCommand.Parameters.AddWithValue("@gdl3", propertyData.Size3);
+        insertCommand.Parameters.AddWithValue("@trf3", propertyData.Tariff3);
+        insertCommand.Parameters.AddWithValue("@gdl4", propertyData.Size4);
+        insertCommand.Parameters.AddWithValue("@trf4", propertyData.Tariff4);
+        insertCommand.Parameters.AddWithValue("@gdl5", propertyData.Size5);
+        insertCommand.Parameters.AddWithValue("@trf5", propertyData.Tariff5);
+        insertCommand.Parameters.AddWithValue("@gdl6", propertyData.Size6);
+        insertCommand.Parameters.AddWithValue("@trf6", propertyData.Tariff6);
+        insertCommand.Parameters.AddWithValue("@gdl7", propertyData.Size7);
+        insertCommand.Parameters.AddWithValue("@trf7", propertyData.Tariff7);
+        insertCommand.Parameters.AddWithValue("@gdl8", propertyData.Size8);
+        insertCommand.Parameters.AddWithValue("@trf8", propertyData.Tariff8);
+
+        await insertCommand.ExecuteNonQueryAsync();
+    }
+
     public async Task<DataTable> CalculateRetroAsync(
         RetroCalculationRequestDto request,
         string odbcName)
@@ -95,9 +141,51 @@ public class RetroService : IRetroService
             throw new InvalidOperationException("Property is locked by another process");
         }
 
-        await CleanupTempData(connection, request.PropertyId, request.JobNumber);
+        // Get property data
+        var propertyCommand = new SqlCommand(@"
+            SELECT 
+                hs.mspkod, 
+                hs.godel, hs.gdl2, hs.gdl3, hs.gdl4, hs.gdl5, hs.gdl6, hs.gdl7, hs.gdl8,
+                hs.mas, hs.mas2, hs.mas3, hs.mas4, hs.mas5, hs.mas6, hs.mas7, hs.mas8,
+                hs.valdate, hs.valdatesof
+            FROM hs 
+            WHERE hs.hskod = @propertyId", connection);
+        propertyCommand.Parameters.AddWithValue("@propertyId", request.PropertyId);
 
-        // Insert initial calculation request
+        using var reader = await propertyCommand.ExecuteReaderAsync();
+        if (!await reader.ReadAsync())
+        {
+            throw new InvalidOperationException($"Property {request.PropertyId} not found");
+        }
+
+        var propertyData = new PropertyDto
+        {
+            PropertyId = request.PropertyId,
+            PayerId = reader.GetInt32(reader.GetOrdinal("mspkod")),
+            Size1 = reader.GetDouble(reader.GetOrdinal("godel")),
+            Tariff1 = reader.GetInt32(reader.GetOrdinal("mas")),
+            Size2 = reader.GetDouble(reader.GetOrdinal("gdl2")),
+            Tariff2 = reader.GetInt32(reader.GetOrdinal("mas2")),
+            Size3 = reader.GetDouble(reader.GetOrdinal("gdl3")),
+            Tariff3 = reader.GetInt32(reader.GetOrdinal("mas3")),
+            Size4 = reader.GetDouble(reader.GetOrdinal("gdl4")),
+            Tariff4 = reader.GetInt32(reader.GetOrdinal("mas4")),
+            Size5 = reader.GetDouble(reader.GetOrdinal("gdl5")),
+            Tariff5 = reader.GetInt32(reader.GetOrdinal("mas5")),
+            Size6 = reader.GetDouble(reader.GetOrdinal("gdl6")),
+            Tariff6 = reader.GetInt32(reader.GetOrdinal("mas6")),
+            Size7 = reader.GetDouble(reader.GetOrdinal("gdl7")),
+            Tariff7 = reader.GetInt32(reader.GetOrdinal("mas7")),
+            Size8 = reader.GetDouble(reader.GetOrdinal("gdl8")),
+            Tariff8 = reader.GetInt32(reader.GetOrdinal("mas8")),
+            ValidFrom = reader.IsDBNull(reader.GetOrdinal("valdate")) ? null : reader.GetDateTime(reader.GetOrdinal("valdate")),
+            ValidTo = reader.IsDBNull(reader.GetOrdinal("valdatesof")) ? null : reader.GetDateTime(reader.GetOrdinal("valdatesof"))
+        };
+
+        await CleanupTempData(connection, request.PropertyId, request.JobNumber);
+        await InsertInitialData(connection, request, propertyData);
+
+        // Run preparation procedures
         await connection.ExecuteCommandAsync($"""
             EXEC [dbo].[PrepareRetroData] '{request.PropertyId}', 0;
             EXEC [dbo].[MultiplyTempArnmforatRows] '{request.PropertyId}', '{string.Join(", ", request.ChargeTypes)}', 0;
