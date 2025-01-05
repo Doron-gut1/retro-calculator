@@ -3,12 +3,6 @@ namespace RetroCalculator.Api.Models.DTOs;
 public class PropertyDto
 {
     public string PropertyId { get; set; } = string.Empty;
-<<<<<<< HEAD
-    public string Address { get; set; } = string.Empty;
-    public decimal Size { get; set; }
-    public string PayerId { get; set; } = string.Empty;
-    public string PayerName { get; set; } = string.Empty;
-=======
     public int PayerId { get; set; }            // mspkod
     public double PayerNumber { get; set; }     // maintz
     public string PayerName { get; set; } = string.Empty;  // fullname
@@ -34,7 +28,6 @@ public class PropertyDto
     // תאריכי תוקף
     public DateTime? ValidFrom { get; set; }    // valdate
     public DateTime? ValidTo { get; set; }      // valdatesof
->>>>>>> 4acc4d7968b49817f786494a640c2033e2afc7c5
 }
 
 public class PayerDto
@@ -50,14 +43,24 @@ public class RetroCalculationRequestDto
     public required DateTime StartDate { get; set; }
     public required DateTime EndDate { get; set; }
     public List<int> ChargeTypes { get; set; } = new();
+    public int JobNumber { get; set; }        // JOBNUM
 }
 
 public class RetroCalculationResultDto
 {
     public string PropertyId { get; set; } = string.Empty;
     public DateTime Period { get; set; }
-    public int ChargeType { get; set; }
-    public decimal Amount { get; set; }
-    public decimal Discount { get; set; }
+    public int ChargeTypeId { get; set; }     // SUGTS
+    public decimal PaymentAmount { get; set; } // PAYSUM
+    public decimal DiscountAmount { get; set; } // SUMHAN
     public decimal Total { get; set; }
+    public DateTime? CollectionDate { get; set; } // DTGV
+    public DateTime? ValueDate { get; set; }    // DTVAL
+}
+
+public class RetroApprovalDto
+{
+    public required string PropertyId { get; set; }
+    public required string Remarks { get; set; }    // HESBER
+    public int JobNumber { get; set; }             // JOBNUM
 }
