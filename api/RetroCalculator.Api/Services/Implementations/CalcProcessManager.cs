@@ -12,14 +12,15 @@ public class CalcProcessManager : ICalcProcessManager
         _logger = logger;
     }
 
-    [DllImport("CalcRetroProcessManager.dll", CallingConvention = CallingConvention.StdCall)]
-    private static extern bool CalcRetroProcessManagerFunc(
+    // הפונקציה ב-DLL החיצוני
+    [DllImport("CalcRetroProcessManager.dll", EntryPoint = "CalcRetroProcessManager", CharSet = CharSet.Ansi)]
+    private static extern bool CalcRetroProcessManagerInternal(
         int moazaCode,
-        string userName,
-        string odbcName,
+        [MarshalAs(UnmanagedType.LPStr)] string userName,
+        [MarshalAs(UnmanagedType.LPStr)] string odbcName,
         int jobNum,
         int processType,
-        string propertyId);
+        [MarshalAs(UnmanagedType.LPStr)] string propertyId);
 
     public async Task<bool> CalculateRetroAsync(
         string odbcName,
@@ -34,22 +35,19 @@ public class CalcProcessManager : ICalcProcessManager
                 "Starting calculation: ODBC={OdbcName}, Job={JobNum}, Property={PropertyId}",
                 odbcName, jobNum, propertyId);
 
-            var result = await Task.Run(() =>
-                CalcRetroProcessManagerFunc(
-                    90,
+            return await Task.Run(() =>
+                CalcRetroProcessManagerInternal(
+                    90, // קוד מועצה קבוע
                     userName,
                     odbcName,
                     jobNum,
                     processType,
                     propertyId
                 ));
-
-            _logger.LogInformation("Calculation completed with result: {Result}", result);
-            return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in calculation");
+            _logger.LogError(ex, "Error executing DLL function");
             throw;
         }
     }
