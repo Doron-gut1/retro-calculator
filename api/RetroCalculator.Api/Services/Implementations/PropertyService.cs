@@ -1,5 +1,4 @@
 using Microsoft.Data.SqlClient;
-using RetroCalculator.Api.Models;
 using RetroCalculator.Api.Models.DTOs;
 using RetroCalculator.Api.Services.Interfaces;
 
@@ -49,8 +48,16 @@ public class PropertyService : IPropertyService
                 },
                 SizesAndTariffs = new List<SizeAndTariffDto>
                 {
-                    new() { Index = 1, Size = (float)reader.GetDouble(4), TariffId = reader.GetInt32(5) },
-                    new() { Index = 2, Size = (float)reader.GetDouble(6), TariffId = reader.GetInt32(7) }
+                    new() { 
+                        Index = 1, 
+                        Size = reader.IsDBNull(4) ? null : (float)reader.GetDouble(4),
+                        TariffId = reader.IsDBNull(5) ? null : reader.GetInt32(5)
+                    },
+                    new() {
+                        Index = 2,
+                        Size = reader.IsDBNull(6) ? null : (float)reader.GetDouble(6),
+                        TariffId = reader.IsDBNull(7) ? null : reader.GetInt32(7)
+                    }
                 },
                 ValidFrom = reader.IsDBNull(8) ? null : reader.GetDateTime(8),
                 ValidTo = reader.IsDBNull(9) ? null : reader.GetDateTime(9)
@@ -74,7 +81,8 @@ public class PropertyService : IPropertyService
                 "SELECT COUNT(*) FROM hs WHERE hskod = @id", connection);
 
             command.Parameters.AddWithValue("@id", id);
-            var count = (int)await command.ExecuteScalarAsync();
+            var result = await command.ExecuteScalarAsync();
+            var count = result != null ? Convert.ToInt32(result) : 0;
 
             return count > 0;
         }
@@ -98,7 +106,8 @@ public class PropertyService : IPropertyService
                 WHERE hs = @propertyId", connection);
 
             command.Parameters.AddWithValue("@propertyId", propertyId);
-            var count = (int)await command.ExecuteScalarAsync();
+            var result = await command.ExecuteScalarAsync();
+            var count = result != null ? Convert.ToInt32(result) : 0;
 
             return count > 0;
         }
