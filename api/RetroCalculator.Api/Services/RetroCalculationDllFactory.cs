@@ -13,25 +13,7 @@ public class RetroCalculationDllFactory : IRetroCalculationDllFactory
 
     public IRetroCalculationDll Create(string odbcConnectionString, int jobNumber, string propertyId = "")
     {
-        try
-        {
-            // TODO: Load DLL and create instance
-            // var assembly = Assembly.LoadFrom("path_to_dll/CalcArnProcessManager.dll");
-            // var retroType = assembly.GetType("Namespace.Retro");
-            // var instance = Activator.CreateInstance(retroType,
-            //     moazaCode: _configuration.GetValue<int>("RetroCalculation:MoazaCode"),
-            //     userName: "system",
-            //     odbcName: odbcConnectionString,
-            //     Jobnum: jobNumber,
-            //     processType: 1,
-            //     Hskod: propertyId);
-
-            // return new RetroCalculationDllWrapper(instance);
-            throw new NotImplementedException("DLL integration not implemented yet");
-        }
-        catch (Exception ex)
-        {
-            throw new Exception("Failed to create DLL instance", ex);
-        }
+        // TODO: Implement DLL loading and instance creation
+        throw new NotImplementedException("DLL integration not implemented yet");
     }
 }

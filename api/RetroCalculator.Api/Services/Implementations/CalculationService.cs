@@ -1,3 +1,4 @@
+using Microsoft.Data.SqlClient;
 using RetroCalculator.Api.Services.Interfaces;
 
 namespace RetroCalculator.Api.Services.Implementations;
@@ -5,28 +6,95 @@ namespace RetroCalculator.Api.Services.Implementations;
 public class CalculationService : ICalculationService
 {
     private readonly ILogger<CalculationService> _logger;
+    private readonly string _connectionString;
+    private readonly IRetroCalculationDllFactory _dllFactory;
 
-    public CalculationService(ILogger<CalculationService> logger)
+    public CalculationService(
+        ILogger<CalculationService> logger,
+        IConfiguration configuration,
+        IRetroCalculationDllFactory dllFactory)
     {
         _logger = logger;
+        _connectionString = configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string is missing");
+        _dllFactory = dllFactory;
     }
 
-    public async Task<bool> PerformCalculation(string propertyId)
+    public async Task InitializeCalculationAsync(string propertyId, int jobNumber)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        // Clear existing calculations
+        using (var command = new SqlCommand(
+            "DELETE FROM Temparnmforat WHERE hs = @propertyId", connection))
+        {
+            command.Parameters.AddWithValue("@propertyId", propertyId);
+            await command.ExecuteNonQueryAsync();
+        }
+
+        // Get property details
+        using (var command = new SqlCommand(@"
+            SELECT mspkod FROM hs WHERE hskod = @propertyId", connection))
+        {
+            command.Parameters.AddWithValue("@propertyId", propertyId);
+            var mspkod = await command.ExecuteScalarAsync();
+
+            if (mspkod == null)
+            {
+                throw new InvalidOperationException($"Property {propertyId} not found");
+            }
+
+            // Initialize calculation
+            using var initCommand = new SqlCommand(@"
+                INSERT INTO Temparnmforat (hs, mspkod, sugts, hdtme, hdtad, jobnum)
+                VALUES (@propertyId, @mspkod, 1010, @date, @date, @jobnum)", connection);
+
+            initCommand.Parameters.AddWithValue("@propertyId", propertyId);
+            initCommand.Parameters.AddWithValue("@mspkod", mspkod);
+            initCommand.Parameters.AddWithValue("@date", DateTime.Today);
+            initCommand.Parameters.AddWithValue("@jobnum", jobNumber);
+
+            await initCommand.ExecuteNonQueryAsync();
+        }
+    }
+
+    public async Task<bool> RunRetroCalculationAsync(int jobNumber, string odbcConnectionString)
     {
         try
         {
-            // טעינת ה-DLL והפעלת הפונקציה הנדרשת
-            dynamic calcManager = Activator.CreateInstance(Type.GetTypeFromProgID("CalcArnProcessManager"));
-            
-            // הפעלת הפונקציה הנדרשת
-            calcManager.CalcRetroProcessManager("SYSTEM", "SYSTEM", 1, 1, propertyId);
-            
-            return true;
+            using var dll = _dllFactory.Create(odbcConnectionString, jobNumber);
+            var (success, error) = dll.CalculateRetro();
+
+            if (!success)
+            {
+                _logger.LogError("DLL calculation failed: {Error}", error);
+            }
+
+            return success;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "שגיאה בהפעלת CalcArnProcessManager");
+            _logger.LogError(ex, "Error running retro calculation for job {JobNumber}", jobNumber);
             return false;
         }
+    }
+
+    public async Task<bool> ValidatePeriodAsync(DateTime startDate, DateTime endDate)
+    {
+        await using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+
+        using var command = new SqlCommand(@"
+            SELECT COUNT(*) 
+            FROM sagur 
+            WHERE mnt BETWEEN 
+                dbo.GetMntByDate(@startDate) AND 
+                dbo.GetMntByDate(@endDate)", connection);
+
+        command.Parameters.AddWithValue("@startDate", startDate);
+        command.Parameters.AddWithValue("@endDate", endDate);
+
+        var count = (int)await command.ExecuteScalarAsync();
+        return count > 0;
     }
 }
