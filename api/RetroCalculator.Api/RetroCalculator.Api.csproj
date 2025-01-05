@@ -4,35 +4,20 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Platforms>AnyCPU</Platforms>
-    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.0" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
-  <ItemGroup>
-    <None Update="CalcArnProcess.dll;OdbcConverter.dll">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-</ItemGroup>
-    <Reference Include="CalcArnProcess">
-      <HintPath>$(ProjectDir)CalcArnProcess.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="OdbcConverter">
-      <HintPath>$(ProjectDir)OdbcConverter.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.5" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="CalcArnProcess.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="OdbcConverter.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 
