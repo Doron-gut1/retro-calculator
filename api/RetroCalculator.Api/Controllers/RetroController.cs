@@ -11,7 +11,7 @@ public class RetroController : ControllerBase
 {
     private readonly IRetroService _retroService;
     private readonly ILogger<RetroController> _logger;
-    private const string DefaultOdbcName = "EprArnona";
+    private const string DefaultOdbcName = "brngviadev";
 
     public RetroController(
         IRetroService retroService,
