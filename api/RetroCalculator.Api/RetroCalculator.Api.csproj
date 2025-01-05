@@ -15,9 +15,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="lib\*.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <Reference Include="OdbcConverter">
+      <HintPath>OdbcConverter.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>
