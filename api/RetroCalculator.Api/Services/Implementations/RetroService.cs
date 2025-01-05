@@ -75,43 +75,38 @@ public class RetroService : IRetroService
             await cleanupCommand.ExecuteNonQueryAsync();
             _logger.LogInformation("Cleaned up old data");
 
-            // הכנסת שורה בסיסית לכל סוג חיוב
-            foreach (var sugts in request.ChargeTypes)
+            // הכנסת שורה בסיסית
+            var insertCommand = new SqlCommand(@"
+                INSERT INTO Temparnmforat (
+                    hs, mspkod, sugts, 
+                    gdl1, trf1, gdl2, trf2, gdl3, trf3, gdl4, trf4,
+                    gdl5, trf5, gdl6, trf6, gdl7, trf7, gdl8, trf8,
+                    hdtme, hdtad, jobnum, valdate, valdatesof
+                ) VALUES (
+                    @hs, @mspkod, @sugts,
+                    @gdl1, @trf1, @gdl2, @trf2, @gdl3, @trf3, @gdl4, @trf4,
+                    @gdl5, @trf5, @gdl6, @trf6, @gdl7, @trf7, @gdl8, @trf8,
+                    @hdtme, @hdtad, @jobnum, @valdate, @valdatesof
+                )", connection);
+
+            insertCommand.Parameters.AddWithValue("@hs", request.PropertyId);
+            insertCommand.Parameters.AddWithValue("@mspkod", 0);
+            insertCommand.Parameters.AddWithValue("@sugts", 1010);
+            insertCommand.Parameters.AddWithValue("@hdtme", request.StartDate);
+            insertCommand.Parameters.AddWithValue("@hdtad", request.EndDate);
+            insertCommand.Parameters.AddWithValue("@jobnum", jobNum);
+            insertCommand.Parameters.AddWithValue("@valdate", DBNull.Value);
+            insertCommand.Parameters.AddWithValue("@valdatesof", DBNull.Value);
+
+            for (var i = 1; i <= 8; i++)
             {
-                _logger.LogInformation("Processing charge type: {ChargeType}", sugts);
-
-                var insertCommand = new SqlCommand(@"
-                    INSERT INTO Temparnmforat (
-                        hs, mspkod, sugts, 
-                        gdl1, trf1, gdl2, trf2, gdl3, trf3, gdl4, trf4,
-                        gdl5, trf5, gdl6, trf6, gdl7, trf7, gdl8, trf8,
-                        hdtme, hdtad, jobnum, valdate, valdatesof
-                    ) VALUES (
-                        @hs, @mspkod, @sugts,
-                        @gdl1, @trf1, @gdl2, @trf2, @gdl3, @trf3, @gdl4, @trf4,
-                        @gdl5, @trf5, @gdl6, @trf6, @gdl7, @trf7, @gdl8, @trf8,
-                        @hdtme, @hdtad, @jobnum, @valdate, @valdatesof
-                    )", connection);
-
-                insertCommand.Parameters.AddWithValue("@hs", request.PropertyId);
-                insertCommand.Parameters.AddWithValue("@mspkod", 0);
-                insertCommand.Parameters.AddWithValue("@sugts", sugts);
-                insertCommand.Parameters.AddWithValue("@hdtme", request.StartDate);
-                insertCommand.Parameters.AddWithValue("@hdtad", request.EndDate);
-                insertCommand.Parameters.AddWithValue("@jobnum", jobNum);
-                insertCommand.Parameters.AddWithValue("@valdate", DBNull.Value);
-                insertCommand.Parameters.AddWithValue("@valdatesof", DBNull.Value);
-
-                for (var i = 1; i <= 8; i++)
-                {
-                    var size = request.SizesAndTariffs.FirstOrDefault(s => s.Index == i);
-                    insertCommand.Parameters.AddWithValue($"@gdl{i}", size?.Size ?? 0);
-                    insertCommand.Parameters.AddWithValue($"@trf{i}", size?.TariffCode ?? 0);
-                }
-
-                await insertCommand.ExecuteNonQueryAsync();
-                _logger.LogInformation("Inserted base row for charge type {ChargeType}", sugts);
+                var size = request.SizesAndTariffs.FirstOrDefault(s => s.Index == i);
+                insertCommand.Parameters.AddWithValue($"@gdl{i}", size?.Size ?? 0);
+                insertCommand.Parameters.AddWithValue($"@trf{i}", size?.TariffCode ?? 0);
             }
+
+            await insertCommand.ExecuteNonQueryAsync();
+            _logger.LogInformation("Inserted base row with charge type 1010");
 
             // הפעלת פרוצדורות הכנה
             _logger.LogInformation("Running preparation procedures");
@@ -129,23 +124,28 @@ public class RetroService : IRetroService
             await multiplyCommand.ExecuteNonQueryAsync();
             _logger.LogInformation("MultiplyTempArnmforatRows completed");
 
-            // הפעלת החישוב
+            // הפעלת החישוב באמצעות ה-DLL
             _logger.LogInformation("Starting DLL calculation");
             
+            // נסיון הרצה ישירה
             try {
-                var success = await Task.Run(() =>
-                    CalcRetroProcessManager(
-                        90, // קוד מועצה קבוע
-                        "RetroWeb", // שם משתמש קבוע
-                        odbcName,
-                        jobNum,
-                        1, // סוג תהליך קבוע
-                        request.PropertyId
-                    ));
+                _logger.LogInformation("Calling DLL with: ODBC={OdbcName}, JobNum={JobNum}, PropertyId={PropertyId}", 
+                    odbcName, jobNum, request.PropertyId);
 
-                if (!success)
+                var result = CalcRetroProcessManager(
+                    90,
+                    "RetroWeb",
+                    odbcName,
+                    jobNum,
+                    1,
+                    request.PropertyId
+                );
+
+                _logger.LogInformation("DLL calculation result: {Result}", result);
+
+                if (!result)
                 {
-                    _logger.LogError("DLL calculation failed");
+                    _logger.LogError("DLL calculation returned false");
                     throw new InvalidOperationException("DLL calculation failed");
                 }
             }
