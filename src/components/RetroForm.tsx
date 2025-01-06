@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect } from 'react';
 import { useRetroStore } from '@/store';
+import { useSession } from '@/hooks/useSession';
 import { useErrorStore } from '@/lib/ErrorManager';
+import { retroApi } from '@/services/api';
 import { PropertySearch } from './Form/PropertySearch';
 import { PayerInfo } from './Form/PayerInfo';
 import { DateRange } from './Form/DateRange';
@@ -12,36 +14,104 @@ import { AnimatedAlert } from './UX/AnimatedAlert';
 import { LoadingSpinner } from './UX/LoadingSpinner';
 
 export const RetroForm: React.FC = () => {
+  // שימוש בהוק הסשן
+  useSession();
+
   const {
+    odbcName,
+    jobNumber,
     property,
     startDate,
     endDate,
     selectedChargeTypes,
     results,
     isLoading,
-    setLoading
+    setLoading,
+    setResults
   } = useRetroStore();
 
-  const { errors, clearErrors } = useErrorStore();
+  const { errors, clearErrors, addError } = useErrorStore();
+
+  // האם הסשן מוכן
+  const isSessionReady = odbcName && jobNumber;
 
   const handleCalculate = useCallback(async () => {
+    if (!isSessionReady) {
+      addError({
+        field: 'calculation',
+        type: 'error',
+        message: 'לא ניתן לבצע חישוב ללא פרמטרים מהאקסס'
+      });
+      return;
+    }
+
+    if (!property) {
+      addError({
+        field: 'calculation',
+        type: 'error',
+        message: 'יש לבחור נכס'
+      });
+      return;
+    }
+
+    if (!startDate || !endDate) {
+      addError({
+        field: 'calculation',
+        type: 'error',
+        message: 'יש לבחור תאריכי התחלה וסיום'
+      });
+      return;
+    }
+
+    if (selectedChargeTypes.length === 0) {
+      addError({
+        field: 'calculation',
+        type: 'error',
+        message: 'יש לבחור לפחות סוג חיוב אחד'
+      });
+      return;
+    }
+
     clearErrors();
     setLoading(true);
 
     try {
-      // כאן יתווסף החישוב האמיתי מול השרת
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      const response = await retroApi.calculateRetro({
+        propertyId: property.id,
+        startDate: startDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0],
+        chargeTypes: selectedChargeTypes.map(Number),
+        jobNumber: jobNumber
+      }, odbcName);
+
+      setResults(response.rows);
     } catch (error) {
-      console.error('שגיאה בחישוב:', error);
+      if (error instanceof Error) {
+        addError({
+          field: 'calculation',
+          type: 'error',
+          message: error.message
+        });
+      }
     } finally {
       setLoading(false);
     }
-  }, [clearErrors, setLoading]);
+  }, [isSessionReady, property, startDate, endDate, selectedChargeTypes, jobNumber, odbcName, clearErrors, setLoading, addError]);
 
   useEffect(() => {
     return () => clearErrors();
   }, [clearErrors]);
+
+  if (!isSessionReady) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="bg-white p-8 rounded-lg shadow-lg text-center space-y-4">
+          <h2 className="text-xl font-semibold text-gray-800">שגיאה</h2>
+          <p className="text-gray-600">הדף חייב להיפתח מתוך האקסס</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4 p-4 bg-gray-50 min-h-screen">
