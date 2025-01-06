@@ -1,8 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Property, CalculationResult, ValidationError } from '../types';
+import type { Property, CalculationResult } from '../types';
+import type { SessionParams } from '../types/session';
 
-interface RetroState {
+interface RetroState extends SessionParams {
   property: Property | null;
   selectedChargeTypes: string[];
   startDate: Date | null;
@@ -12,6 +13,7 @@ interface RetroState {
 }
 
 interface Actions {
+  setSessionParams: (params: SessionParams) => void;
   setProperty: (property: Property | null) => void;
   setSelectedChargeTypes: (types: string[]) => void;
   setStartDate: (dateStr: string) => void;
@@ -19,11 +21,11 @@ interface Actions {
   setResults: (results: CalculationResult[]) => void;
   setLoading: (isLoading: boolean) => void;
   reset: () => void;
-  undo: () => void;
-  redo: () => void;
 }
 
 const initialState: RetroState = {
+  odbcName: null,
+  jobNumber: null,
   property: null,
   selectedChargeTypes: [],
   startDate: null,
@@ -33,17 +35,12 @@ const initialState: RetroState = {
 };
 
 const validateDate = (dateStr: string): Date | null => {
-  // בדיקה שהפורמט נכון (YYYY-MM-DD)
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return null;
 
   const [year, month, day] = dateStr.split('-').map(Number);
-
-  // בדיקת טווח שנים הגיוני (1900-2100)
   if (year < 1900 || year > 2100) return null;
 
   const date = new Date(year, month - 1, day);
-
-  // בדיקה שהתאריך תקין
   if (
     date.getFullYear() !== year ||
     date.getMonth() !== month - 1 ||
@@ -57,6 +54,8 @@ export const useRetroStore = create(
   persist<RetroState & Actions>(
     (set, get) => ({
       ...initialState,
+
+      setSessionParams: (params) => set(params),
 
       setProperty: (property) => set({ property }),
 
@@ -115,20 +114,12 @@ export const useRetroStore = create(
       setLoading: (isLoading) => set({ isLoading }),
       
       reset: () => set(initialState),
-      
-      undo: () => {
-        // יתווסף בהמשך
-        console.log('undo');
-      },
-      
-      redo: () => {
-        // יתווסף בהמשך
-        console.log('redo');
-      },
     }),
     {
       name: 'retro-calculator-storage',
       partialize: (state) => ({
+        odbcName: state.odbcName,
+        jobNumber: state.jobNumber,
         property: state.property,
         selectedChargeTypes: state.selectedChargeTypes,
         startDate: state.startDate,
