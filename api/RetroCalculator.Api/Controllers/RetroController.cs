@@ -88,14 +88,17 @@ public class RetroController : ControllerBase
                 odbcName, jobNum);
 
             // בדיקת תקינות ה-ODBC
-            var testConnection = _retroService.ValidateOdbcConnection(odbcName);
-            if (!testConnection)
+            if (!_retroService.ValidateOdbcConnection(odbcName))
             {
                 return BadRequest(new { error = "Invalid ODBC connection" });
             }
 
-            // הפניה לדף הראשי של האפליקציה
-            return Redirect($"/retro-calculator?odbc={odbcName}&job={jobNum}");
+            // במקום Redirect, מחזירים הצלחה - הפרונט כבר פתוח
+            return Ok(new { 
+                success = true,
+                odbcName = odbcName,
+                jobNum = jobNum
+            });
         }
         catch (Exception ex)
         {
