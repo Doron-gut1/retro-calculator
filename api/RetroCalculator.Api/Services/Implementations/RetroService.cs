@@ -29,6 +29,27 @@ public class RetroService : IRetroService, IDisposable
             ?? throw new InvalidOperationException("Failed to create OdbcConverter instance");
     }
 
+    public bool ValidateOdbcConnection(string odbcName)
+    {
+        try
+        {
+            var connectionString = _odbcConverter.GetSqlConnectionString(odbcName, "", "");
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                return false;
+            }
+
+            using var connection = new SqlConnection(connectionString);
+            connection.Open();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error validating ODBC connection: {OdbcName}", odbcName);
+            return false;
+        }
+    }
+
     private async Task<SqlConnection> GetConnectionAsync(string odbcName)
     {
         if (string.IsNullOrEmpty(_connectionString))
@@ -91,8 +112,6 @@ public class RetroService : IRetroService, IDisposable
             throw new InvalidOperationException($"Property {request.PropertyId} not found");
         }
 
-        var jobNum = request.JobNumber > 0 ? request.JobNumber : new Random().Next(1000000, 9999999);
-
         try
         {
             // Check if property is locked
@@ -106,7 +125,7 @@ public class RetroService : IRetroService, IDisposable
                 throw new InvalidOperationException("Property is locked by another process");
             }
 
-            await CleanupTempData(connection, request.PropertyId, jobNum);
+            await CleanupTempData(connection, request.PropertyId, request.JobNumber);
 
             // Insert initial data with correct mspkod
             using var insertCommand = new SqlCommand(@"
@@ -127,7 +146,7 @@ public class RetroService : IRetroService, IDisposable
             insertCommand.Parameters.AddWithValue("@sugts", 1010);
             insertCommand.Parameters.AddWithValue("@hdtme", request.StartDate);
             insertCommand.Parameters.AddWithValue("@hdtad", request.EndDate);
-            insertCommand.Parameters.AddWithValue("@jobnum", jobNum);
+            insertCommand.Parameters.AddWithValue("@jobnum", request.JobNumber);
             insertCommand.Parameters.AddWithValue("@valdate", DBNull.Value);
             insertCommand.Parameters.AddWithValue("@valdatesof", DBNull.Value);
             insertCommand.Parameters.AddWithValue("@hkarn", 0); // Default to no special arrangement
@@ -156,7 +175,7 @@ public class RetroService : IRetroService, IDisposable
             var success = await _calcProcessManager.CalculateRetroAsync(
                 odbcName,
                 "RetroWeb",
-                jobNum,
+                request.JobNumber,
                 1,
                 request.PropertyId);
 
@@ -167,7 +186,7 @@ public class RetroService : IRetroService, IDisposable
             }
 
             _logger.LogInformation("DLL calculation completed successfully");
-            return await GetRetroResultsDataTableAsync(request.PropertyId, jobNum, connection);
+            return await GetRetroResultsDataTableAsync(request.PropertyId, request.JobNumber, connection);
         }
         catch (Exception ex)
         {
@@ -176,7 +195,7 @@ public class RetroService : IRetroService, IDisposable
             using var cleanupCommand = new SqlCommand(
                 "DELETE FROM Temparnmforat WHERE jobnum = @jobnum",
                 connection);
-            cleanupCommand.Parameters.AddWithValue("@jobnum", jobNum);
+            cleanupCommand.Parameters.AddWithValue("@jobnum", request.JobNumber);
             await cleanupCommand.ExecuteNonQueryAsync();
 
             throw;
