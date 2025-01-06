@@ -3,20 +3,27 @@ using RetroCalculator.Api.Services.Interfaces;
 
 namespace RetroCalculator.Api.Services.Implementations;
 
-// המחלקה שמייצגת את ClsReturn
 public class RetroResult
 {
     public int StatusCode { get; set; }
-    public string StatusText { get; set; }
-    public object Data { get; set; }
-    public object Error { get; set; }
+    public required string StatusText { get; set; }
+    public required object Data { get; set; }
+    public required object Error { get; set; }
+
+    public RetroResult()
+    {
+        StatusText = string.Empty;
+        Data = new object();
+        Error = new object();
+    }
 }
 
-public class CalcProcessManager : ICalcProcessManager
+public class CalcProcessManager : ICalcProcessManager, IDisposable
 {
     private readonly ILogger<CalcProcessManager> _logger;
     private readonly string _dllPath;
-    private dynamic _retroInstance;
+    private dynamic? _retroInstance;
+    private bool _disposed;
 
     public CalcProcessManager(ILogger<CalcProcessManager> logger, IWebHostEnvironment environment)
     {
@@ -38,11 +45,12 @@ public class CalcProcessManager : ICalcProcessManager
     {
         try
         {
+            await Task.Yield(); // Make method truly async
+            
             _logger.LogInformation(
                 "Starting retro calculation: ODBC={OdbcName}, Job={JobNum}, Property={PropertyId}",
                 odbcName, jobNum, propertyId);
 
-            // טעינת ה-DLL באופן דינמי
             var assembly = System.Reflection.Assembly.LoadFrom(_dllPath);
             var retroType = assembly.GetType("CalcArnProcess.Retro");
 
@@ -51,7 +59,6 @@ public class CalcProcessManager : ICalcProcessManager
                 throw new InvalidOperationException("Could not find Retro type in DLL");
             }
 
-            // יצירת מופע חדש
             _retroInstance = Activator.CreateInstance(retroType,
                 90, // moazaCode
                 userName,
@@ -60,14 +67,17 @@ public class CalcProcessManager : ICalcProcessManager
                 processType,
                 propertyId);
 
-            // קריאה לפונקציה CalculateRetro
-            dynamic result = _retroInstance.CalculateRetro();
+            if (_retroInstance == null)
+            {
+                throw new InvalidOperationException("Failed to create Retro instance");
+            }
 
-            // בדיקת התוצאה
+            dynamic result = _retroInstance.CalculateRetro();
             (bool Success, string ErrorDescription) success = result;
+
             if (!success.Success)
             {
-               // _logger.LogError("Retro calculation failed: {Error}", result.ErrorDescription);
+                _logger.LogError("Retro calculation failed: {Error}", success.ErrorDescription);
             }
 
             return success.Success;
@@ -77,5 +87,31 @@ public class CalcProcessManager : ICalcProcessManager
             _logger.LogError(ex, "Error executing retro calculation");
             throw;
         }
+    }
+
+    public void Dispose()
+    {
+        if (!_disposed)
+        {
+            if (_retroInstance != null)
+            {
+                try
+                {
+                    // Attempt to dispose the retro instance if it implements IDisposable
+                    (_retroInstance as IDisposable)?.Dispose();
+                    _retroInstance = null;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error disposing retro instance");
+                }
+            }
+            _disposed = true;
+        }
+    }
+
+    ~CalcProcessManager()
+    {
+        Dispose();
     }
 }
