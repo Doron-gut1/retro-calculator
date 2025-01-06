@@ -46,16 +46,16 @@ public class RetroCalculationRequestDto
     public int JobNumber { get; set; }        // JOBNUM
 }
 
-public class RetroCalculationResultDto
-{
-    public string PropertyId { get; set; } = string.Empty;
-    public string Period { get; set; } = string.Empty;  // dbo.mntname(MNT)
-    public int ChargeTypeId { get; set; }     // SUGTS
-    public decimal PaymentAmount { get; set; } // PAYSUM
-    public decimal DiscountAmount { get; set; } // SUMHAN
-    public decimal Total { get; set; }
-    public DateTime? CollectionDate { get; set; } // DTGV
-    public DateTime? ValueDate { get; set; }    // DTVAL
-}
+//public class RetroCalculationResultDto
+//{
+//    public string PropertyId { get; set; } = string.Empty;
+//    public string Period { get; set; } = string.Empty;  // dbo.mntname(MNT)
+//    public int ChargeTypeId { get; set; }     // SUGTS
+//    public decimal PaymentAmount { get; set; } // PAYSUM
+//    public decimal DiscountAmount { get; set; } // SUMHAN
+//    public decimal Total { get; set; }
+//    public DateTime? CollectionDate { get; set; } // DTGV
+//    public DateTime? ValueDate { get; set; }    // DTVAL
+//}
 
 // TODO: RetroApprovalDto removed - will handle direct DB operations later
