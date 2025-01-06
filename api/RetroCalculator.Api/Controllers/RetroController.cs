@@ -76,113 +76,65 @@ public class RetroController : ControllerBase
         }
     }
 
-    [HttpGet("calculate-from-access")]
-    public async Task<ActionResult> CalculateRetroFromAccess(
+    [HttpGet("open-from-access")]
+    public ActionResult OpenFromAccess(
         [FromQuery] string odbcName,
-        [FromQuery] int jobNum,
-        [FromQuery] string propertyId,
-        [FromQuery] DateTime startDate,
-        [FromQuery] DateTime endDate)
+        [FromQuery] int jobNum)
     {
         try 
         {
             _logger.LogInformation(
-                "Starting retro calculation from Access: odbc={OdbcName}, job={JobNum}, property={PropertyId}",
-                odbcName, jobNum, propertyId);
+                "Opening from Access: odbc={OdbcName}, job={JobNum}",
+                odbcName, jobNum);
 
-            var request = new RetroCalculationRequestDto
-            {
-                PropertyId = propertyId,
-                StartDate = startDate,
-                EndDate = endDate,
-                ChargeTypes = new List<int> { 1010 },  // ארנונה
-                JobNumber = jobNum
-            };
+            return Content($@"<!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset='utf-8'>
+                    <title>Retro Calculator</title>
+                    <script>
+                        // Store Access parameters
+                        localStorage.setItem('odbc_name', '{odbcName}');
+                        localStorage.setItem('job_num', '{jobNum}');
+                        localStorage.setItem('from_access', 'true');
+                        
+                        // Navigate to main app
+                        window.location.href = '/';
 
-            var results = await _retroService.CalculateRetroAsync(request, odbcName);
-            
-            return Content(GenerateHtmlResults(results), "text/html");
+                        // Setup window close handler
+                        window.onbeforeunload = function() {{
+                            if(window.opener) {{
+                                window.opener.location.reload();
+                            }}
+                        }};
+                    </script>
+                </head>
+                <body dir='rtl'>
+                    <p>טוען את המערכת...</p>
+                </body>
+                </html>", "text/html");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in Access retro calculation");
-            return Content($@"<html>
-                <head><meta charset='utf-8'></head>
+            _logger.LogError(ex, "Error opening from Access");
+            return Content($@"<!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset='utf-8'>
+                    <title>שגיאה</title>
+                </head>
                 <body dir='rtl'>
                     <h1>שגיאה</h1>
                     <p>{ex.Message}</p>
                     <script>
-                        setTimeout(() => {{if(window.opener){{window.close();}}}}, 5000);
+                        setTimeout(() => {{
+                            if(window.opener) {{
+                                window.close();
+                            }}
+                        }}, 5000);
                     </script>
                 </body>
-            </html>", "text/html");
+                </html>", "text/html");
         }
-    }
-
-    private string GenerateHtmlResults(DataTable results)
-    {
-        var html = new System.Text.StringBuilder();
-        html.Append(@"<html>
-            <head>
-                <meta charset='utf-8'>
-                <style>
-                    body { font-family: Arial, sans-serif; direction: rtl; }
-                    table { border-collapse: collapse; width: 100%; margin: 20px 0; }
-                    th, td { border: 1px solid black; padding: 8px; text-align: right; }
-                    th { background-color: #f2f2f2; }
-                    .actions { position: fixed; bottom: 20px; left: 20px; }
-                </style>
-                <script>
-                    function closeAndReturn() {
-                        if(window.opener) {
-                            window.close();
-                        }
-                    }
-                </script>
-            </head>
-            <body>
-                <h1>תוצאות חישוב רטרו</h1>");
-
-        html.Append("<table>");
-
-        // Add headers
-        html.Append("<tr>");
-        foreach (DataColumn col in results.Columns)
-        {
-            // התאמת שמות עמודות לעברית
-            var headerName = col.ColumnName switch
-            {
-                "mnt_display" => "תקופה",
-                "sugtsname" => "סוג חיוב",
-                "paysum" => "סכום",
-                "sumhan" => "הנחה",
-                "dtgv" => "ת.גביה",
-                "dtval" => "ת.ערך",
-                "payer_name" => "משלם",
-                _ => col.ColumnName
-            };
-            html.Append($"<th>{headerName}</th>");
-        }
-        html.Append("</tr>");
-
-        // Add data rows
-        foreach (DataRow row in results.Rows)
-        {
-            html.Append("<tr>");
-            foreach (DataColumn col in results.Columns)
-            {
-                var value = row[col]?.ToString() ?? "";
-                html.Append($"<td>{value}</td>");
-            }
-            html.Append("</tr>");
-        }
-
-        html.Append(@"</table>
-            <div class='actions'>
-                <button onclick='closeAndReturn()'>סגור</button>
-            </div>
-            </body></html>");
-
-        return html.ToString();
     }
 }
