@@ -64,7 +64,7 @@ public class RetroService : IRetroService, IDisposable
     }
 
     public async Task<DataTable> CalculateRetroAsync(
-        RetroCalculationRequest request,
+        RetroCalculationRequestDto request,
         string odbcName)
     {
         _logger.LogInformation(
@@ -91,7 +91,7 @@ public class RetroService : IRetroService, IDisposable
             throw new InvalidOperationException($"Property {request.PropertyId} not found");
         }
 
-        var jobNum = new Random().Next(1000000, 9999999);
+        var jobNum = request.JobNumber > 0 ? request.JobNumber : new Random().Next(1000000, 9999999);
 
         try
         {
@@ -130,13 +130,12 @@ public class RetroService : IRetroService, IDisposable
             insertCommand.Parameters.AddWithValue("@jobnum", jobNum);
             insertCommand.Parameters.AddWithValue("@valdate", DBNull.Value);
             insertCommand.Parameters.AddWithValue("@valdatesof", DBNull.Value);
-            insertCommand.Parameters.AddWithValue("@hkarn", request.Hkarn);
+            insertCommand.Parameters.AddWithValue("@hkarn", 0); // Default to no special arrangement
 
             for (var i = 1; i <= 8; i++)
             {
-                var size = request.SizesAndTariffs.FirstOrDefault(s => s.Index == i);
-                insertCommand.Parameters.AddWithValue($"@gdl{i}", size?.Size ?? 0);
-                insertCommand.Parameters.AddWithValue($"@trf{i}", size?.TariffCode ?? 0);
+                insertCommand.Parameters.AddWithValue($"@gdl{i}", 0);
+                insertCommand.Parameters.AddWithValue($"@trf{i}", 0);
             }
 
             await insertCommand.ExecuteNonQueryAsync();
