@@ -5,5 +5,5 @@ namespace RetroCalculator.Api.Services.Interfaces;
 
 public interface IRetroService : IDisposable
 {
-    Task<DataTable> CalculateRetroAsync(RetroCalculationRequest request, string odbcName);
+    Task<DataTable> CalculateRetroAsync(RetroCalculationRequestDto request, string odbcName);
 }
