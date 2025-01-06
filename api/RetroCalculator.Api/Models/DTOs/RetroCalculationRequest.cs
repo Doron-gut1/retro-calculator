@@ -2,16 +2,17 @@ namespace RetroCalculator.Api.Models.DTOs;
 
 public class RetroCalculationRequest
 {
-    public string PropertyId { get; set; } = string.Empty;
-    public DateTime StartDate { get; set; }
-    public DateTime EndDate { get; set; }
-    public List<int> ChargeTypes { get; set; } = new();
-    public List<SizeAndTariff> SizesAndTariffs { get; set; } = new();
+    public required string PropertyId { get; set; }
+    public required DateTime StartDate { get; set; }
+    public required DateTime EndDate { get; set; }
+    public required IEnumerable<int> ChargeTypes { get; set; }
+    public required IEnumerable<SizeAndTariff> SizesAndTariffs { get; set; }
+    public int Hkarn { get; set; } = 0; // הסדר ברירת מחדל - ללא הסדר
 }
 
 public class SizeAndTariff
 {
-    public int Index { get; set; }
-    public double Size { get; set; }
-    public int TariffCode { get; set; }
+    public required int Index { get; set; }
+    public required double Size { get; set; }
+    public required int TariffCode { get; set; }
 }
