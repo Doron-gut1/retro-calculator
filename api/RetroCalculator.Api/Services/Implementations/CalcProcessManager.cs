@@ -18,7 +18,7 @@ public class RetroResult
     }
 }
 
-public class CalcProcessManager : ICalcProcessManager, IDisposable
+public class CalcProcessManager : ICalcProcessManager
 {
     private readonly ILogger<CalcProcessManager> _logger;
     private readonly string _dllPath;
@@ -107,11 +107,7 @@ public class CalcProcessManager : ICalcProcessManager, IDisposable
                 }
             }
             _disposed = true;
+            GC.SuppressFinalize(this);
         }
-    }
-
-    ~CalcProcessManager()
-    {
-        Dispose();
     }
 }
