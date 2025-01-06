@@ -21,13 +21,26 @@ public class RetroController : ControllerBase
         _logger = logger;
     }
 
+    [HttpGet("hkarn-options")]
+    public ActionResult<IEnumerable<object>> GetHkarnOptions()
+    {
+        var options = new[]
+        {
+            new { Value = 0, Label = "ללא הסדר" },
+            new { Value = 1, Label = "ה.ק." },
+            new { Value = 7, Label = "ה.ק.באשראי" },
+            new { Value = 3, Label = "ה.ק. דרך הישוב" }
+        };
+
+        return Ok(options);
+    }
+
     [HttpPost("calculate")]
     public async Task<ActionResult<object>> CalculateRetro(
         [FromBody] RetroCalculationRequest request)
     {
         try
         {
-            // Basic validation
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -35,7 +48,6 @@ public class RetroController : ControllerBase
 
             var results = await _retroService.CalculateRetroAsync(request, DefaultOdbcName);
             
-            // Convert DataTable to a more JSON-friendly format
             var jsonResults = new
             {
                 Rows = from DataRow row in results.Rows
