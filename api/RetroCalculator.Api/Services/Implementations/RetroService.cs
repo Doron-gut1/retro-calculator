@@ -127,7 +127,8 @@ public class RetroService : IRetroService
             await connection.ExecuteCommandAsync(
                 $"EXEC [dbo].[MultiplyTempArnmforatRows] '{request.PropertyId}', '{chargeTypesStr}', 0");
 
-            // Calculate using DLL
+            
+            // הפעלת החישוב
             _logger.LogInformation("Starting DLL calculation");
             var success = await _calcProcessManager.CalculateRetroAsync(
                 odbcName,
@@ -138,15 +139,23 @@ public class RetroService : IRetroService
 
             if (!success)
             {
+                _logger.LogError("DLL calculation failed");
                 throw new InvalidOperationException("DLL calculation failed");
             }
 
+            _logger.LogInformation("DLL calculation completed successfully");
             return await GetRetroResultsAsync(request.PropertyId, jobNum, odbcName);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during retro calculation");
-            await CleanupTempData(connection, request.PropertyId, jobNum);
+
+            var cleanupCommand = new SqlCommand(
+                "DELETE FROM Temparnmforat WHERE jobnum = @jobnum",
+                connection);
+            cleanupCommand.Parameters.AddWithValue("@jobnum", jobNum);
+            await cleanupCommand.ExecuteNonQueryAsync();
+
             throw;
         }
     }
