@@ -1,2 +1,2 @@
-export { default as Alert } from './alert';
-export { default as Dialog } from './dialog';
+export * from './alert';
+export * from './dialog';
