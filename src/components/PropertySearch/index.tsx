@@ -2,12 +2,10 @@ import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 import { Property, PropertySearchProps } from '../../types/property';
 import SearchResults from './SearchResults';
-import PropertyDetails from './PropertyDetails';
 
 const PropertySearch: React.FC<PropertySearchProps> = ({ onPropertySelect }) => {
   const [propertyCode, setPropertyCode] = useState('');
   const [searchResults, setSearchResults] = useState<Property[]>([]);
-  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   
   const handleSearch = () => {
     // TODO: להוסיף חיבור לשרת
@@ -37,14 +35,8 @@ const PropertySearch: React.FC<PropertySearchProps> = ({ onPropertySelect }) => 
   };
 
   const handlePropertySelect = (property: Property) => {
-    setSelectedProperty(property);
     setSearchResults([]);
     onPropertySelect(property);
-  };
-
-  const handlePayerChange = () => {
-    // TODO: להוסיף לוגיקה להחלפת משלם
-    console.log('החלפת משלם');
   };
 
   return (
@@ -72,13 +64,6 @@ const PropertySearch: React.FC<PropertySearchProps> = ({ onPropertySelect }) => 
           onSelect={handlePropertySelect}
         />
       </div>
-      
-      {selectedProperty && (
-        <PropertyDetails 
-          property={selectedProperty}
-          onPayerChange={handlePayerChange}
-        />
-      )}
     </div>
   );
 };

@@ -24,8 +24,8 @@ export const RetroForm: React.FC = () => {
   const { errors, clearErrors } = useErrorSystem();
 
   const handleDateChange = useCallback((startDate: Date | null, endDate: Date | null) => {
-    if (startDate) setStartDate(startDate.toISOString());
-    if (endDate) setEndDate(endDate.toISOString());
+    setStartDate(startDate?.toISOString() || ''); 
+    setEndDate(endDate?.toISOString() || '');
   }, [setStartDate, setEndDate]);
 
   const handleChargeTypesChange = useCallback((types: string[]) => {
