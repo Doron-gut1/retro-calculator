@@ -1,4 +1,9 @@
 export interface RetroResultRow {
+  period: string;
+  chargeType: string;
+  amount: number;
+  discount: number;
+  total: number;
   mnt: string;
   mnt_display: string;
   sugts: number;
@@ -10,7 +15,7 @@ export interface RetroResultRow {
   hesber?: string;
 }
 
-export interface CalculationResult extends RetroResultRow {}
+export type CalculationResult = RetroResultRow;
 
 export interface RetroCalculationRequest {
   propertyId: string;
