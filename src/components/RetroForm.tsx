@@ -8,6 +8,7 @@ import { CalculationButtons } from './buttons';
 import { CalculationResults } from './results';
 import { AnimatedAlert } from './UX';
 import { LoadingSpinner } from './UX';
+import { Property } from '../types/property';
 
 export const RetroForm: React.FC = () => {
   const {
@@ -18,7 +19,8 @@ export const RetroForm: React.FC = () => {
     setLoading,
     setStartDate,
     setEndDate,
-    setSelectedChargeTypes
+    setSelectedChargeTypes,
+    setProperty
   } = useRetroStore();
 
   const { errors, clearErrors } = useErrorSystem();
@@ -31,6 +33,10 @@ export const RetroForm: React.FC = () => {
   const handleChargeTypesChange = useCallback((types: string[]) => {
     setSelectedChargeTypes(types);
   }, [setSelectedChargeTypes]);
+
+  const handlePropertySelect = useCallback((selectedProperty: Property) => {
+    setProperty(selectedProperty);
+  }, [setProperty]);
 
   const handleCalculate = useCallback(async () => {
     clearErrors();
@@ -61,7 +67,7 @@ export const RetroForm: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Property Search */}
           <div className="space-y-4">
-            <PropertySearch />
+            <PropertySearch onPropertySelect={handlePropertySelect} />
           </div>
 
           {/* Dates & Charge Types */}
@@ -76,7 +82,7 @@ export const RetroForm: React.FC = () => {
           {/* Action Buttons */}
           <div className="flex flex-col justify-end gap-2">
             <CalculationButtons
-              onCalculate={handleCalculate}
+              calculate={handleCalculate}
               disabled={isLoading}
             />
           </div>
