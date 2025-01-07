@@ -1,22 +1,22 @@
 import React, { useState } from 'react';
 import { useErrorSystem } from '@/lib/ErrorSystem';
-import { PropertySearch, PropertyDetails } from './PropertySearch';
+import { PropertySearch } from './PropertySearch';
 import DateRangeSelect from './inputs/DateRangeSelect';
 import ChargeTypesSelect from './inputs/ChargeTypesSelect';
 import { SizesTable } from './SizesAndTariffs';
 import { CalculationButtons } from './buttons';
 import { CalculationResults } from './results';
-import { AnimatedAlert } from './UX/AnimatedAlert';
+import type { Property } from '@/types';
 
 export const RetroForm: React.FC = () => {
-  const [property, setProperty] = useState(null);
+  const [property, setProperty] = useState<Property | null>(null);
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [selectedChargeTypes, setSelectedChargeTypes] = useState<string[]>([]);
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { addError, errors, clearErrors } = useErrorSystem();
+  const { addError, clearErrors } = useErrorSystem();
 
   const handleCalculate = async () => {
     if (!property) {
@@ -50,9 +50,9 @@ export const RetroForm: React.FC = () => {
     clearErrors();
 
     try {
-      // TODO: כאן יהיה הקוד לחישוב
+      // TODO: כאן יהיה החישוב האמיתי
       setResults([]);
-    } catch (error) {
+    } catch (error: unknown) {
       addError({
         type: 'error',
         message: error instanceof Error ? error.message : 'שגיאה בחישוב',
@@ -63,9 +63,9 @@ export const RetroForm: React.FC = () => {
     }
   };
 
-  const handlePayerChange = (newPayerId: string) => {
+  const handlePayerChange = (payerId: string) => {
     // TODO: יישום החלפת משלם
-    console.log('החלפת משלם:', newPayerId);
+    console.log('החלפת משלם:', payerId);
   };
 
   return (
@@ -78,12 +78,6 @@ export const RetroForm: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="space-y-4">
             <PropertySearch onPropertySelect={setProperty} />
-            {property && (
-              <PropertyDetails 
-                property={property} 
-                onPayerChange={handlePayerChange} 
-              />
-            )}
           </div>
 
           <div className="space-y-4">
