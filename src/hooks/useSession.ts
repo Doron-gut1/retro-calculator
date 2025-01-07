@@ -8,44 +8,52 @@ export function useSession() {
   const { addError } = useErrorStore();
 
   useEffect(() => {
-    // ניסיון לקרוא פרמטרים מה-URL
-    const params = new URLSearchParams(window.location.search);
-    const odbcName = params.get('odbcName');
-    const jobNum = params.get('jobNum');
+    const searchParams = new URLSearchParams(window.location.search);
+    const odbcName = searchParams.get('odbcName');
+    const jobNum = searchParams.get('jobNum');
 
-    // אם אין פרמטרים - זה לא נפתח מהאקסס
+    // הדפסת הפרמטרים לבדיקה
+    console.log('URL:', window.location.href);
+    console.log('Search Params:', { odbcName, jobNum });
+
     if (!odbcName || !jobNum) {
+      console.error('Missing required params');
       addError({
         field: 'session',
         type: 'error',
-        message: 'הדף חייב להיפתח מתוך האקסס'
+        message: 'חסרים פרמטרים נדרשים בקריאה מהאקסס'
       });
       return;
     }
 
-    // בדיקת תקינות הפרמטרים מול השרת
     const validateSession = async () => {
       try {
-        const response = await retroApi.validateAccessParams(odbcName, parseInt(jobNum));
-        setSessionParams({
-          odbcName: response.odbcName,
-          jobNumber: response.jobNum
-        });
-      } catch (error) {
-        if (error instanceof Error) {
-          addError({
-            field: 'session',
-            type: 'error',
-            message: error.message
+        console.log('Validating session with:', { odbcName, jobNum });
+        const response = await retroApi.validateAccessParams(
+          odbcName,
+          parseInt(jobNum, 10)
+        );
+        console.log('Validation response:', response);
+
+        if (response.success) {
+          setSessionParams({
+            odbcName: response.odbcName,
+            jobNumber: response.jobNum
           });
+        } else {
+          throw new Error('אימות הפרמטרים נכשל');
         }
+      } catch (error) {
+        console.error('Session validation failed:', error);
+        addError({
+          field: 'session',
+          type: 'error',
+          message: error instanceof Error ? error.message : 'שגיאה באימות פרמטרים מהאקסס'
+        });
         reset();
       }
     };
 
     validateSession();
-
-    // ניקוי בסגירה
-    return () => reset();
-  }, []);
+  }, [setSessionParams, addError, reset]);
 }
