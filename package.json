@@ -21,9 +21,13 @@
     "zustand": "^4.4.7"
   },
   "devDependencies": {
+    "@emotion/react": "^11.14.0",
+    "@testing-library/react": "^16.1.0",
+    "@types/jest": "^29.5.14",
     "@types/node": "^20.10.5",
     "@types/react": "^18.2.45",
     "@types/react-dom": "^18.2.18",
+    "@types/testing-library__react": "^10.0.1",
     "@typescript-eslint/eslint-plugin": "^6.14.0",
     "@typescript-eslint/parser": "^6.14.0",
     "@vitejs/plugin-react": "^4.2.1",
