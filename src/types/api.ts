@@ -1,32 +1,37 @@
-// בקשת חישוב רטרו
+export interface RetroResultRow {
+  mnt: string;
+  mnt_display: string;
+  sugts: number;
+  sugtsname: string;
+  paysum: string;
+  sumhk: string;
+  dtgv: string;
+  dtval: string;
+  hesber?: string;
+}
+
+export interface CalculationResult extends RetroResultRow {}
+
 export interface RetroCalculationRequest {
   propertyId: string;
-  startDate: string; // YYYY-MM-DD
-  endDate: string; // YYYY-MM-DD
+  startDate: string;
+  endDate: string;
   chargeTypes: number[];
   jobNumber: number;
 }
 
-// שורת תוצאה מהשרת
-export interface RetroResultRow {
-  mnt: string; // תקופה
-  mnt_display: string; // תצוגת תקופה
-  sugts: number; // קוד סוג חיוב
-  sugtsname: string; // שם סוג חיוב
-  paysum: string; // סכום
-  sumhk: string; // סכום הסדר
-  dtgv: string; // תאריך גביה
-  dtval: string; // תאריך ערך
-  hesber?: string; // הסבר אם יש
-}
-
-// תגובת חישוב מהשרת
 export interface RetroCalculationResponse {
   rows: RetroResultRow[];
 }
 
-// סוגי שגיאות אפשריות
-export type ApiError = {
+export interface OpenFromAccessResponse {
+  success: boolean;
+  odbcName: string;
+  jobNum: number;
+  error?: string;
+}
+
+export interface ApiError {
   error: string;
   details?: string;
-};
+}
