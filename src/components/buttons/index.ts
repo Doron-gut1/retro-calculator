@@ -1,1 +1,1 @@
-export * from './CalculationButtons';
+export { default as CalculationButtons } from './CalculationButtons';

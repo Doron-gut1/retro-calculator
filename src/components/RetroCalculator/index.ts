@@ -1,1 +1,1 @@
-export { default } from './RetroCalculator';
+export { RetroCalculator } from './RetroCalculator';
