@@ -12,8 +12,6 @@ import { LoadingSpinner } from './UX';
 export const RetroForm: React.FC = () => {
   const {
     property,
-    startDate,
-    endDate,
     selectedChargeTypes,
     results,
     isLoading,
@@ -25,9 +23,9 @@ export const RetroForm: React.FC = () => {
 
   const { errors, clearErrors } = useErrorSystem();
 
-  const handleDateChange = useCallback((start: string, end: string) => {
-    setStartDate(start);
-    setEndDate(end);
+  const handleDateChange = useCallback((startDate: Date | null, endDate: Date | null) => {
+    if (startDate) setStartDate(startDate.toISOString());
+    if (endDate) setEndDate(endDate.toISOString());
   }, [setStartDate, setEndDate]);
 
   const handleChargeTypesChange = useCallback((types: string[]) => {
@@ -61,7 +59,7 @@ export const RetroForm: React.FC = () => {
       {/* Main Form */}
       <div className="bg-white rounded-lg shadow p-4 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Property Search & Payer Info */}
+          {/* Property Search */}
           <div className="space-y-4">
             <PropertySearch />
           </div>
@@ -70,7 +68,7 @@ export const RetroForm: React.FC = () => {
           <div className="space-y-4">
             <DateRangeSelect onChange={handleDateChange} />
             <ChargeTypesSelect 
-              selected={selectedChargeTypes.map(String)}
+              selected={selectedChargeTypes}
               onChange={handleChargeTypesChange}
             />
           </div>
@@ -78,7 +76,7 @@ export const RetroForm: React.FC = () => {
           {/* Action Buttons */}
           <div className="flex flex-col justify-end gap-2">
             <CalculationButtons
-              calculate={handleCalculate}
+              onCalculate={handleCalculate}
               disabled={isLoading}
             />
           </div>
