@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 import { useRetroStore } from '@/store';
-import { useErrorStore } from '@/lib/ErrorManager';
+import { useErrorSystem } from '@/lib/ErrorSystem';
 import { retroApi } from '@/services/api';
 
 export function useSession() {
   const { setSessionParams, reset } = useRetroStore();
-  const { addError } = useErrorStore();
+  const { addError } = useErrorSystem();
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -19,9 +19,9 @@ export function useSession() {
     if (!odbcName || !jobNum) {
       console.error('Missing required params');
       addError({
-        field: 'session',
         type: 'error',
-        message: 'חסרים פרמטרים נדרשים בקריאה מהאקסס'
+        message: 'חסרים פרמטרים נדרשים בקריאה מהאקסס',
+        field: 'session'
       });
       return;
     }
@@ -46,9 +46,9 @@ export function useSession() {
       } catch (error) {
         console.error('Session validation failed:', error);
         addError({
-          field: 'session',
           type: 'error',
-          message: error instanceof Error ? error.message : 'שגיאה באימות פרמטרים מהאקסס'
+          message: error instanceof Error ? error.message : 'שגיאה באימות פרמטרים מהאקסס',
+          field: 'session'
         });
         reset();
       }
