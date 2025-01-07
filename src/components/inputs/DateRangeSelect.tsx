@@ -9,10 +9,7 @@ const DateRangeSelect: React.FC<DateRangeSelectProps> = ({ onChange }) => {
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
 
-  const validateDateInput = (dateStr: string): boolean => {
-    // נקודת עצירה לדיבוג
-    debugger;
-    
+  const validateDateInput = (dateStr: string): boolean => {    
     if (!dateStr) return true;
 
     const [year, month, day] = dateStr.split('-').map(Number);
@@ -37,19 +34,15 @@ const DateRangeSelect: React.FC<DateRangeSelectProps> = ({ onChange }) => {
 
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDate = e.target.value;
-    // רק מעדכנים את הערך המוצג
     setStartDate(newDate);
   };
 
   const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDate = e.target.value;
-    // רק מעדכנים את הערך המוצג
     setEndDate(newDate);
   };
 
-  // בדיקת תקינות כשיוצאים מהשדה
   const handleDateBlur = (isStart: boolean) => (e: React.FocusEvent<HTMLInputElement>) => {
-    debugger;
     const dateValue = e.target.value;
     
     if (validateDateInput(dateValue)) {
@@ -64,7 +57,6 @@ const DateRangeSelect: React.FC<DateRangeSelectProps> = ({ onChange }) => {
         onChange(startDate ? new Date(startDate) : null, dateValue ? new Date(dateValue) : null);
       }
     } else {
-      // אם הוולידציה נכשלה, מנקים את השדה
       if (isStart) {
         setStartDate('');
       } else {

@@ -1,11 +1,11 @@
 import React from 'react';
 
-export interface ChargeTypesSelectProps {
+interface ChargeTypesSelectProps {
   selected: string[];
   onChange: (types: string[]) => void;
 }
 
-export const ChargeTypesSelect: React.FC<ChargeTypesSelectProps> = ({ selected, onChange }) => {
+const ChargeTypesSelect: React.FC<ChargeTypesSelectProps> = ({ selected, onChange }) => {
   const handleChange = (type: string) => {
     if (selected.includes(type)) {
       onChange(selected.filter(t => t !== type));
@@ -36,3 +36,5 @@ export const ChargeTypesSelect: React.FC<ChargeTypesSelectProps> = ({ selected, 
     </div>
   );
 };
+
+export default ChargeTypesSelect;
