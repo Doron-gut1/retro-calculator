@@ -13,12 +13,12 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true,
-    // הגדרת proxy לבקשות API
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://localhost:5001',
         changeOrigin: true,
         secure: false,
+        rewrite: (path) => path.replace(/^\/api/, '')
       },
     },
   },
