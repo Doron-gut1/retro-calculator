@@ -1,20 +1,29 @@
-import React, { useState } from 'react';
-import { useErrorSystem } from '@/lib/ErrorSystem';
+import React from 'react';
+import { useErrorSystem } from '../lib/ErrorSystem';
 import { PropertySearch } from './PropertySearch';
 import DateRangeSelect from './inputs/DateRangeSelect';
 import ChargeTypesSelect from './inputs/ChargeTypesSelect';
 import { SizesTable } from './SizesAndTariffs';
 import { CalculationButtons } from './buttons';
 import { CalculationResults } from './results';
-import type { Property } from '@/types';
+import type { Property, CalculationResult } from '../types';
+import { useRetroStore } from '../store';
 
 export const RetroForm: React.FC = () => {
-  const [property, setProperty] = useState<Property | null>(null);
-  const [startDate, setStartDate] = useState<string>('');
-  const [endDate, setEndDate] = useState<string>('');
-  const [selectedChargeTypes, setSelectedChargeTypes] = useState<string[]>([]);
-  const [results, setResults] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const {
+    property,
+    startDate,
+    endDate,
+    selectedChargeTypes,
+    results,
+    isLoading,
+    setProperty,
+    setStartDate,
+    setEndDate,
+    setSelectedChargeTypes,
+    setResults,
+    setLoading
+  } = useRetroStore();
 
   const { addError, clearErrors } = useErrorSystem();
 
@@ -46,7 +55,7 @@ export const RetroForm: React.FC = () => {
       return;
     }
 
-    setIsLoading(true);
+    setLoading(true);
     clearErrors();
 
     try {
@@ -59,13 +68,8 @@ export const RetroForm: React.FC = () => {
         field: 'calculation'
       });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  };
-
-  const handlePayerChange = (payerId: string) => {
-    // TODO: יישום החלפת משלם
-    console.log('החלפת משלם:', payerId);
   };
 
   return (
@@ -82,8 +86,8 @@ export const RetroForm: React.FC = () => {
 
           <div className="space-y-4">
             <DateRangeSelect 
-              startDate={startDate} 
-              endDate={endDate} 
+              startDate={startDate?.toISOString().split('T')[0] || ''}
+              endDate={endDate?.toISOString().split('T')[0] || ''}
               onChange={(start, end) => {
                 setStartDate(start);
                 setEndDate(end);
