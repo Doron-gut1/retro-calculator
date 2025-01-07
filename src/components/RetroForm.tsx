@@ -22,12 +22,50 @@ export const RetroForm: React.FC = () => {
     isLoading,
     setLoading,
     setResults,
-    handlePayerChange
+    handlePayerChange,
+    setStartDate,
+    setEndDate,
+    setSelectedChargeTypes
   } = useRetroStore();
 
   const { errors, clearErrors, addError } = useErrorStore();
 
   const isSessionReady = odbcName && jobNumber;
+
+  // useEffect לאתחול פרמטרים מה-URL
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    console.log('Search params:', Object.fromEntries(searchParams));
+    
+    const odbcName = searchParams.get('odbcName');
+    const jobNum = searchParams.get('jobNum');
+
+    if (odbcName && jobNum) {
+      try {
+        const jobNumber = parseInt(jobNum, 10);
+        if (isNaN(jobNumber)) {
+          addError({
+            field: 'session',
+            type: 'error',
+            message: 'מספר Job לא תקין'
+          });
+          return;
+        }
+
+        console.log('Setting session params:', { odbcName, jobNumber });
+        useRetroStore.getState().setSessionParams({ odbcName, jobNumber });
+      } catch (error) {
+        console.error('Error parsing session params:', error);
+        addError({
+          field: 'session',
+          type: 'error',
+          message: 'שגיאה בטעינת פרמטרים מהאקסס'
+        });
+      }
+    } else {
+      console.warn('Missing session params:', { odbcName, jobNum });
+    }
+  }, []);
 
   const handleCalculate = useCallback(async () => {
     if (!isSessionReady) {
@@ -97,8 +135,9 @@ export const RetroForm: React.FC = () => {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="bg-white p-8 rounded-lg shadow-lg text-center space-y-4">
-          <h2 className="text-xl font-semibold text-gray-800">שגיאה</h2>
+          <h2 className="text-xl font-semibold text-gray-800">שגיאה בטעינה</h2>
           <p className="text-gray-600">הדף חייב להיפתח מתוך האקסס</p>
+          <p className="text-sm text-gray-500">{odbcName ? `ODBC: ${odbcName}` : 'חסר ODBC'}, {jobNumber ? `Job: ${jobNumber}` : 'חסר Job'}</p>
         </div>
       </div>
     );
@@ -118,8 +157,8 @@ export const RetroForm: React.FC = () => {
           </div>
 
           <div className="space-y-4">
-            <DateRangeSelect />
-            <ChargeTypesSelect />
+            <DateRangeSelect startDate={startDate} endDate={endDate} onChange={{ setStartDate, setEndDate }} />
+            <ChargeTypesSelect selected={selectedChargeTypes} onChange={setSelectedChargeTypes} />
           </div>
 
           <div className="flex flex-col justify-end gap-2">
