@@ -1,9 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Property, CalculationResult } from '../types';
-import type { SessionParams } from '../types/session';
 
-interface RetroState extends SessionParams {
+interface RetroState {
+  odbcName: string | null;
+  jobNumber: number | null;
   property: Property | null;
   selectedChargeTypes: string[];
   startDate: Date | null;
@@ -13,13 +14,14 @@ interface RetroState extends SessionParams {
 }
 
 interface Actions {
-  setSessionParams: (params: SessionParams) => void;
+  setSessionParams: ({ odbcName, jobNumber }: { odbcName: string; jobNumber: number }) => void;
   setProperty: (property: Property | null) => void;
   setSelectedChargeTypes: (types: string[]) => void;
   setStartDate: (dateStr: string) => void;
   setEndDate: (dateStr: string) => void;
   setResults: (results: CalculationResult[]) => void;
   setLoading: (isLoading: boolean) => void;
+  handlePayerChange: (payerId: string) => void;
   reset: () => void;
 }
 
@@ -55,7 +57,7 @@ export const useRetroStore = create(
     (set, get) => ({
       ...initialState,
 
-      setSessionParams: (params) => set(params),
+      setSessionParams: ({ odbcName, jobNumber }) => set({ odbcName, jobNumber }),
 
       setProperty: (property) => set({ property }),
 
@@ -71,14 +73,6 @@ export const useRetroStore = create(
         const { endDate } = get();
         if (endDate && newDate > endDate) {
           console.error('תאריך התחלה חייב להיות לפני תאריך סיום');
-          return;
-        }
-
-        const oneYearFromNow = new Date();
-        oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
-        
-        if (newDate > oneYearFromNow) {
-          console.error('תאריך התחלה לא יכול להיות מעבר לשנה מהיום');
           return;
         }
 
@@ -98,14 +92,6 @@ export const useRetroStore = create(
           return;
         }
 
-        const oneYearFromNow = new Date();
-        oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
-        
-        if (newDate > oneYearFromNow) {
-          console.error('תאריך סיום לא יכול להיות מעבר לשנה מהיום');
-          return;
-        }
-
         set({ endDate: newDate });
       },
 
@@ -113,7 +99,12 @@ export const useRetroStore = create(
       
       setLoading: (isLoading) => set({ isLoading }),
       
-      reset: () => set(initialState),
+      handlePayerChange: (payerId) => {
+        // TODO: Implement payer change logic
+        console.log('Changing payer to:', payerId);
+      },
+      
+      reset: () => set(initialState)
     }),
     {
       name: 'retro-calculator-storage',
