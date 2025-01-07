@@ -1,18 +1,12 @@
 // Main Components
-export * from './RetroCalculator';
+export { RetroCalculator } from './RetroCalculator';
 export { RetroForm } from './RetroForm';
 
-// Property Search
+// Feature Components
 export * from './PropertySearch';
-
-// Results
-export * from './results';
-
-// Buttons
 export * from './buttons';
-
-// Inputs
-export * from './inputs';
+export * from './results';
+export * from './SizesAndTariffs';
 
 // UI Components
 export * from './ui';
