@@ -1,4 +1,4 @@
-import React from 'react';
+/* import React from 'react';
 import { Property } from '../../types/property';
 
 interface PropertyDetailsProps {
@@ -44,4 +44,4 @@ const PropertyDetails: React.FC<PropertyDetailsProps> = ({ property, onPayerChan
   );
 };
 
-export default PropertyDetails;
+export default PropertyDetails; */
