@@ -36,22 +36,6 @@ const initialState: RetroState = {
   isLoading: false
 };
 
-const validateDate = (dateStr: string): Date | null => {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return null;
-
-  const [year, month, day] = dateStr.split('-').map(Number);
-  if (year < 1900 || year > 2100) return null;
-
-  const date = new Date(year, month - 1, day);
-  if (
-    date.getFullYear() !== year ||
-    date.getMonth() !== month - 1 ||
-    date.getDate() !== day
-  ) return null;
-
-  return date;
-};
-
 export const useRetroStore = create(
   persist<RetroState & Actions>(
     (set, get) => ({
@@ -64,34 +48,20 @@ export const useRetroStore = create(
       setSelectedChargeTypes: (types) => set({ selectedChargeTypes: types }),
 
       setStartDate: (dateStr) => {
-        const newDate = validateDate(dateStr);
-        if (!newDate) {
+        const newDate = new Date(dateStr);
+        if (isNaN(newDate.getTime())) {
           console.error('תאריך התחלה לא תקין');
           return;
         }
-
-        const { endDate } = get();
-        if (endDate && newDate > endDate) {
-          console.error('תאריך התחלה חייב להיות לפני תאריך סיום');
-          return;
-        }
-
         set({ startDate: newDate });
       },
 
       setEndDate: (dateStr) => {
-        const newDate = validateDate(dateStr);
-        if (!newDate) {
+        const newDate = new Date(dateStr);
+        if (isNaN(newDate.getTime())) {
           console.error('תאריך סיום לא תקין');
           return;
         }
-
-        const { startDate } = get();
-        if (startDate && newDate < startDate) {
-          console.error('תאריך סיום חייב להיות אחרי תאריך התחלה');
-          return;
-        }
-
         set({ endDate: newDate });
       },
 
@@ -114,7 +84,9 @@ export const useRetroStore = create(
         property: state.property,
         selectedChargeTypes: state.selectedChargeTypes,
         startDate: state.startDate,
-        endDate: state.endDate
+        endDate: state.endDate,
+        results: state.results,
+        isLoading: state.isLoading
       })
     }
   )
