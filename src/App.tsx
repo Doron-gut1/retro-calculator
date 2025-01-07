@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ErrorBoundary } from './components/UX';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { RetroForm } from './components/RetroForm';
 import { useRetroStore } from './store';
 import { useErrorStore } from './lib/ErrorManager';
@@ -37,7 +37,7 @@ const App: React.FC = () => {
         message: 'שגיאה בפרמטרים מהאקסס'
       });
     }
-  }, []);
+  }, [setSessionParams, addError]);
 
   return (
     <ErrorBoundary>
