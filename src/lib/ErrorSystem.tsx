@@ -8,24 +8,32 @@ export interface ErrorMessage {
   message: string;
   field?: string;
   timeout?: number;
+  timestamp?: number;
 }
 
 interface ErrorState {
   errors: ErrorMessage[];
+  lastCheck: number;
   addError: (error: Omit<ErrorMessage, 'id'>) => void;
   removeError: (id: string) => void;
+  removeFieldError: (field: string) => void;
   clearErrors: () => void;
+  hasErrors: () => boolean;
+  getFieldErrors: (field: string) => ErrorMessage[];
 }
 
 export const useErrorSystem = create<ErrorState>((set, get) => ({
   errors: [],
+  lastCheck: Date.now(),
 
   addError: (error) => {
     const id = Math.random().toString(36).substr(2, 9);
     const timeout = error.timeout || 5000;
+    const timestamp = Date.now();
 
     set((state) => ({
-      errors: [...state.errors, { ...error, id }]
+      errors: [...state.errors.filter(e => e.field !== error.field), { ...error, id, timestamp }],
+      lastCheck: timestamp
     }));
 
     if (timeout > 0) {
@@ -37,11 +45,27 @@ export const useErrorSystem = create<ErrorState>((set, get) => ({
 
   removeError: (id) => {
     set((state) => ({
-      errors: state.errors.filter((error) => error.id !== id)
+      errors: state.errors.filter((error) => error.id !== id),
+      lastCheck: Date.now()
     }));
   },
 
-  clearErrors: () => set({ errors: [] })
+  removeFieldError: (field) => {
+    set((state) => ({
+      errors: state.errors.filter((error) => error.field !== field),
+      lastCheck: Date.now()
+    }));
+  },
+
+  clearErrors: () => set({
+    errors: [],
+    lastCheck: Date.now()
+  }),
+
+  hasErrors: () => get().errors.length > 0,
+
+  getFieldErrors: (field: string) => 
+    get().errors.filter(e => e.field === field)
 }));
 
 export const ErrorDisplay: React.FC = () => {
