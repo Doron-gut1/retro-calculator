@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Property, CalculationResult } from '../types';
+import type { Property, RetroResultRow } from '../types';
 
 interface RetroState {
   odbcName: string | null;
@@ -9,7 +9,7 @@ interface RetroState {
   selectedChargeTypes: string[];
   startDate: Date | null;
   endDate: Date | null;
-  results: CalculationResult[];
+  results: RetroResultRow[];
   isLoading: boolean;
 }
 
@@ -19,7 +19,7 @@ interface Actions {
   setSelectedChargeTypes: (types: string[]) => void;
   setStartDate: (dateStr: string) => void;
   setEndDate: (dateStr: string) => void;
-  setResults: (results: CalculationResult[]) => void;
+  setResults: (results: RetroResultRow[]) => void;
   setLoading: (isLoading: boolean) => void;
   handlePayerChange: (payerId: string) => void;
   reset: () => void;
@@ -36,44 +36,18 @@ const initialState: RetroState = {
   isLoading: false
 };
 
-export const useRetroStore = create(
-  persist<RetroState & Actions>(
-    (set, get) => ({
+export const useRetroStore = create<RetroState & Actions>(
+  persist(
+    (set) => ({
       ...initialState,
-
       setSessionParams: ({ odbcName, jobNumber }) => set({ odbcName, jobNumber }),
-
       setProperty: (property) => set({ property }),
-
       setSelectedChargeTypes: (types) => set({ selectedChargeTypes: types }),
-
-      setStartDate: (dateStr) => {
-        const newDate = new Date(dateStr);
-        if (isNaN(newDate.getTime())) {
-          console.error('תאריך התחלה לא תקין');
-          return;
-        }
-        set({ startDate: newDate });
-      },
-
-      setEndDate: (dateStr) => {
-        const newDate = new Date(dateStr);
-        if (isNaN(newDate.getTime())) {
-          console.error('תאריך סיום לא תקין');
-          return;
-        }
-        set({ endDate: newDate });
-      },
-
+      setStartDate: (dateStr) => set({ startDate: new Date(dateStr) }),
+      setEndDate: (dateStr) => set({ endDate: new Date(dateStr) }),
       setResults: (results) => set({ results }),
-      
       setLoading: (isLoading) => set({ isLoading }),
-      
-      handlePayerChange: (payerId) => {
-        // TODO: Implement payer change logic
-        console.log('Changing payer to:', payerId);
-      },
-      
+      handlePayerChange: (payerId) => console.log('Changing payer to:', payerId),
       reset: () => set(initialState)
     }),
     {
@@ -87,7 +61,7 @@ export const useRetroStore = create(
         endDate: state.endDate,
         results: state.results,
         isLoading: state.isLoading
-      })
+      } as RetroState)
     }
   )
 );
