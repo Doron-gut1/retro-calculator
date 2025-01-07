@@ -1,29 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useErrorSystem } from '../lib/ErrorSystem';
-import { PropertySearch } from './PropertySearch';
+import { PropertySearch, PropertyDetails } from './PropertySearch';
 import DateRangeSelect from './inputs/DateRangeSelect';
 import ChargeTypesSelect from './inputs/ChargeTypesSelect';
 import { SizesTable } from './SizesAndTariffs';
 import { CalculationButtons } from './buttons';
 import { CalculationResults } from './results';
-import type { Property, CalculationResult } from '../types';
-import { useRetroStore } from '../store';
+import type { Property } from '../types';
 
 export const RetroForm: React.FC = () => {
-  const {
-    property,
-    startDate,
-    endDate,
-    selectedChargeTypes,
-    results,
-    isLoading,
-    setProperty,
-    setStartDate,
-    setEndDate,
-    setSelectedChargeTypes,
-    setResults,
-    setLoading
-  } = useRetroStore();
+  const [property, setProperty] = useState<Property | null>(null);
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
+  const [selectedChargeTypes, setSelectedChargeTypes] = useState<string[]>([]);
+  const [results, setResults] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const { addError, clearErrors } = useErrorSystem();
 
@@ -55,7 +46,7 @@ export const RetroForm: React.FC = () => {
       return;
     }
 
-    setLoading(true);
+    setIsLoading(true);
     clearErrors();
 
     try {
@@ -68,8 +59,16 @@ export const RetroForm: React.FC = () => {
         field: 'calculation'
       });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
+  };
+
+  const handlePropertySelect = (selectedProperty: Property) => {
+    setProperty(selectedProperty);
+  };
+
+  const handlePayerChange = (payerId: string) => {
+    console.log('Changing payer:', payerId);
   };
 
   return (
@@ -81,13 +80,14 @@ export const RetroForm: React.FC = () => {
       <div className="bg-white rounded-lg shadow p-4 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="space-y-4">
-            <PropertySearch onPropertySelect={setProperty} />
+            <PropertySearch onPropertySelect={handlePropertySelect} />
+            {property && <PropertyDetails property={property} onPayerChange={handlePayerChange} />}
           </div>
 
           <div className="space-y-4">
             <DateRangeSelect 
-              startDate={startDate?.toISOString().split('T')[0] || ''}
-              endDate={endDate?.toISOString().split('T')[0] || ''}
+              startDate={startDate}
+              endDate={endDate}
               onChange={(start, end) => {
                 setStartDate(start);
                 setEndDate(end);
