@@ -2,8 +2,8 @@ import React, { useCallback, useEffect } from 'react';
 import { useRetroStore } from '@/store';
 import { useErrorStore } from '@/lib/ErrorManager';
 import { PropertySearch, PropertyDetails } from './PropertySearch';
-import { DateRangeSelect } from './inputs/DateRangeSelect';
-import { ChargeTypes } from './inputs/ChargeTypes';
+import DateRangeSelect from './inputs/DateRangeSelect';
+import ChargeTypesSelect from './inputs/ChargeTypesSelect';
 import { SizesTable } from './SizesAndTariffs';
 import { CalculationButtons } from './buttons';
 import { CalculationResults } from './results';
@@ -21,7 +21,8 @@ export const RetroForm: React.FC = () => {
     results,
     isLoading,
     setLoading,
-    setResults
+    setResults,
+    handlePayerChange
   } = useRetroStore();
 
   const { errors, clearErrors, addError } = useErrorStore();
@@ -69,7 +70,7 @@ export const RetroForm: React.FC = () => {
     setLoading(true);
 
     try {
-      // Will be implemented when backend is ready
+      // TODO: Add real calculation when backend is ready
       setResults([]);
     } catch (error) {
       if (error instanceof Error) {
@@ -113,12 +114,12 @@ export const RetroForm: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="space-y-4">
             <PropertySearch />
-            {property && <PropertyDetails property={property} />}
+            {property && <PropertyDetails property={property} onPayerChange={handlePayerChange} />}
           </div>
 
           <div className="space-y-4">
             <DateRangeSelect />
-            <ChargeTypes />
+            <ChargeTypesSelect />
           </div>
 
           <div className="flex flex-col justify-end gap-2">
