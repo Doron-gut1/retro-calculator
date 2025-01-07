@@ -1,16 +1,13 @@
 import React, { useCallback, useEffect } from 'react';
 import { useRetroStore } from '../store';
 import { useErrorSystem } from '../lib/ErrorSystem';
-import { PropertySearch } from './PropertySearch';
+import PropertySearch from './PropertySearch';
 import { SizesTable } from './SizesAndTariffs';
-import { DateRangeSelect } from './inputs';
-import { ChargeTypesSelect } from './inputs';
+import { DateRangeSelect, ChargeTypesSelect } from './inputs';
 import { CalculationButtons } from './buttons';
 import { CalculationResults } from './results';
 import { AnimatedAlert } from './UX';
 import { LoadingSpinner } from './UX';
-// הוספת קומפוננטת PayerInfo במקום להשתמש בטיפוס
-import { PayerInfo } from './PayerInfo';
 
 export const RetroForm: React.FC = () => {
   const {
@@ -28,12 +25,12 @@ export const RetroForm: React.FC = () => {
 
   const { errors, clearErrors } = useErrorSystem();
 
-  const handleDateChange = useCallback((start: Date, end: Date) => {
+  const handleDateChange = useCallback((start: string, end: string) => {
     setStartDate(start);
     setEndDate(end);
   }, [setStartDate, setEndDate]);
 
-  const handleChargeTypesChange = useCallback((types: number[]) => {
+  const handleChargeTypesChange = useCallback((types: string[]) => {
     setSelectedChargeTypes(types);
   }, [setSelectedChargeTypes]);
 
@@ -43,7 +40,6 @@ export const RetroForm: React.FC = () => {
     try {
       // כאן יתווסף החישוב האמיתי מול השרת
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
     } catch (error) {
       console.error('שגיאה בחישוב:', error);
     } finally {
@@ -68,18 +64,13 @@ export const RetroForm: React.FC = () => {
           {/* Property Search & Payer Info */}
           <div className="space-y-4">
             <PropertySearch />
-            {property && <PayerInfo />}
           </div>
 
           {/* Dates & Charge Types */}
           <div className="space-y-4">
-            <DateRangeSelect 
-              onChange={handleDateChange}
-              startDate={startDate}
-              endDate={endDate}
-            />
+            <DateRangeSelect onChange={handleDateChange} />
             <ChargeTypesSelect 
-              selected={selectedChargeTypes}
+              selected={selectedChargeTypes.map(String)}
               onChange={handleChargeTypesChange}
             />
           </div>
