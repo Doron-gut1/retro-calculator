@@ -1,11 +1,11 @@
 import { useEffect } from 'react';
 import { useRetroStore } from '@/store';
-import { useErrorSystem } from '@/lib/ErrorSystem';
+import { useErrorStore } from '@/lib/ErrorManager';
 import { retroApi } from '@/services/api';
 
 export function useSession() {
   const { setSessionParams, reset } = useRetroStore();
-  const { addError } = useErrorSystem();
+  const { addError } = useErrorStore();
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
