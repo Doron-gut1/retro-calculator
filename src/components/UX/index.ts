@@ -1,3 +1,3 @@
-export { default as AnimatedAlert } from './AnimatedAlert';
-export { default as LoadingSpinner } from './LoadingSpinner';
+export { AnimatedAlert } from './AnimatedAlert';
+export { LoadingSpinner } from './LoadingSpinner';
 export { ErrorBoundary } from './ErrorBoundary';
