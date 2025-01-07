@@ -8,7 +8,7 @@ import { CalculationButtons } from './buttons';
 import { CalculationResults } from './results';
 import { AnimatedAlert } from './UX';
 import { LoadingSpinner } from './UX';
-import { Property } from '../types/property';
+import { Property } from '../types';
 
 export const RetroForm: React.FC = () => {
   const {
@@ -38,22 +38,10 @@ export const RetroForm: React.FC = () => {
     setProperty(selectedProperty);
   }, [setProperty]);
 
-  const handleCalculate = useCallback(async () => {
-    clearErrors();
-    setLoading(true);
-    try {
-      // כאן יתווסף החישוב האמיתי מול השרת
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    } catch (error) {
-      console.error('שגיאה בחישוב:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [clearErrors, setLoading]);
-
-  useEffect(() => {
-    return () => clearErrors();
-  }, [clearErrors]);
+  const handleResultsReceived = useCallback((results: any) => {
+    // לטפל בתוצאות
+    console.log('התקבלו תוצאות:', results);
+  }, []);
 
   return (
     <div className="flex flex-col gap-4 p-4 bg-gray-50 min-h-screen">
@@ -82,7 +70,12 @@ export const RetroForm: React.FC = () => {
           {/* Action Buttons */}
           <div className="flex flex-col justify-end gap-2">
             <CalculationButtons
-              calculate={handleCalculate}
+              propertyId={property?.hskod || ''}
+              startDate={property?.startDate || ''}
+              endDate={property?.endDate || ''}
+              chargeTypes={selectedChargeTypes}
+              sizes={[]}
+              onResultsReceived={handleResultsReceived}
               disabled={isLoading}
             />
           </div>
