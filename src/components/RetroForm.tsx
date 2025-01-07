@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { useRetroStore } from '../store';
 import { useErrorSystem } from '../lib/ErrorSystem';
 import PropertySearch from './PropertySearch';
@@ -16,14 +16,13 @@ export const RetroForm: React.FC = () => {
     selectedChargeTypes,
     results,
     isLoading,
-    setLoading,
     setStartDate,
     setEndDate,
     setSelectedChargeTypes,
     setProperty
   } = useRetroStore();
 
-  const { errors, clearErrors } = useErrorSystem();
+  const { errors } = useErrorSystem();
 
   const handleDateChange = useCallback((startDate: Date | null, endDate: Date | null) => {
     setStartDate(startDate?.toISOString() || ''); 
@@ -39,7 +38,6 @@ export const RetroForm: React.FC = () => {
   }, [setProperty]);
 
   const handleResultsReceived = useCallback((results: any) => {
-    // לטפל בתוצאות
     console.log('התקבלו תוצאות:', results);
   }, []);
 
@@ -73,7 +71,7 @@ export const RetroForm: React.FC = () => {
               propertyId={property?.hskod || ''}
               startDate={property?.startDate || ''}
               endDate={property?.endDate || ''}
-              chargeTypes={selectedChargeTypes}
+              chargeTypes={selectedChargeTypes.map(Number)}
               sizes={[]}
               onResultsReceived={handleResultsReceived}
               disabled={isLoading}
