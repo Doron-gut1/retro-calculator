@@ -22,50 +22,20 @@ export const RetroForm: React.FC = () => {
     isLoading,
     setLoading,
     setResults,
-    handlePayerChange,
     setStartDate,
     setEndDate,
-    setSelectedChargeTypes
+    setSelectedChargeTypes,
+    handlePayerChange
   } = useRetroStore();
 
   const { errors, clearErrors, addError } = useErrorStore();
 
   const isSessionReady = odbcName && jobNumber;
 
-  // useEffect לאתחול פרמטרים מה-URL
-  useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    console.log('Search params:', Object.fromEntries(searchParams));
-    
-    const odbcName = searchParams.get('odbcName');
-    const jobNum = searchParams.get('jobNum');
-
-    if (odbcName && jobNum) {
-      try {
-        const jobNumber = parseInt(jobNum, 10);
-        if (isNaN(jobNumber)) {
-          addError({
-            field: 'session',
-            type: 'error',
-            message: 'מספר Job לא תקין'
-          });
-          return;
-        }
-
-        console.log('Setting session params:', { odbcName, jobNumber });
-        useRetroStore.getState().setSessionParams({ odbcName, jobNumber });
-      } catch (error) {
-        console.error('Error parsing session params:', error);
-        addError({
-          field: 'session',
-          type: 'error',
-          message: 'שגיאה בטעינת פרמטרים מהאקסס'
-        });
-      }
-    } else {
-      console.warn('Missing session params:', { odbcName, jobNum });
-    }
-  }, []);
+  const handleDateChange = useCallback((start: Date | null, end: Date | null) => {
+    if (start) setStartDate(start.toISOString().split('T')[0]);
+    if (end) setEndDate(end.toISOString().split('T')[0]);
+  }, [setStartDate, setEndDate]);
 
   const handleCalculate = useCallback(async () => {
     if (!isSessionReady) {
@@ -157,7 +127,7 @@ export const RetroForm: React.FC = () => {
           </div>
 
           <div className="space-y-4">
-            <DateRangeSelect startDate={startDate} endDate={endDate} onChange={{ setStartDate, setEndDate }} />
+            <DateRangeSelect startDate={startDate} endDate={endDate} onChange={handleDateChange} />
             <ChargeTypesSelect selected={selectedChargeTypes} onChange={setSelectedChargeTypes} />
           </div>
 
