@@ -3,20 +3,16 @@ import { useRetroStore } from '@/store';
 import { useSession } from '@/hooks/useSession';
 import { useErrorStore } from '@/lib/ErrorManager';
 import { retroApi } from '@/services/api';
-import { PropertySearch } from './PropertySearch';
-import { PropertyDetails } from './PropertySearch/PropertyDetails';
-import { DateRange } from './inputs/DateRange';
-import { ChargeTypes } from './inputs/ChargeTypes';
+import { PropertySearch, PropertyDetails } from './PropertySearch';
+import { TariffInput } from './PropertySearch/TariffInput';
+import { ChargeTypeSelector } from './inputs/TariffSelector';
 import { SizesTable } from './SizesAndTariffs';
-import { CalculationButtons } from './buttons/CalculationButtons';
-import { CalculationResults } from './results/CalculationResults';
-import { AnimatedAlert } from './UX/AnimatedAlert';
-import { LoadingSpinner } from './UX/LoadingSpinner';
+import { CalculationButtons } from './buttons';
+import { CalculationResults } from './results';
+import { AnimatedAlert } from './UX';
+import { LoadingSpinner } from './UX';
 
 export const RetroForm: React.FC = () => {
-  // useSession hook for managing Access parameters
-  useSession();
-
   const {
     odbcName,
     jobNumber,
@@ -32,7 +28,6 @@ export const RetroForm: React.FC = () => {
 
   const { errors, clearErrors, addError } = useErrorStore();
 
-  // Check if session is ready
   const isSessionReady = odbcName && jobNumber;
 
   const handleCalculate = useCallback(async () => {
@@ -115,27 +110,22 @@ export const RetroForm: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-4 p-4 bg-gray-50 min-h-screen">
-      {/* Header */}
       <div className="bg-blue-600 text-white p-4 rounded-lg shadow">
         <h1 className="text-2xl font-semibold">חישוב רטרו</h1>
       </div>
 
-      {/* Main Form */}
       <div className="bg-white rounded-lg shadow p-4 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Property Search & Payer Info */}
           <div className="space-y-4">
             <PropertySearch />
             {property && <PropertyDetails />}
           </div>
 
-          {/* Dates & Charge Types */}
           <div className="space-y-4">
-            <DateRange />
-            <ChargeTypes />
+            <TariffInput />
+            <ChargeTypeSelector />
           </div>
 
-          {/* Action Buttons */}
           <div className="flex flex-col justify-end gap-2">
             <CalculationButtons
               onCalculate={handleCalculate}
@@ -144,7 +134,6 @@ export const RetroForm: React.FC = () => {
           </div>
         </div>
 
-        {/* Sizes Table */}
         {property && (
           <div className="mt-6">
             <SizesTable />
@@ -152,21 +141,18 @@ export const RetroForm: React.FC = () => {
         )}
       </div>
 
-      {/* Results Section */}
       {results.length > 0 && (
         <div className="bg-white rounded-lg shadow p-4">
           <CalculationResults />
         </div>
       )}
 
-      {/* Loading Indicator */}
       {isLoading && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <LoadingSpinner size="lg" />
         </div>
       )}
 
-      {/* Error Messages */}
       {errors.length > 0 && (
         <div className="fixed bottom-4 right-4 space-y-2 max-w-md">
           {errors.map((error, index) => (
