@@ -36,7 +36,7 @@ const initialState: RetroState = {
   isLoading: false
 };
 
-export const useRetroStore = create<RetroState & Actions>(
+export const useRetroStore = create<RetroState & Actions>()(
   persist(
     (set) => ({
       ...initialState,
