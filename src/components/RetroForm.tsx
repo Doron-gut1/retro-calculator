@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect } from 'react';
 import { useRetroStore } from '../store';
 import { useErrorSystem } from '../lib/ErrorSystem';
-//import { retroApi } from '../services/api';
-import { PropertySearch, PropertyDetails } from './PropertySearch';
+import { PropertySearch } from './PropertySearch';
 import { SizesTable } from './SizesAndTariffs';
 import { DateRangeSelect } from './inputs';
 import { ChargeTypesSelect } from './inputs';
@@ -10,10 +9,8 @@ import { CalculationButtons } from './buttons';
 import { CalculationResults } from './results';
 import { AnimatedAlert } from './UX';
 import { LoadingSpinner } from './UX';
-import { PayerDetails } from '../types/property';
-//import { Property, PropertySearchResult } from '../types/property.types';
-
-
+// הוספת קומפוננטת PayerInfo במקום להשתמש בטיפוס
+import { PayerInfo } from './PayerInfo';
 
 export const RetroForm: React.FC = () => {
   const {
@@ -23,10 +20,22 @@ export const RetroForm: React.FC = () => {
     selectedChargeTypes,
     results,
     isLoading,
-    setLoading
+    setLoading,
+    setStartDate,
+    setEndDate,
+    setSelectedChargeTypes
   } = useRetroStore();
 
   const { errors, clearErrors } = useErrorSystem();
+
+  const handleDateChange = useCallback((start: Date, end: Date) => {
+    setStartDate(start);
+    setEndDate(end);
+  }, [setStartDate, setEndDate]);
+
+  const handleChargeTypesChange = useCallback((types: number[]) => {
+    setSelectedChargeTypes(types);
+  }, [setSelectedChargeTypes]);
 
   const handleCalculate = useCallback(async () => {
     clearErrors();
@@ -59,19 +68,26 @@ export const RetroForm: React.FC = () => {
           {/* Property Search & Payer Info */}
           <div className="space-y-4">
             <PropertySearch />
-            {property && <PayerDetails />}
+            {property && <PayerInfo />}
           </div>
 
           {/* Dates & Charge Types */}
           <div className="space-y-4">
-            <DateRangeSelect />
-            <ChargeTypesSelect />
+            <DateRangeSelect 
+              onChange={handleDateChange}
+              startDate={startDate}
+              endDate={endDate}
+            />
+            <ChargeTypesSelect 
+              selected={selectedChargeTypes}
+              onChange={handleChargeTypesChange}
+            />
           </div>
 
           {/* Action Buttons */}
           <div className="flex flex-col justify-end gap-2">
             <CalculationButtons
-              onCalculate={handleCalculate}
+              calculate={handleCalculate}
               disabled={isLoading}
             />
           </div>

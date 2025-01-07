@@ -1,5 +1,5 @@
 // Main Components
-export { RetroCalculator } from './RetroCalculator';
+export { RetroCalculator } from './RetroCalculator.DEL';
 export { RetroForm } from './RetroForm';
 
 // Feature Components
