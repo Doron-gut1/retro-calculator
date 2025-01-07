@@ -5,40 +5,40 @@ import type {
   ApiError
 } from '../types/api';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
-class ApiError extends Error {
-  constructor(message: string, public details?: string) {
-    super(message);
-    this.name = 'ApiError';
-  }
-}
+// שימוש בפורט הנכון
+const API_BASE_URL = 'http://localhost:5001/api';
 
 export const retroApi = {
-  /**
-   * בדיקת הפרמטרים מהאקסס
-   */
-  async validateAccessParams(odbcName: string, jobNum: number): Promise<OpenFromAccessResponse> {
+  async validateAccessParams(
+    odbcName: string,
+    jobNum: number
+  ): Promise<OpenFromAccessResponse> {
     try {
+      console.log('Making API request to:', `${API_BASE_URL}/Retro/open-from-access`);
+      console.log('Request params:', { odbcName, jobNum });
+      
       const response = await fetch(
-        `${API_BASE_URL}/Retro/open-from-access?odbcName=${odbcName}&jobNum=${jobNum}`
+        `${API_BASE_URL}/Retro/open-from-access?odbcName=${odbcName}&jobNum=${jobNum}`,
+        {
+          headers: {
+            'Accept': 'application/json'
+          }
+        }
       );
 
       if (!response.ok) {
-        const error = await response.json() as ApiError;
-        throw new ApiError(error.error, error.details);
+        throw new Error(`API error: ${response.status}`);
       }
 
-      return await response.json() as OpenFromAccessResponse;
+      const data = await response.json();
+      console.log('API response:', data);
+      return data;
     } catch (error) {
-      if (error instanceof ApiError) throw error;
-      throw new ApiError('שגיאה באימות פרמטרים מהאקסס');
+      console.error('API request failed:', error);
+      throw error;
     }
   },
 
-  /**
-   * חישוב רטרו
-   */
   async calculateRetro(
     request: RetroCalculationRequest,
     odbcName: string
@@ -48,19 +48,19 @@ export const retroApi = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
-        body: JSON.stringify(request),
+        body: JSON.stringify(request)
       });
 
       if (!response.ok) {
-        const error = await response.json() as ApiError;
-        throw new ApiError(error.error, error.details);
+        throw new Error(`API error: ${response.status}`);
       }
 
-      return await response.json() as RetroCalculationResponse;
+      return await response.json();
     } catch (error) {
-      if (error instanceof ApiError) throw error;
-      throw new ApiError('שגיאה בחישוב רטרו');
+      console.error('API request failed:', error);
+      throw error;
     }
-  },
+  }
 };
