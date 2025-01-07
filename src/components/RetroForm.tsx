@@ -1,123 +1,74 @@
 import React, { useCallback, useEffect } from 'react';
 import { useRetroStore } from '../store';
 import { useErrorSystem } from '../lib/ErrorSystem';
-import { retroApi } from '../services/api';
+//import { retroApi } from '../services/api';
 import { PropertySearch, PropertyDetails } from './PropertySearch';
 import { SizesTable } from './SizesAndTariffs';
+//import { DateRangeSelect } from './inputs';
+//import { ChargeTypesSelect } from './inputs';
 import { CalculationButtons } from './buttons';
 import { CalculationResults } from './results';
 import { AnimatedAlert } from './UX';
 import { LoadingSpinner } from './UX';
+//import { PayerDetails } from '../types/property';
+//import { Property, PropertySearchResult } from '../types/property.types';
+
+
 
 export const RetroForm: React.FC = () => {
   const {
-    odbcName,
-    jobNumber,
     property,
     startDate,
     endDate,
     selectedChargeTypes,
     results,
     isLoading,
-    setLoading,
-    setResults
+    setLoading
   } = useRetroStore();
 
-  const { errors, clearErrors, addError } = useErrorSystem();
-
-  const isSessionReady = odbcName && jobNumber;
+  const { errors, clearErrors } = useErrorSystem();
 
   const handleCalculate = useCallback(async () => {
-    if (!isSessionReady) {
-      addError({
-        type: 'error',
-        message: 'לא ניתן לבצע חישוב ללא פרמטרים מהאקסס',
-        field: 'calculation'
-      });
-      return;
-    }
-
-    if (!property) {
-      addError({
-        type: 'error',
-        message: 'יש לבחור נכס',
-        field: 'calculation'
-      });
-      return;
-    }
-
-    if (!startDate || !endDate) {
-      addError({
-        type: 'error',
-        message: 'יש לבחור תאריכי התחלה וסיום',
-        field: 'calculation'
-      });
-      return;
-    }
-
-    if (selectedChargeTypes.length === 0) {
-      addError({
-        type: 'error',
-        message: 'יש לבחור לפחות סוג חיוב אחד',
-        field: 'calculation'
-      });
-      return;
-    }
-
     clearErrors();
     setLoading(true);
-
     try {
-      const response = await retroApi.calculateRetro({
-        propertyId: property.id,
-        startDate: startDate.toISOString().split('T')[0],
-        endDate: endDate.toISOString().split('T')[0],
-        chargeTypes: selectedChargeTypes.map(Number),
-        jobNumber: jobNumber
-      }, odbcName);
-
-      setResults(response.rows);
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        addError({
-          type: 'error',
-          message: error.message,
-          field: 'calculation'
-        });
-      }
+      // כאן יתווסף החישוב האמיתי מול השרת
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+    } catch (error) {
+      console.error('שגיאה בחישוב:', error);
     } finally {
       setLoading(false);
     }
-  }, [isSessionReady, property, startDate, endDate, selectedChargeTypes, jobNumber, odbcName, clearErrors, setLoading, addError, setResults]);
+  }, [clearErrors, setLoading]);
 
   useEffect(() => {
     return () => clearErrors();
   }, [clearErrors]);
 
-  if (!isSessionReady) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="bg-white p-8 rounded-lg shadow-lg text-center space-y-4">
-          <h2 className="text-xl font-semibold text-gray-800">שגיאה</h2>
-          <p className="text-gray-600">הדף חייב להיפתח מתוך האקסס</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col gap-4 p-4 bg-gray-50 min-h-screen">
+      {/* Header */}
       <div className="bg-blue-600 text-white p-4 rounded-lg shadow">
         <h1 className="text-2xl font-semibold">חישוב רטרו</h1>
       </div>
 
+      {/* Main Form */}
       <div className="bg-white rounded-lg shadow p-4 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Property Search & Payer Info */}
           <div className="space-y-4">
-            <PropertySearch property={property} />
-            {property && <PropertyDetails property={property} />}
+            <PropertySearch />
+            {property && <PayerInfo />}
           </div>
 
+          {/* Dates & Charge Types */}
+          <div className="space-y-4">
+            <DateRange />
+            <ChargeTypes />
+          </div>
+
+          {/* Action Buttons */}
           <div className="flex flex-col justify-end gap-2">
             <CalculationButtons
               onCalculate={handleCalculate}
@@ -126,28 +77,32 @@ export const RetroForm: React.FC = () => {
           </div>
         </div>
 
+        {/* Sizes Table */}
         {property && (
           <div className="mt-6">
-            <SizesTable property={property} />
+            <SizesTable />
           </div>
         )}
       </div>
 
+      {/* Results Section */}
       {results.length > 0 && (
         <div className="bg-white rounded-lg shadow p-4">
           <CalculationResults results={results} />
         </div>
       )}
 
+      {/* Loading Indicator */}
       {isLoading && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <LoadingSpinner size="lg" />
         </div>
       )}
 
+      {/* Error Messages */}
       {errors.length > 0 && (
         <div className="fixed bottom-4 right-4 space-y-2 max-w-md">
-          {errors.map((error, index: number) => (
+          {errors.map((error, index) => (
             <AnimatedAlert
               key={`${error.field}-${index}`}
               type={error.type || 'error'}
