@@ -1,11 +1,9 @@
 import React, { useCallback, useEffect } from 'react';
 import { useRetroStore } from '@/store';
-import { useSession } from '@/hooks/useSession';
 import { useErrorStore } from '@/lib/ErrorManager';
-import { retroApi } from '@/services/api';
 import { PropertySearch, PropertyDetails } from './PropertySearch';
-import { DateRangeSelect } from './inputs';
-import { ChargeTypesSelect } from './inputs/TariffSelector';
+import { DateRangeSelect } from './inputs/DateRangeSelect';
+import { ChargeTypes } from './inputs/ChargeTypes';
 import { SizesTable } from './SizesAndTariffs';
 import { CalculationButtons } from './buttons';
 import { CalculationResults } from './results';
@@ -23,8 +21,7 @@ export const RetroForm: React.FC = () => {
     results,
     isLoading,
     setLoading,
-    setResults,
-    onPayerChange
+    setResults
   } = useRetroStore();
 
   const { errors, clearErrors, addError } = useErrorStore();
@@ -32,11 +29,62 @@ export const RetroForm: React.FC = () => {
   const isSessionReady = odbcName && jobNumber;
 
   const handleCalculate = useCallback(async () => {
-    // ... rest of handleCalculate function
-  }, [isSessionReady, property, startDate, endDate, selectedChargeTypes, jobNumber, odbcName, clearErrors, setLoading, addError]);
+    if (!isSessionReady) {
+      addError({
+        field: 'calculation',
+        type: 'error',
+        message: 'לא ניתן לבצע חישוב ללא פרמטרים מהאקסס'
+      });
+      return;
+    }
+
+    if (!property) {
+      addError({
+        field: 'calculation',
+        type: 'error',
+        message: 'יש לבחור נכס'
+      });
+      return;
+    }
+
+    if (!startDate || !endDate) {
+      addError({
+        field: 'calculation',
+        type: 'error',
+        message: 'יש לבחור תאריכי התחלה וסיום'
+      });
+      return;
+    }
+
+    if (selectedChargeTypes.length === 0) {
+      addError({
+        field: 'calculation',
+        type: 'error',
+        message: 'יש לבחור לפחות סוג חיוב אחד'
+      });
+      return;
+    }
+
+    clearErrors();
+    setLoading(true);
+
+    try {
+      // Will be implemented when backend is ready
+      setResults([]);
+    } catch (error) {
+      if (error instanceof Error) {
+        addError({
+          field: 'calculation',
+          type: 'error',
+          message: error.message
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [isSessionReady, property, startDate, endDate, selectedChargeTypes, clearErrors, setLoading, addError, setResults]);
 
   const handleConfirm = useCallback(() => {
-    // Close the window and return to Access
     window.close();
   }, []);
 
@@ -65,12 +113,12 @@ export const RetroForm: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div className="space-y-4">
             <PropertySearch />
-            {property && <PropertyDetails property={property} onPayerChange={onPayerChange} />}
+            {property && <PropertyDetails property={property} />}
           </div>
 
           <div className="space-y-4">
             <DateRangeSelect />
-            <ChargeTypesSelect />
+            <ChargeTypes />
           </div>
 
           <div className="flex flex-col justify-end gap-2">
