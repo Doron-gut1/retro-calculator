@@ -4,13 +4,13 @@ import { useErrorSystem } from '../lib/ErrorSystem';
 //import { retroApi } from '../services/api';
 import { PropertySearch, PropertyDetails } from './PropertySearch';
 import { SizesTable } from './SizesAndTariffs';
-//import { DateRangeSelect } from './inputs';
-//import { ChargeTypesSelect } from './inputs';
+import { DateRangeSelect } from './inputs';
+import { ChargeTypesSelect } from './inputs';
 import { CalculationButtons } from './buttons';
 import { CalculationResults } from './results';
 import { AnimatedAlert } from './UX';
 import { LoadingSpinner } from './UX';
-//import { PayerDetails } from '../types/property';
+import { PayerDetails } from '../types/property';
 //import { Property, PropertySearchResult } from '../types/property.types';
 
 
@@ -59,13 +59,13 @@ export const RetroForm: React.FC = () => {
           {/* Property Search & Payer Info */}
           <div className="space-y-4">
             <PropertySearch />
-            {property && <PayerInfo />}
+            {property && <PayerDetails />}
           </div>
 
           {/* Dates & Charge Types */}
           <div className="space-y-4">
-            <DateRange />
-            <ChargeTypes />
+            <DateRangeSelect />
+            <ChargeTypesSelect />
           </div>
 
           {/* Action Buttons */}
