@@ -4,6 +4,11 @@ import type { Property } from '../types';
 
 const API_BASE_URL = 'https://localhost:5001/api';
 
+// קריאת פרמטרים מה-URL
+const urlParams = new URLSearchParams(window.location.search);
+const initialOdbcName = urlParams.get('odbcName');
+const initialJobNum = urlParams.get('jobNum');
+
 interface RetroState {
   odbcName: string | null;
   jobNumber: number | null;
@@ -26,8 +31,8 @@ interface Actions {
 }
 
 const initialState: RetroState = {
-  odbcName: null,
-  jobNumber: null,
+  odbcName: initialOdbcName,  // אתחול מה-URL
+  jobNumber: initialJobNum ? parseInt(initialJobNum) : null,  // אתחול מה-URL
   property: null,
   selectedChargeTypes: [],
   startDate: null,
