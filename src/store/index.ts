@@ -8,7 +8,7 @@ interface RetroState {
   odbcName: string | null;
   jobNumber: number | null;
   property: Property | null;
-  selectedChargeTypes: number[];
+  selectedChargeTypes: string[];
   startDate: Date | null;
   endDate: Date | null;
   isLoading: boolean;
@@ -18,7 +18,7 @@ interface RetroState {
 interface Actions {
   setSessionParams: ({ odbcName, jobNumber }: { odbcName: string; jobNumber: number }) => void;
   searchProperty: (propertyCode: string) => Promise<void>;
-  setSelectedChargeTypes: (types: number[]) => void;
+  setSelectedChargeTypes: (types: string[]) => void;
   setStartDate: (dateStr: string) => void;
   setEndDate: (dateStr: string) => void;
   calculateRetro: () => Promise<void>;
@@ -41,10 +41,8 @@ export const useRetroStore = create<RetroState & Actions>()(
     (set, get) => ({
       ...initialState,
 
-      // הגדרת פרמטרים מהאקסס
       setSessionParams: ({ odbcName, jobNumber }) => set({ odbcName, jobNumber }),
 
-      // חיפוש נכס
       searchProperty: async (propertyCode: string) => {
         const { odbcName } = get();
         if (!odbcName) {
@@ -82,14 +80,11 @@ export const useRetroStore = create<RetroState & Actions>()(
         }
       },
 
-      // ניהול סוגי חיוב
       setSelectedChargeTypes: (types) => set({ selectedChargeTypes: types }),
 
-      // ניהול תאריכים
       setStartDate: (dateStr) => set({ startDate: new Date(dateStr) }),
       setEndDate: (dateStr) => set({ endDate: new Date(dateStr) }),
 
-      // חישוב רטרו
       calculateRetro: async () => {
         const state = get();
         const { property, startDate, endDate, selectedChargeTypes, odbcName } = state;
@@ -121,7 +116,6 @@ export const useRetroStore = create<RetroState & Actions>()(
         }
       },
 
-      // איפוס המצב
       reset: () => set(initialState)
     }),
     {
