@@ -53,7 +53,7 @@ export const useRetroStore = create<RetroState & Actions>()(
         try {
           set({ isLoading: true, error: null });
           
-          // Debug logs
+// Debug logs
           console.log('Searching with params:', { propertyCode, odbcName });
 
           const url = new URL(`${API_BASE_URL}/Property/search`);
@@ -63,16 +63,16 @@ export const useRetroStore = create<RetroState & Actions>()(
           console.log('Full URL:', url.toString());
 
           const response = await fetch(url.toString(), {
-            headers: {
-              'Accept': 'application/json'
-            }
-          });
+              headers: {
+                'Accept': 'application/json'
+              }
+            });
 
           console.log('Response status:', response.status);
           
           const text = await response.text();
           console.log('Raw response:', text);
-          
+
           if (!response.ok) {
             throw new Error(`API error: ${response.status} - ${text}`);
           }
