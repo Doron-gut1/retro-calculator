@@ -2,8 +2,6 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Property } from '../types';
 
-console.log('Store initialization started');
-
 const API_BASE_URL = 'https://localhost:5001/api';
 
 interface RetroState {
@@ -38,8 +36,6 @@ const initialState: RetroState = {
   error: null
 };
 
-console.log('Initial state created:', initialState);
-
 export const useRetroStore = create<RetroState & Actions>()(
   persist(
     (set, get) => ({
@@ -48,14 +44,11 @@ export const useRetroStore = create<RetroState & Actions>()(
       setSessionParams: ({ odbcName, jobNumber }) => {
         console.log('Setting session params:', { odbcName, jobNumber });
         set({ odbcName, jobNumber });
-        console.log('Current store state after setSessionParams:', get());
       },
 
       searchProperty: async (propertyCode: string) => {
-        console.log('Searching property, current state:', get());
         const { odbcName } = get();
         if (!odbcName) {
-          console.log('No ODBC connection found');
           set({ error: 'לא נמצא חיבור לאקסס' });
           return;
         }
@@ -63,28 +56,21 @@ export const useRetroStore = create<RetroState & Actions>()(
         try {
           set({ isLoading: true, error: null });
           
-          console.log('Searching with params:', { propertyCode, odbcName });
-
           const url = new URL(`${API_BASE_URL}/Property/${propertyCode}?odbcName=${odbcName}`);
-          console.log('Full URL:', url.toString());
 
           const response = await fetch(url.toString(), {
               headers: {
                 'Accept': 'application/json'
               }
             });
-
-          console.log('Response status:', response.status);
           
           const text = await response.text();
-          console.log('Raw response:', text);
 
           if (!response.ok) {
             throw new Error(`API error: ${response.status} - ${text}`);
           }
 
           const data = text ? JSON.parse(text) : null;
-          console.log('Parsed data:', data);
 
           if (data && Array.isArray(data) && data.length > 0) {
             set({ property: data[0] });
@@ -104,7 +90,6 @@ export const useRetroStore = create<RetroState & Actions>()(
       setEndDate: (dateStr) => set({ endDate: new Date(dateStr) }),
 
       calculateRetro: async () => {
-        console.log('Starting calculation, current state:', get());
         const state = get();
         const { property, startDate, endDate, selectedChargeTypes, jobNumber } = state;
 
@@ -124,8 +109,9 @@ export const useRetroStore = create<RetroState & Actions>()(
             jobNumber
           };
 
-          console.log('Calculation request:', requestBody);
+          // TODO: הוספת קריאה ל-API אמיתי
           await new Promise(resolve => setTimeout(resolve, 1000));
+          console.log('Calculation request:', requestBody);
           
         } catch (error) {
           console.error('שגיאה בחישוב רטרו:', error);
@@ -139,20 +125,14 @@ export const useRetroStore = create<RetroState & Actions>()(
     }),
     {
       name: 'retro-calculator-storage',
-      partialize: (state) => {
-        console.log('Persisting state:', state);
-        return {
-          odbcName: state.odbcName,
-          jobNumber: state.jobNumber,
-          property: state.property,
-          selectedChargeTypes: state.selectedChargeTypes,
-          startDate: state.startDate,
-          endDate: state.endDate,
-          isLoading: state.isLoading
-        } as RetroState;
-      }
+      partialize: (state) => ({
+        odbcName: state.odbcName,
+        jobNumber: state.jobNumber,
+        property: state.property,
+        selectedChargeTypes: state.selectedChargeTypes,
+        startDate: state.startDate,
+        endDate: state.endDate
+      } as RetroState)
     }
   )
 );
-
-console.log('Store created and ready');
