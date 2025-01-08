@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Property } from '../types';
 
-const API_BASE_URL = 'http://localhost:5001/api';
+const API_BASE_URL = 'https://localhost:5001/api';
 
 interface RetroState {
   odbcName: string | null;
@@ -53,23 +53,35 @@ export const useRetroStore = create<RetroState & Actions>()(
         try {
           set({ isLoading: true, error: null });
           
+          // Debug logs
+          console.log('Searching with params:', { propertyCode, odbcName });
+
           const url = new URL(`${API_BASE_URL}/Property/search`);
           url.searchParams.append('propertyCode', propertyCode);
           url.searchParams.append('odbcName', odbcName);
           
+          console.log('Full URL:', url.toString());
+
           const response = await fetch(url.toString(), {
             headers: {
               'Accept': 'application/json'
             }
           });
 
+          console.log('Response status:', response.status);
+          
+          const text = await response.text();
+          console.log('Raw response:', text);
+          
           if (!response.ok) {
-            throw new Error(`API error: ${response.status}`);
+            throw new Error(`API error: ${response.status} - ${text}`);
           }
 
-          const results = await response.json();
-          if (results && results.length > 0) {
-            set({ property: results[0] });
+          const data = text ? JSON.parse(text) : null;
+          console.log('Parsed data:', data);
+
+          if (data && Array.isArray(data) && data.length > 0) {
+            set({ property: data[0] });
           } else {
             set({ error: 'לא נמצא נכס' });
           }
