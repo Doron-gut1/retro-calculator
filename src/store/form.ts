@@ -53,14 +53,11 @@ export const useFormStore = create(
     }),
     {
       name: 'retro-form-storage',
-      partialize: (state) => ({
-        ...state,  // שומר את כל המצב
-        // רק לא שומרים את הפונקציות
-        setProperty: undefined,
-        setStartDate: undefined,
-        setEndDate: undefined,
-        setSelectedChargeTypes: undefined,
-        reset: undefined
+      partialize: (state: FormState & FormActions): FormState => ({
+        property: state.property,
+        startDate: state.startDate,
+        endDate: state.endDate,
+        selectedChargeTypes: state.selectedChargeTypes
       })
     }
   )
