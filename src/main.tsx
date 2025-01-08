@@ -14,11 +14,9 @@ if (!rootElement) {
 console.log('Creating React root...');
 const root = ReactDOM.createRoot(rootElement);
 
-console.log('Rendering app...');
+// Removing StrictMode temporarily for debugging
 root.render(
-  <React.StrictMode>
     <App />
-  </React.StrictMode>
 );
 
 console.log('App rendered successfully from main.tsx');
