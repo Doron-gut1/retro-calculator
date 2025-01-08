@@ -40,9 +40,10 @@ export const useSessionStore = create(
     {
       name: 'retro-session-storage',
       partialize: (state) => ({
-        currentOdbc: state.currentOdbc,
-        currentJobNumber: state.currentJobNumber,
-        urlParamsProcessed: state.urlParamsProcessed
+        ...state,  // שומר את כל המצב
+        // רק לא שומרים את הפונקציות
+        setSession: undefined,
+        reset: undefined
       })
     }
   )
