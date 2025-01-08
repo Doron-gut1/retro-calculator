@@ -1,99 +1,59 @@
-import React, { useCallback } from 'react';
-import { useRetroStore } from '../store';
-import PropertySearch from './PropertySearch';
-import { SizesTable } from './SizesAndTariffs';
-import { DateRangeSelect, ChargeTypesSelect } from './inputs';
-import { CalculationButtons } from './buttons';
-import { AnimatedAlert } from './UX';
-import { LoadingSpinner } from './UX';
+import React from 'react';
+import { useFormStore } from './store/form';
+import { useSessionStore } from './store/session';
+import { Calculator, Check } from 'lucide-react';
+import { PropertySearch } from './PropertySearch';
 
 export const RetroForm: React.FC = () => {
-  const {
+  const { 
     property,
     selectedChargeTypes,
     startDate,
     endDate,
-    isLoading,
-    error,
-    setSelectedChargeTypes,
     setStartDate,
     setEndDate,
-    searchProperty,
-    calculateRetro
-  } = useRetroStore();
+    setSelectedChargeTypes
+  } = useFormStore();
 
-  const handleSearch = useCallback(async (propertyCode: string) => {
-    await searchProperty(propertyCode);
-  }, [searchProperty]);
+  const { currentOdbc, currentJobNumber } = useSessionStore();
 
-  const handleDateChange = useCallback((startDate: Date | null, endDate: Date | null) => {
-    if (startDate) setStartDate(startDate.toISOString());
-    if (endDate) setEndDate(endDate.toISOString());
-  }, [setStartDate, setEndDate]);
-
-  const handleChargeTypesChange = useCallback((types: string[]) => {
-    setSelectedChargeTypes(types);
-  }, [setSelectedChargeTypes]);
+  const handleCalculate = async () => {
+    // TODO: Implement calculation
+    console.log('Calculating...', { property, selectedChargeTypes, startDate, endDate });
+  };
 
   return (
-    <div className="flex flex-col gap-4 p-4 bg-gray-50 min-h-screen">
-      {/* Header */}
-      <div className="bg-blue-600 text-white p-4 rounded-lg shadow">
+    <div className="flex flex-col bg-gray-50 min-h-screen text-right">
+      <div className="bg-blue-600 text-white p-4">
         <h1 className="text-2xl font-semibold">חישוב רטרו</h1>
       </div>
+      
+      <div className="flex flex-col p-4 gap-4">
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="grid grid-cols-3 gap-6">
+            {/* Property Search & Info */}
+            <PropertySearch />
 
-      {/* Main Form */}
-      <div className="bg-white rounded-lg shadow p-4 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Property Search */}
-          <div className="space-y-4">
-            <PropertySearch onSearch={handleSearch} />
-          </div>
+            {/* Dates & Charge Types */}
+            <div>{/* TODO: Add dates and charge types */}</div>
 
-          {/* Dates & Charge Types */}
-          <div className="space-y-4">
-            <DateRangeSelect onChange={handleDateChange} />
-            <ChargeTypesSelect 
-              selected={selectedChargeTypes}
-              onChange={handleChargeTypesChange}
-            />
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-col justify-end gap-2">
-            <CalculationButtons
-              onCalculate={calculateRetro}
-              disabled={isLoading || !property}
-            />
+            {/* Action Buttons */}
+            <div className="flex flex-col justify-end gap-2">
+              <button 
+                className="bg-blue-600 text-white p-3 rounded flex items-center justify-center gap-2 hover:bg-blue-700"
+                onClick={handleCalculate}
+              >
+                <Calculator size={20} />
+                חשב
+              </button>
+              <button className="bg-green-600 text-white p-3 rounded flex items-center justify-center gap-2 hover:bg-green-700">
+                <Check size={20} />
+                אשר
+              </button>
+            </div>
           </div>
         </div>
-
-        {/* Sizes Table */}
-        {property && (
-          <div className="mt-6">
-            <SizesTable property={property} />
-          </div>
-        )}
       </div>
-
-      {/* Loading Indicator */}
-      {isLoading && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <LoadingSpinner size="lg" />
-        </div>
-      )}
-
-      {/* Error Messages */}
-      {error && (
-        <div className="fixed bottom-4 right-4 space-y-2 max-w-md">
-          <AnimatedAlert
-            type="error"
-            title="שגיאה"
-            message={error}
-            duration={5000}
-          />
-        </div>
-      )}
     </div>
   );
 };
