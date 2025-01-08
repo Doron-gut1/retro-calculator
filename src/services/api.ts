@@ -2,13 +2,35 @@ import type {
   RetroCalculationRequest,
   RetroCalculationResponse,
   OpenFromAccessResponse,
-  ApiError
-} from '../types/api';
+  ApiError,
+  Property
+} from '../types';
 
-// שימוש בפורט הנכון
 const API_BASE_URL = 'http://localhost:5001/api';
 
 export const retroApi = {
+  async searchProperty(propertyCode: string, odbcName: string): Promise<Property[]> {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/Property/search?propertyCode=${propertyCode}&odbcName=${odbcName}`,
+        {
+          headers: {
+            'Accept': 'application/json'
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Property search failed:', error);
+      throw error;
+    }
+  },
+
   async validateAccessParams(
     odbcName: string,
     jobNum: number
