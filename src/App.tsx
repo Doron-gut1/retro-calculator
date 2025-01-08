@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import { ErrorBoundary } from './components/ErrorBoundary';
 import { RetroForm } from './components/RetroForm';
 import { useSessionStore } from './store/session';
 
@@ -29,11 +28,9 @@ const App: React.FC = () => {
   }, []); // רק בטעינה
 
   return (
-    <ErrorBoundary>
-      <div dir="rtl">
-        <RetroForm />
-      </div>
-    </ErrorBoundary>
+    <div dir="rtl">
+      <RetroForm />
+    </div>
   );
 };
 
