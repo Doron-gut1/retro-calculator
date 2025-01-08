@@ -1,11 +1,5 @@
 import React, { useCallback } from 'react';
 import { useRetroStore } from '../store';
-import PropertySearch from './PropertySearch';
-import { SizesTable } from './SizesAndTariffs';
-import { DateRangeSelect, ChargeTypesSelect } from './inputs';
-import { CalculationButtons } from './buttons';
-import { AnimatedAlert } from './UX';
-import { LoadingSpinner } from './UX';
 import { Calculator, Check } from 'lucide-react';
 
 export const RetroForm: React.FC = () => {
@@ -16,14 +10,19 @@ export const RetroForm: React.FC = () => {
     endDate,
     isLoading,
     error,
+    searchProperty,
     setSelectedChargeTypes,
     setStartDate,
     setEndDate,
-    searchProperty,
     calculateRetro
   } = useRetroStore();
 
-  console.log('RetroForm rendered with state:', { property, selectedChargeTypes, startDate, endDate });
+  console.log('RetroForm rendered with state:', { 
+    property, 
+    selectedChargeTypes, 
+    startDate, 
+    endDate 
+  });
 
   const handleSearch = useCallback(async (propertyCode: string) => {
     console.log('Property search triggered:', propertyCode);
@@ -44,31 +43,47 @@ export const RetroForm: React.FC = () => {
       <div className="flex flex-col p-4 gap-4">
         <div className="bg-white rounded-lg shadow p-4">
           <div className="grid grid-cols-3 gap-6">
-            {/* Property Search & Info */}
-            <PropertySearch onSearch={handleSearch} />
-
-            {/* Dates & Charge Types */}
+            {/* Property Search */}
             <div className="space-y-4">
-              {property && (
-                <>
-                  <DateRangeSelect
-                    startDate={startDate}
-                    endDate={endDate}
-                    onStartDateChange={(date) => setStartDate(date?.toISOString() ?? '')}
-                    onEndDateChange={(date) => setEndDate(date?.toISOString() ?? '')}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium">קוד נכס</label>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    className="flex-1 p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                    placeholder="הזן קוד נכס..."
+                    onChange={(e) => handleSearch(e.target.value)}
                   />
-                  <ChargeTypesSelect
-                    selected={selectedChargeTypes}
-                    onChange={setSelectedChargeTypes}
-                  />
-                </>
-              )}
+                </div>
+              </div>
+            </div>
+
+            {/* Dates & Types Selection */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium">תאריך התחלה</label>
+                <input 
+                  type="date" 
+                  className="w-full p-2 border rounded"
+                  value={startDate?.toISOString().split('T')[0] || ''}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium">תאריך סיום</label>
+                <input 
+                  type="date" 
+                  className="w-full p-2 border rounded"
+                  value={endDate?.toISOString().split('T')[0] || ''}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
             </div>
 
             {/* Action Buttons */}
             <div className="flex flex-col justify-end gap-2">
               <button 
-                className="bg-blue-600 text-white p-3 rounded flex items-center justify-center gap-2 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-blue-600 text-white p-3 rounded flex items-center justify-center gap-2 hover:bg-blue-700 disabled:opacity-50"
                 onClick={handleCalculate}
                 disabled={isLoading || !property}
               >
@@ -76,7 +91,7 @@ export const RetroForm: React.FC = () => {
                 חשב
               </button>
               <button 
-                className="bg-green-600 text-white p-3 rounded flex items-center justify-center gap-2 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-green-600 text-white p-3 rounded flex items-center justify-center gap-2 hover:bg-green-700 disabled:opacity-50"
                 disabled={isLoading || !property}
               >
                 <Check size={20} />
@@ -84,32 +99,19 @@ export const RetroForm: React.FC = () => {
               </button>
             </div>
           </div>
-
-          {/* Sizes Table */}
-          {property && (
-            <div className="mt-6">
-              <SizesTable property={property} />
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Loading Indicator */}
+      {/* Loading & Error States */}
       {isLoading && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <LoadingSpinner />
+          <div className="text-white">Loading...</div>
         </div>
       )}
 
-      {/* Error Messages */}
       {error && (
-        <div className="fixed bottom-4 right-4 space-y-2 max-w-md">
-          <AnimatedAlert
-            type="error"
-            title="שגיאה"
-            message={error}
-            duration={5000}
-          />
+        <div className="fixed bottom-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
+          {error}
         </div>
       )}
     </div>
