@@ -1,34 +1,18 @@
 import React, { useState } from 'react';
 import { Search } from 'lucide-react';
-import { Property, PropertySearchProps } from '../../types';
-import { retroApi } from '../../services/api';
 import { useRetroStore } from '../../store';
-import SearchResults from './SearchResults';
 
-const PropertySearch: React.FC<PropertySearchProps> = ({ onPropertySelect }) => {
+interface PropertySearchProps {
+  onSearch: (propertyCode: string) => Promise<void>;
+}
+
+export const PropertySearch: React.FC<PropertySearchProps> = ({ onSearch }) => {
   const [propertyCode, setPropertyCode] = useState('');
-  const [searchResults, setSearchResults] = useState<Property[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const { odbcName } = useRetroStore();
-  
-  const handleSearch = async () => {
-    if (!propertyCode || !odbcName) return;
+  const { isLoading } = useRetroStore();
 
-    setIsSearching(true);
-    try {
-      const results = await retroApi.searchProperty(propertyCode, odbcName);
-      setSearchResults(results);
-    } catch (error) {
-      console.error('Error searching property:', error);
-      // TODO: להוסיף הודעת שגיאה למשתמש
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const handlePropertySelect = (property: Property) => {
-    setSearchResults([]);
-    onPropertySelect(property);
+  const handleSubmit = async () => {
+    if (!propertyCode.trim()) return;
+    await onSearch(propertyCode.trim());
   };
 
   return (
@@ -42,21 +26,17 @@ const PropertySearch: React.FC<PropertySearchProps> = ({ onPropertySelect }) => 
             placeholder="הזן קוד נכס..."
             value={propertyCode}
             onChange={(e) => setPropertyCode(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            disabled={isSearching}
+            onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+            disabled={isLoading}
           />
           <button 
             className="p-2 bg-blue-100 text-blue-600 rounded hover:bg-blue-200 disabled:opacity-50"
-            onClick={handleSearch}
-            disabled={isSearching || !propertyCode}
+            onClick={handleSubmit}
+            disabled={isLoading || !propertyCode.trim()}
           >
             <Search size={20} />
           </button>
         </div>
-        <SearchResults 
-          results={searchResults}
-          onSelect={handlePropertySelect}
-        />
       </div>
     </div>
   );
