@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Search } from 'lucide-react';
-import { Property, PropertySearchProps } from '../../types/property';
+import { Property, PropertySearchProps } from '../../types/index';
 import SearchResults from './SearchResults';
 
 const PropertySearch: React.FC<PropertySearchProps> = ({ onPropertySelect }) => {
@@ -10,7 +10,7 @@ const PropertySearch: React.FC<PropertySearchProps> = ({ onPropertySelect }) => 
   const handleSearch = () => {
     // TODO: להוסיף חיבור לשרת
     // כרגע מדמה נתונים לצורך הדגמה
-    const mockResults: Property[] = [
+  /*   const mockResults: Property[] = [
       {
         hskod: propertyCode,
         ktovet: 'רחוב הרצל 1',
@@ -29,9 +29,9 @@ const PropertySearch: React.FC<PropertySearchProps> = ({ onPropertySelect }) => 
         sughs: 1,
         godel: 90
       }
-    ];
+    ]; */
     
-    setSearchResults(mockResults);
+    /* setSearchResults(mockResults); */
   };
 
   const handlePropertySelect = (property: Property) => {
