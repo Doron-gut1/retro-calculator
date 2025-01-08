@@ -1,3 +1,4 @@
+// Latest Version - After Store Centralization - 2024-01-08
 import React, { useCallback } from 'react';
 import { useRetroStore } from '../store';
 import { Calculator, Check } from 'lucide-react';
@@ -34,6 +35,17 @@ export const RetroForm: React.FC = () => {
     await calculateRetro();
   }, [calculateRetro]);
 
+  // התאמת הטיפול בתאריכים כדי למנוע את שגיאת toISOString
+  const formatDateForInput = (date: Date | null) => {
+    if (!date) return '';
+    try {
+      return date instanceof Date ? date.toISOString().split('T')[0] : '';
+    } catch (e) {
+      console.error('Error formatting date:', e);
+      return '';
+    }
+  };
+
   return (
     <div className="flex flex-col bg-gray-50 min-h-screen text-right">
       <div className="bg-blue-600 text-white p-4">
@@ -65,7 +77,7 @@ export const RetroForm: React.FC = () => {
                 <input 
                   type="date" 
                   className="w-full p-2 border rounded"
-                  value={startDate?.toISOString().split('T')[0] || ''}
+                  value={formatDateForInput(startDate)}
                   onChange={(e) => setStartDate(e.target.value)}
                 />
               </div>
@@ -74,7 +86,7 @@ export const RetroForm: React.FC = () => {
                 <input 
                   type="date" 
                   className="w-full p-2 border rounded"
-                  value={endDate?.toISOString().split('T')[0] || ''}
+                  value={formatDateForInput(endDate)}
                   onChange={(e) => setEndDate(e.target.value)}
                 />
               </div>
