@@ -1,90 +1,87 @@
 import React from 'react';
 import { create } from 'zustand';
-import { AnimatedAlert } from '@/components/UX/AnimatedAlert';
-
-export interface ErrorMessage {
-  id: string;
-  type: 'error' | 'warning' | 'info';
-  message: string;
-  field?: string;
-  timeout?: number;
-  timestamp?: number;
-}
 
 interface ErrorState {
-  errors: ErrorMessage[];
-  lastCheck: number;
-  addError: (error: Omit<ErrorMessage, 'id'>) => void;
-  removeError: (id: string) => void;
-  removeFieldError: (field: string) => void;
-  clearErrors: () => void;
-  hasErrors: () => boolean;
-  getFieldErrors: (field: string) => ErrorMessage[];
+  errors: Array<{
+    id: string;
+    message: string;
+    field?: string;
+    timestamp: number;
+  }>;
+  fieldErrors: Record<string, string>;
 }
 
-export const useErrorSystem = create<ErrorState>((set, get) => ({
-  errors: [],
-  lastCheck: Date.now(),
+interface ErrorActions {
+  addError: (error: string | Error) => void;
+  removeError: (id: string) => void;
+  setFieldError: (field: string, error: string) => void;
+  clearFieldError: (field: string) => void;
+  clearAllErrors: () => void;
+}
 
-  addError: (error) => {
-    const id = Math.random().toString(36).substr(2, 9);
-    const timeout = error.timeout || 5000;
-    const timestamp = Date.now();
+export const useErrorStore = create<ErrorState & ErrorActions>()((set, get) => ({
+  errors: [],
+  fieldErrors: {},
+
+  addError: (error: string | Error) => {
+    const errorMessage = error instanceof Error ? error.message : error;
+    const newError = {
+      id: Math.random().toString(36).substr(2, 9),
+      message: errorMessage,
+      timestamp: Date.now(),
+    };
 
     set((state) => ({
-      errors: [...state.errors.filter(e => e.field !== error.field), { ...error, id, timestamp }],
-      lastCheck: timestamp
+      errors: [...state.errors, newError].filter((e) => 
+        Date.now() - e.timestamp < 5000
+      ),
     }));
 
-    if (timeout > 0) {
-      setTimeout(() => {
-        get().removeError(id);
-      }, timeout);
-    }
+    setTimeout(() => {
+      set((state) => ({
+        errors: state.errors.filter((error) => error.id !== newError.id),
+      }));
+    }, 5000);
   },
 
-  removeError: (id) => {
+  removeError: (id: string) => {
     set((state) => ({
       errors: state.errors.filter((error) => error.id !== id),
-      lastCheck: Date.now()
     }));
   },
 
-  removeFieldError: (field) => {
+  setFieldError: (field: string, error: string) => {
     set((state) => ({
-      errors: state.errors.filter((error) => error.field !== field),
-      lastCheck: Date.now()
+      fieldErrors: { ...state.fieldErrors, [field]: error },
     }));
   },
 
-  clearErrors: () => set({
-    errors: [],
-    lastCheck: Date.now()
-  }),
+  clearFieldError: (field: string) => {
+    set((state) => {
+      const { [field]: _, ...rest } = state.fieldErrors;
+      return { fieldErrors: rest };
+    });
+  },
 
-  hasErrors: () => get().errors.length > 0,
-
-  getFieldErrors: (field: string) => 
-    get().errors.filter(e => e.field === field)
+  clearAllErrors: () => {
+    set({ errors: [], fieldErrors: {} });
+  },
 }));
 
-export const ErrorDisplay: React.FC = () => {
-  const errors = useErrorSystem((state) => state.errors);
-  const removeError = useErrorSystem((state) => state.removeError);
+export const useError = () => {
+  const { addError } = useErrorStore((state) => state);
+  const { setFieldError } = useErrorStore((state) => state);
 
-  if (errors.length === 0) return null;
-
-  return (
-    <div className="fixed bottom-4 right-4 space-y-2 max-w-md">
-      {errors.map((error) => (
-        <AnimatedAlert
-          key={error.id}
-          type={error.type}
-          title={error.field ? `שגיאה ב${error.field}` : 'שגיאה'}
-          message={error.message}
-          onClose={() => removeError(error.id)}
-        />
-      ))}    
-    </div>
+  const handleError = React.useCallback(
+    (e: Error | string, field?: string) => {
+      if (field) {
+        setFieldError(field, typeof e === 'string' ? e : e.message);
+      } else {
+        addError(e);
+      }
+    },
+    [addError, setFieldError]
   );
+
+  return { handleError };
 };
