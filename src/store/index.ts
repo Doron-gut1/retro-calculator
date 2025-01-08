@@ -4,6 +4,14 @@ import type { Property } from '../types';
 
 const API_BASE_URL = 'https://localhost:5001/api';
 
+// קריאה חד פעמית של פרמטרים בזמן האתחול
+console.log('Reading initial URL parameters...');
+const urlParams = new URLSearchParams(window.location.search);
+const initialOdbcName = urlParams.get('odbcName');
+const initialJobNum = urlParams.get('jobNum');
+
+console.log('Initial params from URL:', { odbcName: initialOdbcName, jobNum: initialJobNum });
+
 interface RetroState {
   odbcName: string | null;
   jobNumber: number | null;
@@ -26,8 +34,9 @@ interface Actions {
 }
 
 const initialState: RetroState = {
-  odbcName: null,
-  jobNumber: null,
+  // הכנסת הפרמטרים מה-URL ישירות ל-initial state
+  odbcName: initialOdbcName,
+  jobNumber: initialJobNum ? parseInt(initialJobNum) : null,
   property: null,
   selectedChargeTypes: [],
   startDate: null,
@@ -35,6 +44,8 @@ const initialState: RetroState = {
   isLoading: false,
   error: null
 };
+
+console.log('Creating store with initial state:', initialState);
 
 export const useRetroStore = create<RetroState & Actions>()(
   persist(
@@ -56,21 +67,28 @@ export const useRetroStore = create<RetroState & Actions>()(
         try {
           set({ isLoading: true, error: null });
           
+          console.log('Searching with params:', { propertyCode, odbcName });
+
           const url = new URL(`${API_BASE_URL}/Property/${propertyCode}?odbcName=${odbcName}`);
+          console.log('Full URL:', url.toString());
 
           const response = await fetch(url.toString(), {
               headers: {
                 'Accept': 'application/json'
               }
             });
+
+          console.log('Response status:', response.status);
           
           const text = await response.text();
+          console.log('Raw response:', text);
 
           if (!response.ok) {
             throw new Error(`API error: ${response.status} - ${text}`);
           }
 
           const data = text ? JSON.parse(text) : null;
+          console.log('Parsed data:', data);
 
           if (data && Array.isArray(data) && data.length > 0) {
             set({ property: data[0] });
@@ -109,9 +127,8 @@ export const useRetroStore = create<RetroState & Actions>()(
             jobNumber
           };
 
-          // TODO: הוספת קריאה ל-API אמיתי
-          await new Promise(resolve => setTimeout(resolve, 1000));
           console.log('Calculation request:', requestBody);
+          await new Promise(resolve => setTimeout(resolve, 1000));
           
         } catch (error) {
           console.error('שגיאה בחישוב רטרו:', error);
