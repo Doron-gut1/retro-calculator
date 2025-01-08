@@ -1,10 +1,9 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, PersistOptions } from 'zustand/middleware';
 import type { Property } from '../types';
 
 const API_BASE_URL = 'https://localhost:5001/api';
 
-// מצב האפליקציה
 interface RetroState {
   odbcName: string | null;
   jobNumber: number | null;
@@ -28,6 +27,8 @@ interface Actions {
   setUrlParamsProcessed: (processed: boolean) => void;
 }
 
+type RetroStore = RetroState & Actions;
+
 const initialState: RetroState = {
   odbcName: null,
   jobNumber: null,
@@ -40,7 +41,20 @@ const initialState: RetroState = {
   urlParamsProcessed: false
 };
 
-export const useRetroStore = create<RetroState & Actions>(
+const persistOptions: PersistOptions<RetroStore> = {
+  name: 'retro-calculator-storage',
+  partialize: (state) => ({
+    odbcName: state.odbcName,
+    jobNumber: state.jobNumber,
+    property: state.property,
+    selectedChargeTypes: state.selectedChargeTypes,
+    startDate: state.startDate,
+    endDate: state.endDate,
+    urlParamsProcessed: state.urlParamsProcessed
+  })
+};
+
+export const useRetroStore = create<RetroStore>(
   persist(
     (set, get) => ({
       ...initialState,
@@ -138,17 +152,6 @@ export const useRetroStore = create<RetroState & Actions>(
 
       reset: () => set(initialState)
     }),
-    {
-      name: 'retro-calculator-storage',
-      partialize: (state) => ({
-        odbcName: state.odbcName,
-        jobNumber: state.jobNumber,
-        property: state.property,
-        selectedChargeTypes: state.selectedChargeTypes,
-        startDate: state.startDate,
-        endDate: state.endDate,
-        urlParamsProcessed: state.urlParamsProcessed
-      })
-    }
+    persistOptions
   )
 );
