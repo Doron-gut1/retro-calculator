@@ -1,6 +1,5 @@
 import React, { useCallback } from 'react';
 import { useRetroStore } from '../store';
-import { useErrorSystem } from '../lib/ErrorSystem';
 import PropertySearch from './PropertySearch';
 import { SizesTable } from './SizesAndTariffs';
 import { DateRangeSelect, ChargeTypesSelect } from './inputs';
@@ -33,7 +32,7 @@ export const RetroForm: React.FC = () => {
   }, [setStartDate, setEndDate]);
 
   const handleChargeTypesChange = useCallback((types: string[]) => {
-    setSelectedChargeTypes(types.map(Number));
+    setSelectedChargeTypes(types);
   }, [setSelectedChargeTypes]);
 
   return (
@@ -55,7 +54,7 @@ export const RetroForm: React.FC = () => {
           <div className="space-y-4">
             <DateRangeSelect onChange={handleDateChange} />
             <ChargeTypesSelect 
-              selected={selectedChargeTypes.map(String)}
+              selected={selectedChargeTypes}
               onChange={handleChargeTypesChange}
             />
           </div>
