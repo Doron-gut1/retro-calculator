@@ -1,18 +1,10 @@
-/* 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Property } from '../types';
 
 const API_BASE_URL = 'https://localhost:5001/api';
 
-// קריאה חד פעמית של פרמטרים בזמן האתחול
-console.log('Reading initial URL parameters...');
-const urlParams = new URLSearchParams(window.location.search);
-const initialOdbcName = urlParams.get('odbcName');
-const initialJobNum = urlParams.get('jobNum');
-
-console.log('Initial params from URL:', { odbcName: initialOdbcName, jobNum: initialJobNum });
-
+// מצב האפליקציה
 interface RetroState {
   odbcName: string | null;
   jobNumber: number | null;
@@ -22,6 +14,7 @@ interface RetroState {
   endDate: Date | null;
   isLoading: boolean;
   error: string | null;
+  urlParamsProcessed: boolean;
 }
 
 interface Actions {
@@ -32,22 +25,22 @@ interface Actions {
   setEndDate: (dateStr: string) => void;
   calculateRetro: () => Promise<void>;
   reset: () => void;
+  setUrlParamsProcessed: (processed: boolean) => void;
 }
 
 const initialState: RetroState = {
-  odbcName: initialOdbcName,
-  jobNumber: initialJobNum ? parseInt(initialJobNum) : null,
+  odbcName: null,
+  jobNumber: null,
   property: null,
   selectedChargeTypes: [],
   startDate: null,
   endDate: null,
   isLoading: false,
-  error: null
+  error: null,
+  urlParamsProcessed: false
 };
 
-console.log('Creating store with initial state:', initialState);
-
-export const useRetroStore = create<RetroState & Actions>()(
+export const useRetroStore = create<RetroState & Actions>(
   persist(
     (set, get) => ({
       ...initialState,
@@ -55,6 +48,11 @@ export const useRetroStore = create<RetroState & Actions>()(
       setSessionParams: ({ odbcName, jobNumber }) => {
         console.log('Setting session params:', { odbcName, jobNumber });
         set({ odbcName, jobNumber });
+      },
+
+      setUrlParamsProcessed: (processed) => {
+        console.log('Setting urlParamsProcessed:', processed);
+        set({ urlParamsProcessed: processed });
       },
 
       searchProperty: async (propertyCode: string) => {
@@ -148,13 +146,9 @@ export const useRetroStore = create<RetroState & Actions>()(
         property: state.property,
         selectedChargeTypes: state.selectedChargeTypes,
         startDate: state.startDate,
-        endDate: state.endDate
-      } as RetroState)
+        endDate: state.endDate,
+        urlParamsProcessed: state.urlParamsProcessed
+      })
     }
   )
 );
-*/
-
-// Re-export the new stores
-export * from './session';
-export * from './form';

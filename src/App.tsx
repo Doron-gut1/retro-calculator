@@ -1,14 +1,13 @@
 import React, { useEffect } from 'react';
 import { RetroForm } from './components/RetroForm';
-import { useSessionStore } from './store/session';
+import { useRetroStore } from './store';
 
 const App: React.FC = () => {
-  const { urlParamsProcessed, setSession } = useSessionStore();
+  const { urlParamsProcessed, setSessionParams, setUrlParamsProcessed } = useRetroStore();
 
   useEffect(() => {
-    console.log('App useEffect running. urlParamsProcessed:', urlParamsProcessed);
-    
     if (!urlParamsProcessed) {
+      console.log('Reading URL parameters...');
       const urlParams = new URLSearchParams(window.location.search);
       const odbcName = urlParams.get('odbcName');
       const jobNum = urlParams.get('jobNum');
@@ -16,16 +15,15 @@ const App: React.FC = () => {
       console.log('Initial params from URL:', { odbcName, jobNum });
       
       if (odbcName && jobNum) {
-        setSession({
-          currentOdbc: odbcName,
-          currentJobNumber: parseInt(jobNum, 10),
-          urlParamsProcessed: true
+        setSessionParams({
+          odbcName: odbcName,
+          jobNumber: parseInt(jobNum, 10)
         });
-      } else {
-        setSession({ urlParamsProcessed: true });
       }
+      
+      setUrlParamsProcessed(true);
     }
-  }, []); // רץ רק פעם אחת בטעינה
+  }, [urlParamsProcessed, setSessionParams, setUrlParamsProcessed]);
 
   return (
     <div dir="rtl" className="min-h-screen bg-gray-50">
