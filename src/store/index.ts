@@ -17,49 +17,36 @@ console.log('Initial URL parameters:', { odbcName: initialOdbcName, jobNum: init
 interface RetroState {
   odbcName: string | null;
   jobNumber: number | null;
-  isInitialized: boolean;
-  property: Property | null;
-  selectedChargeTypes: string[];
-  startDate: Date | null;
-  endDate: Date | null;
-  isLoading: boolean;
-  error: string | null;
-}
-
-interface Actions {
-  setSelectedChargeTypes: (types: string[]) => void;
-  setStartDate: (dateStr: string) => void;
-  setEndDate: (dateStr: string) => void;
-  searchProperty: (propertyCode: string) => Promise<void>;
-  calculateRetro: () => Promise<void>;
-  reset: () => void;
 }
 
 const initialState: RetroState = {
   odbcName: initialOdbcName,
-  jobNumber: initialJobNum ? parseInt(initialJobNum) : null,
-  isInitialized: false,
-  property: null,
-  selectedChargeTypes: [],
-  startDate: null,
-  endDate: null,
-  isLoading: false,
-  error: null
+  jobNumber: initialJobNum ? parseInt(initialJobNum) : null
 };
 
 console.log('Creating store with initial state:', initialState);
 
-export const useRetroStore = create<RetroState & Actions>()(
+export const useRetroStore = create(
   persist(
     (set, get) => ({
+      // Initial State
       ...initialState,
+      
+      // Runtime State - מאותחל רק כשצריך
+      property: null as Property | null,
+      selectedChargeTypes: [] as string[],
+      startDate: null as Date | null,
+      endDate: null as Date | null,
+      isLoading: false,
+      error: null as string | null,
 
-      setSelectedChargeTypes: (types) => {
+      // Actions
+      setSelectedChargeTypes: (types: string[]) => {
         console.log('Setting charge types:', types);
         set({ selectedChargeTypes: types });
       },
 
-      setStartDate: (dateStr) => {
+      setStartDate: (dateStr: string) => {
         console.log('Setting start date:', dateStr);
         try {
           const date = dateStr ? new Date(dateStr) : null;
@@ -71,7 +58,7 @@ export const useRetroStore = create<RetroState & Actions>()(
         }
       },
 
-      setEndDate: (dateStr) => {
+      setEndDate: (dateStr: string) => {
         console.log('Setting end date:', dateStr);
         try {
           const date = dateStr ? new Date(dateStr) : null;
@@ -126,8 +113,7 @@ export const useRetroStore = create<RetroState & Actions>()(
       },
 
       calculateRetro: async () => {
-        const state = get();
-        const { property, startDate, endDate, selectedChargeTypes, jobNumber } = state;
+        const { property, startDate, endDate, selectedChargeTypes, jobNumber } = get();
 
         if (!property || !startDate || !endDate || selectedChargeTypes.length === 0) {
           set({ error: 'אנא מלא את כל השדות הנדרשים' });
@@ -167,12 +153,8 @@ export const useRetroStore = create<RetroState & Actions>()(
       name: 'retro-calculator-storage',
       partialize: (state) => ({
         odbcName: state.odbcName,
-        jobNumber: state.jobNumber,
-        property: state.property,
-        selectedChargeTypes: state.selectedChargeTypes,
-        startDate: state.startDate,
-        endDate: state.endDate
-      } as Partial<RetroState>)
+        jobNumber: state.jobNumber
+      } as RetroState)
     }
   )
 );
