@@ -1,27 +1,25 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Property, RetroResultRow } from '../types';
+import type { Property } from '../types';
 
 interface RetroState {
   odbcName: string | null;
   jobNumber: number | null;
   property: Property | null;
-  selectedChargeTypes: string[];
+  selectedChargeTypes: number[];
   startDate: Date | null;
   endDate: Date | null;
-  results: RetroResultRow[];
   isLoading: boolean;
 }
 
 interface Actions {
   setSessionParams: ({ odbcName, jobNumber }: { odbcName: string; jobNumber: number }) => void;
   setProperty: (property: Property | null) => void;
-  setSelectedChargeTypes: (types: string[]) => void;
+  setSelectedChargeTypes: (types: number[]) => void;
   setStartDate: (dateStr: string) => void;
   setEndDate: (dateStr: string) => void;
-  setResults: (results: RetroResultRow[]) => void;
   setLoading: (isLoading: boolean) => void;
-  handlePayerChange: (payerId: string) => void;
+  calculateRetro: () => Promise<void>;
   reset: () => void;
 }
 
@@ -32,22 +30,50 @@ const initialState: RetroState = {
   selectedChargeTypes: [],
   startDate: null,
   endDate: null,
-  results: [],
   isLoading: false
 };
 
 export const useRetroStore = create<RetroState & Actions>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       ...initialState,
       setSessionParams: ({ odbcName, jobNumber }) => set({ odbcName, jobNumber }),
       setProperty: (property) => set({ property }),
       setSelectedChargeTypes: (types) => set({ selectedChargeTypes: types }),
       setStartDate: (dateStr) => set({ startDate: new Date(dateStr) }),
       setEndDate: (dateStr) => set({ endDate: new Date(dateStr) }),
-      setResults: (results) => set({ results }),
       setLoading: (isLoading) => set({ isLoading }),
-      handlePayerChange: (payerId) => console.log('Changing payer to:', payerId),
+
+      calculateRetro: async () => {
+        const state = get();
+        const { property, startDate, endDate, selectedChargeTypes, odbcName } = state;
+
+        // Validation
+        if (!property || !startDate || !endDate || selectedChargeTypes.length === 0) {
+          throw new Error('אנא מלא את כל השדות הנדרשים');
+        }
+
+        try {
+          set({ isLoading: true });
+
+          const requestBody = {
+            propertyId: property.hskod,
+            startDate: startDate.toISOString(),
+            endDate: endDate.toISOString(),
+            chargeTypes: selectedChargeTypes
+          };
+
+          // TODO: Implement actual API call
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
+        } catch (error) {
+          console.error('שגיאה בחישוב רטרו:', error);
+          throw error;
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+
       reset: () => set(initialState)
     }),
     {
@@ -59,7 +85,6 @@ export const useRetroStore = create<RetroState & Actions>()(
         selectedChargeTypes: state.selectedChargeTypes,
         startDate: state.startDate,
         endDate: state.endDate,
-        results: state.results,
         isLoading: state.isLoading
       } as RetroState)
     }
