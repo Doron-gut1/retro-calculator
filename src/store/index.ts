@@ -16,7 +16,7 @@ interface RetroState {
 }
 
 interface Actions {
-  setSessionParams: ({ odbcName, jobNumber }: { odbcName: string; jobNumber: number }) => void;
+  setSessionParams: (params: { odbcName: string; jobNumber: number }) => void;
   searchProperty: (propertyCode: string) => Promise<void>;
   setSelectedChargeTypes: (types: string[]) => void;
   setStartDate: (dateStr: string) => void;
@@ -36,7 +36,7 @@ const initialState: RetroState = {
   error: null
 };
 
-export const useRetroStore = create<RetroState & Actions>()(
+export const useRetroStore = create<RetroState & Actions>(
   persist(
     (set, get) => ({
       ...initialState,
@@ -53,7 +53,6 @@ export const useRetroStore = create<RetroState & Actions>()(
         try {
           set({ isLoading: true, error: null });
           
-// Debug logs
           console.log('Searching with params:', { propertyCode, odbcName });
 
           const url = new URL(`${API_BASE_URL}/Property/search`);
@@ -87,20 +86,19 @@ export const useRetroStore = create<RetroState & Actions>()(
           }
         } catch (error) {
           console.error('Property search failed:', error);
-          set({ error: 'שגיאה בחיפוש נכס' });
+          set({ error: error instanceof Error ? error.message : 'שגיאה בחיפוש נכס' });
         } finally {
           set({ isLoading: false });
         }
       },
 
-      setSelectedChargeTypes: (types) => set({ selectedChargeTypes: types }),
-
-      setStartDate: (dateStr) => set({ startDate: new Date(dateStr) }),
-      setEndDate: (dateStr) => set({ endDate: new Date(dateStr) }),
+      setSelectedChargeTypes: (types: string[]) => set({ selectedChargeTypes: types }),
+      setStartDate: (dateStr: string) => set({ startDate: new Date(dateStr) }),
+      setEndDate: (dateStr: string) => set({ endDate: new Date(dateStr) }),
 
       calculateRetro: async () => {
         const state = get();
-        const { property, startDate, endDate, selectedChargeTypes, odbcName } = state;
+        const { property, startDate, endDate, selectedChargeTypes, jobNumber } = state;
 
         if (!property || !startDate || !endDate || selectedChargeTypes.length === 0) {
           set({ error: 'אנא מלא את כל השדות הנדרשים' });
@@ -115,15 +113,16 @@ export const useRetroStore = create<RetroState & Actions>()(
             startDate: startDate.toISOString(),
             endDate: endDate.toISOString(),
             chargeTypes: selectedChargeTypes,
-            jobNumber: get().jobNumber
+            jobNumber
           };
 
-          // TODO: הוספת קריאה ל-API אמיתי
+          // TODO: Add actual API call here
           await new Promise(resolve => setTimeout(resolve, 1000));
+          console.log('Calculation request:', requestBody);
           
         } catch (error) {
           console.error('שגיאה בחישוב רטרו:', error);
-          set({ error: 'שגיאה בחישוב רטרו' });
+          set({ error: error instanceof Error ? error.message : 'שגיאה בחישוב רטרו' });
         } finally {
           set({ isLoading: false });
         }
