@@ -24,11 +24,8 @@ interface RetroState {
 }
 
 const initialState = {
-  // Session params
   odbcName: null,
   jobNumber: null,
-  
-  // Form state
   property: null,
   selectedChargeTypes: [],
   startDate: null,
@@ -37,7 +34,7 @@ const initialState = {
   error: null
 };
 
-export const useRetroStore = create<RetroState>((set) => ({
+export const useRetroStore = create<RetroState>((set, get) => ({
   ...initialState,
   
   setSessionParams: (params) => set({
@@ -46,10 +43,20 @@ export const useRetroStore = create<RetroState>((set) => ({
   }),
   
   searchProperty: async (propertyCode) => {
+    const state = get();
+    if (!state.odbcName || !state.jobNumber) {
+      set({ error: 'Missing session parameters' });
+      return;
+    }
+
     set({ isLoading: true, error: null });
     try {
-      const mockProperty = { code: propertyCode, name: 'Test Property' };
-      set({ property: mockProperty });
+      const response = await fetch(`http://localhost:5000/api/Property/search?odbcName=${state.odbcName}&propertyCode=${propertyCode}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch property');
+      }
+      const data = await response.json();
+      set({ property: data });
     } catch (error) {
       set({ error: error instanceof Error ? error.message : 'Unknown error' });
     } finally {
@@ -64,10 +71,36 @@ export const useRetroStore = create<RetroState>((set) => ({
   setEndDate: (date) => set({ endDate: date }),
   
   calculateRetro: async () => {
+    const state = get();
+    if (!state.odbcName || !state.jobNumber) {
+      set({ error: 'Missing session parameters' });
+      return;
+    }
+
     set({ isLoading: true, error: null });
     try {
-      // TODO: Implement actual calculation
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch('http://localhost:5000/api/Retro/calculate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          odbcName: state.odbcName,
+          jobNumber: state.jobNumber,
+          propertyId: state.property?.code,
+          startDate: state.startDate,
+          endDate: state.endDate,
+          chargeTypes: state.selectedChargeTypes
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to calculate retro');
+      }
+      
+      const data = await response.json();
+      // TODO: Handle calculation results
+      
     } catch (error) {
       set({ error: error instanceof Error ? error.message : 'Unknown error' });
     } finally {
