@@ -1,37 +1,39 @@
 import React, { useEffect } from 'react';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { RetroForm } from './components/RetroForm';
-import { useRetroStore } from './store';
+import { useSessionStore } from './store/session';
 
 const App: React.FC = () => {
-  const setSessionParams = useRetroStore(state => state.setSessionParams);
-  const currentOdbc = useRetroStore(state => state.odbcName);
-  const currentJobNumber = useRetroStore(state => state.jobNumber);
+  const { urlParamsProcessed, setSession } = useSessionStore();
 
-  // יטפל בפרמטרים מה-URL רק בטעינה הראשונית ורק אם אין כבר ערכים
   useEffect(() => {
-    if (!currentOdbc || !currentJobNumber) {
+    // רק אם עוד לא עיבדנו פרמטרים מהURL
+    if (!urlParamsProcessed) {
       const urlParams = new URLSearchParams(window.location.search);
       const odbcName = urlParams.get('odbcName');
       const jobNum = urlParams.get('jobNum');
       
-      console.log('URL Parameters:', { odbcName, jobNum });
+      console.log('Initial params from URL:', { odbcName, jobNum });
       
       if (odbcName && jobNum) {
-        console.log('Setting session params from URL');
-        setSessionParams({
-          odbcName,
-          jobNumber: parseInt(jobNum)
+        setSession({
+          currentOdbc: odbcName,
+          currentJobNumber: parseInt(jobNum, 10),
+          urlParamsProcessed: true
         });
+      } else {
+        // סימון שבדקנו URL גם אם לא היו פרמטרים
+        setSession({ urlParamsProcessed: true });
       }
-    } else {
-      console.log('Session params already exist:', { currentOdbc, currentJobNumber });
     }
-  }, []); // ריצה חד פעמית
+  }, []); // רק בטעינה
 
   return (
-    <div dir="rtl">
-      <RetroForm />
-    </div>
+    <ErrorBoundary>
+      <div dir="rtl">
+        <RetroForm />
+      </div>
+    </ErrorBoundary>
   );
 };
 
