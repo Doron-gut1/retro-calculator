@@ -48,10 +48,15 @@ const initialState: State = {
 export const useRetroStore = create<State & Actions>((set, get) => ({
   ...initialState,
 
-  setSessionParams: (params: SessionParams) => set({ sessionParams: params }),
+  setSessionParams: (params: SessionParams) => {
+    console.log('Setting session params:', params);
+    set({ sessionParams: params });
+  },
   
   searchProperty: async (propertyCode: string) => {
     const state = get();
+    console.log('Searching property with state:', state);
+    
     if (!state.sessionParams.odbcName) {
       set({ error: 'Missing ODBC connection' });
       return;
@@ -59,13 +64,20 @@ export const useRetroStore = create<State & Actions>((set, get) => ({
 
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch(`https://localhost:5001/api/Property/${propertyCode}?odbcName=${state.sessionParams.odbcName}`);
+      const url = `https://localhost:5001/api/Property/${propertyCode}?odbcName=${state.sessionParams.odbcName}`;
+      console.log('Fetching from URL:', url);
+      
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`Failed to fetch property: ${response.statusText}`);
       }
       const data = await response.json();
+      console.log('Received data:', data);
+      
       set({ property: data });
+      console.log('Updated store state:', get());
     } catch (error) {
+      console.error('Error in searchProperty:', error);
       set({
         error: error instanceof Error ? error.message : 'Failed to fetch property',
         property: null
