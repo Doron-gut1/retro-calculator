@@ -11,6 +11,8 @@ interface ApiPropertyResponse {
   payerId: number;
   payerNumber: number;
   payerName: string;
+  address: string;  // הוספנו שדה כתובת
+  propertyType: number;  // הוספנו שדה סוג נכס
   size1: number;
   tariff1: number;
   size2: number;
@@ -100,9 +102,11 @@ export const useRetroStore = create<State & Actions>((set, get) => ({
       // מיפוי הנתונים למבנה הנכון
       const property = {
         hskod: apiData.propertyId,
+        ktovet: apiData.address || '',  // ערך ברירת מחדל אם חסר
         mspkod: apiData.payerId,
         maintz: apiData.payerNumber.toString(),
         fullname: apiData.payerName,
+        sughs: apiData.propertyType || 0,  // ערך ברירת מחדל אם חסר
         godel: apiData.size1,
         mas: apiData.tariff1,
         gdl2: apiData.size2 || undefined,
