@@ -1,79 +1,70 @@
-// נתוני הסשן הנוכחי - הכרחי לחיבור לאקסס
 export interface SessionParams {
   odbcName: string | null;
   jobNumber: number | null;
 }
 
-// נתוני נכס מהDB
 export interface Property {
-  hskod: string;    // מזהה נכס
-  ktovet: string;   // כתובת
-  mspkod: number;   // קוד משלם
-  maintz: string;   // מספר משלם
-  fullname: string; // שם משלם
-  sughs: number;    // סוג נכס
-  // גדלים
-  godel: number;    // גודל ראשי
-  gdl2?: number;    // גדלים נוספים
+  hskod: string;
+  mspkod: number;
+  maintz: string;
+  fullname: string;
+  godel: number;
+  mas: number;
+  masName?: string;
+  gdl2?: number;
+  mas2?: number;
+  mas2Name?: string;
   gdl3?: number;
-  gdl4?: number;
-  gdl5?: number;
-  gdl6?: number;
-  gdl7?: number;
-  gdl8?: number;
-  // תעריפים
-  mas: number;      // תעריף ראשי
-  mas2?: number;    // תעריפים נוספים
   mas3?: number;
+  mas3Name?: string;
+  gdl4?: number;
   mas4?: number;
+  mas4Name?: string;
+  gdl5?: number;
   mas5?: number;
+  mas5Name?: string;
+  gdl6?: number;
   mas6?: number;
+  mas6Name?: string;
+  gdl7?: number;
   mas7?: number;
+  mas7Name?: string;
+  gdl8?: number;
   mas8?: number;
-  hesder?: number;  // הסדר (0/1/3/7)
+  mas8Name?: string;
 }
 
-// תוצאות החישוב כפי שחוזרות מהAPI
 export interface RetroResult {
-  period: string;     // MM/YY לדוגמה 01/25
-  chargeType: string; // סוג חיוב
-  amount: number;     // סכום
-  discount: number;   // הנחה
-  total: number;      // סה"כ
-  hesderSum?: number; // סכום הסדר
-  hesber?: string;   // הסבר/הערות
-  dtgv?: string;     // תאריך גביה
-  dtval?: string;    // תאריך ערך
+  period: string;
+  chargeType: string;
+  amount: number;
+  discount: number;
+  total: number;
+  hesderSum?: number;
+  hesber?: string;
+  dtgv?: string;
+  dtval?: string;
 }
 
-// מצב האפליקציה
 export interface RetroState {
   sessionParams: SessionParams;
   property: Property | null;
-  startDate: Date | null;
-  endDate: Date | null;
+  startDate: string | null;
+  endDate: string | null;
   selectedChargeTypes: number[];
   results: RetroResult[];
   isLoading: boolean;
-}
+  error: string | null;
+  success: string | null;
 
-// Props של קומפוננטות
-export interface PropertySearchProps {
-  onPropertySelect: (property: Property) => void;
-}
-
-export interface DateRangeSelectProps {
-  startDate: Date | null;
-  endDate: Date | null;
-  onChange: (start: Date | null, end: Date | null) => void;
-}
-
-export interface ChargeTypesSelectProps {
-  selected: number[];
-  onChange: (types: number[]) => void;
-}
-
-export interface CalculationButtonsProps {
-  onCalculate: () => Promise<void>;
-  disabled?: boolean;
+  // Actions
+  setSessionParams: (params: SessionParams) => void;
+  searchProperty: (propertyCode: string) => Promise<void>;
+  setSelectedChargeTypes: (types: number[]) => void;
+  setStartDate: (date: string) => void;
+  setEndDate: (date: string) => void;
+  calculateRetro: () => Promise<void>;
+  clearError: () => void;
+  clearSuccess: () => void;
+  reset: () => void;
 }
