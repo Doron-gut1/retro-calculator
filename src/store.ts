@@ -117,7 +117,47 @@ export const useRetroStore = create<RetroState>((set, get) => ({
   setEndDate: (date) => set({ endDate: date }),
 
   calculateRetro: async () => {
-    // ... שאר הקוד נשאר אותו דבר
+    const state = get();
+    if (!state.property || !state.startDate || !state.endDate || state.selectedChargeTypes.length === 0) {
+      set({ error: 'Please fill all required fields before calculation' });
+      return;
+    }
+
+    set({ isLoading: true, error: null });
+    try {
+      const response = await fetch('https://localhost:5001/api/Retro/calculate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          odbcName: state.odbcName,
+          jobNumber: state.jobNumber,
+          propertyId: state.property.code,
+          startDate: state.startDate,
+          endDate: state.endDate,
+          chargeTypes: state.selectedChargeTypes,
+          sizes: state.property.sizes
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to calculate retro');
+      }
+
+      const result = await response.json();
+      set({ success: 'Calculation completed successfully' });
+      return result;
+
+    } catch (error) {
+      set({ 
+        error: error instanceof Error 
+          ? error.message 
+          : 'Unknown error occurred during calculation'
+      });
+    } finally {
+      set({ isLoading: false });
+    }
   },
 
   clearError: () => set({ error: null }),
