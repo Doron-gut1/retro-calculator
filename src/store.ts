@@ -11,24 +11,32 @@ interface ApiPropertyResponse {
   payerId: number;
   payerNumber: number;
   payerName: string;
-  address: string;  // הוספנו שדה כתובת
-  propertyType: number;  // הוספנו שדה סוג נכס
+  address: string;
+  propertyType: number;
   size1: number;
   tariff1: number;
+  tariff1Name: string;
   size2: number;
   tariff2: number;
+  tariff2Name: string;
   size3: number;
   tariff3: number;
+  tariff3Name: string;
   size4: number;
   tariff4: number;
+  tariff4Name: string;
   size5: number;
   tariff5: number;
+  tariff5Name: string;
   size6: number;
   tariff6: number;
+  tariff6Name: string;
   size7: number;
   tariff7: number;
+  tariff7Name: string;
   size8: number;
   tariff8: number;
+  tariff8Name: string;
 }
 
 type State = {
@@ -102,27 +110,35 @@ export const useRetroStore = create<State & Actions>((set, get) => ({
       // מיפוי הנתונים למבנה הנכון
       const property = {
         hskod: apiData.propertyId,
-        ktovet: apiData.address || '',  // ערך ברירת מחדל אם חסר
+        ktovet: apiData.address || '',
         mspkod: apiData.payerId,
         maintz: apiData.payerNumber.toString(),
         fullname: apiData.payerName,
-        sughs: apiData.propertyType || 0,  // ערך ברירת מחדל אם חסר
+        sughs: apiData.propertyType || 0,
         godel: apiData.size1,
         mas: apiData.tariff1,
+        masName: apiData.tariff1Name,
         gdl2: apiData.size2 || undefined,
         mas2: apiData.tariff2 || undefined,
+        mas2Name: apiData.tariff2Name,
         gdl3: apiData.size3 || undefined,
         mas3: apiData.tariff3 || undefined,
+        mas3Name: apiData.tariff3Name,
         gdl4: apiData.size4 || undefined,
         mas4: apiData.tariff4 || undefined,
+        mas4Name: apiData.tariff4Name,
         gdl5: apiData.size5 || undefined,
         mas5: apiData.tariff5 || undefined,
+        mas5Name: apiData.tariff5Name,
         gdl6: apiData.size6 || undefined,
         mas6: apiData.tariff6 || undefined,
+        mas6Name: apiData.tariff6Name,
         gdl7: apiData.size7 || undefined,
         mas7: apiData.tariff7 || undefined,
+        mas7Name: apiData.tariff7Name,
         gdl8: apiData.size8 || undefined,
-        mas8: apiData.tariff8 || undefined
+        mas8: apiData.tariff8 || undefined,
+        mas8Name: apiData.tariff8Name
       };
       
       set({ property });
