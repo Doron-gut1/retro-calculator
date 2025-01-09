@@ -1,42 +1,7 @@
 import { create } from 'zustand';
+import { Property, RetroState } from './types';
 
-export interface Property {
-  id: string;
-  address: string;
-  type: string;
-  payerId: string;
-  payerName: string;
-  sizes: Size[];
-}
-
-export interface Size {
-  id: number;
-  size: number;
-  tariffCode: string;
-  tariffName: string;
-  tariffAmount: string;
-}
-
-interface RetroState {
-  property: Property | null;
-  selectedChargeTypes: string[];
-  startDate: Date | null;
-  endDate: Date | null;
-  results: CalculationResult[];
-  isLoading: boolean;
-  error: string | null;
-  success: string | null;
-}
-
-export interface CalculationResult {
-  period: string;
-  chargeType: string;
-  amount: number;
-  discount: number;
-  total: number;
-}
-
-const initialState: RetroState = {
+const initialState = {
   property: null,
   selectedChargeTypes: [],
   startDate: null,
@@ -91,7 +56,7 @@ export const useRetroStore = create<RetroState>((set, get) => ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          propertyId: state.property.id,
+          propertyId: state.property.hskod,
           startDate: state.startDate,
           endDate: state.endDate,
           chargeTypes: state.selectedChargeTypes
