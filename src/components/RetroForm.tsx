@@ -11,8 +11,6 @@ export const RetroForm: React.FC = () => {
   const {
     property,
     selectedChargeTypes,
-    startDate,
-    endDate,
     isLoading,
     error,
     setSelectedChargeTypes,
@@ -27,12 +25,12 @@ export const RetroForm: React.FC = () => {
   }, [searchProperty]);
 
   const handleDateChange = useCallback((startDate: Date | null, endDate: Date | null) => {
-    if (startDate) setStartDate(startDate.toISOString());
-    if (endDate) setEndDate(endDate.toISOString());
+    setStartDate(startDate);
+    setEndDate(endDate);
   }, [setStartDate, setEndDate]);
 
   const handleChargeTypesChange = useCallback((types: string[]) => {
-    setSelectedChargeTypes(types);
+    setSelectedChargeTypes(types.map(Number));
   }, [setSelectedChargeTypes]);
 
   return (
@@ -54,7 +52,7 @@ export const RetroForm: React.FC = () => {
           <div className="space-y-4">
             <DateRangeSelect onChange={handleDateChange} />
             <ChargeTypesSelect 
-              selected={selectedChargeTypes}
+              selected={selectedChargeTypes.map(String)}
               onChange={handleChargeTypesChange}
             />
           </div>
