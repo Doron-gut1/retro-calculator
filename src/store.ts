@@ -6,6 +6,29 @@ type SessionParams = {
   jobNumber: number | null;
 };
 
+interface ApiPropertyResponse {
+  propertyId: string;
+  payerId: number;
+  payerNumber: number;
+  payerName: string;
+  size1: number;
+  tariff1: number;
+  size2: number;
+  tariff2: number;
+  size3: number;
+  tariff3: number;
+  size4: number;
+  tariff4: number;
+  size5: number;
+  tariff5: number;
+  size6: number;
+  tariff6: number;
+  size7: number;
+  tariff7: number;
+  size8: number;
+  tariff8: number;
+}
+
 type State = {
   sessionParams: SessionParams;
   property: RetroState['property'];
@@ -71,10 +94,34 @@ export const useRetroStore = create<State & Actions>((set, get) => ({
       if (!response.ok) {
         throw new Error(`Failed to fetch property: ${response.statusText}`);
       }
-      const data = await response.json();
-      console.log('Received data:', data);
+      const apiData: ApiPropertyResponse = await response.json();
+      console.log('Received data:', apiData);
       
-      set({ property: data });
+      // מיפוי הנתונים למבנה הנכון
+      const property = {
+        hskod: apiData.propertyId,
+        mspkod: apiData.payerId,
+        maintz: apiData.payerNumber.toString(),
+        fullname: apiData.payerName,
+        godel: apiData.size1,
+        mas: apiData.tariff1,
+        gdl2: apiData.size2 || undefined,
+        mas2: apiData.tariff2 || undefined,
+        gdl3: apiData.size3 || undefined,
+        mas3: apiData.tariff3 || undefined,
+        gdl4: apiData.size4 || undefined,
+        mas4: apiData.tariff4 || undefined,
+        gdl5: apiData.size5 || undefined,
+        mas5: apiData.tariff5 || undefined,
+        gdl6: apiData.size6 || undefined,
+        mas6: apiData.tariff6 || undefined,
+        gdl7: apiData.size7 || undefined,
+        mas7: apiData.tariff7 || undefined,
+        gdl8: apiData.size8 || undefined,
+        mas8: apiData.tariff8 || undefined
+      };
+      
+      set({ property });
       console.log('Updated store state:', get());
     } catch (error) {
       console.error('Error in searchProperty:', error);
