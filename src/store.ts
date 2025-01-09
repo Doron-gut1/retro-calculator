@@ -1,7 +1,30 @@
 import { create } from 'zustand';
-import { RetroState, SessionParams } from './types';
+import { RetroState } from './types';
 
-const initialState: Partial<RetroState> = {
+type State = {
+    sessionParams: { odbcName: string | null; jobNumber: number | null };
+    property: RetroState['property'];
+    selectedChargeTypes: number[];
+    startDate: Date | null;
+    endDate: Date | null;
+    results: RetroState['results'];
+    isLoading: boolean;
+    error: string | null;
+    success: string | null;
+}
+
+type Actions = {
+    searchProperty: (propertyCode: string) => Promise<void>;
+    setSelectedChargeTypes: (types: number[]) => void;
+    setStartDate: (date: Date | null) => void;
+    setEndDate: (date: Date | null) => void;
+    calculateRetro: () => Promise<void>;
+    clearError: () => void;
+    clearSuccess: () => void;
+    reset: () => void;
+}
+
+const initialState: State = {
     sessionParams: {
         odbcName: null,
         jobNumber: null
@@ -16,8 +39,8 @@ const initialState: Partial<RetroState> = {
     success: null
 };
 
-export const useRetroStore = create<RetroState>((set, get) => ({
-    ...initialState as RetroState,
+export const useRetroStore = create<State & Actions>((set, get) => ({
+    ...initialState,
 
     searchProperty: async (propertyCode: string) => {
         const state = get();
@@ -91,5 +114,5 @@ export const useRetroStore = create<RetroState>((set, get) => ({
 
     clearSuccess: () => set({ success: null }),
 
-    reset: () => set(initialState as RetroState)
-}))
+    reset: () => set(initialState)
+}));
