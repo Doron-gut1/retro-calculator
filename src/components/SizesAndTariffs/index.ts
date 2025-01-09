@@ -1,1 +1,1 @@
-export { default as SizesTable } from './SizesTable';
+export { SizesTable } from './SizesTable';
