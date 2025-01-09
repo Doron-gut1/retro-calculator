@@ -1,35 +1,21 @@
-import React, { useEffect, useRef } from 'react';
-import { RetroForm } from './components/RetroForm';
+import { useEffect } from 'react';
+import { RetroForm } from './components';
 import { useRetroStore } from './store';
 
-const App: React.FC = () => {
+const App = () => {
   const setSessionParams = useRetroStore(state => state.setSessionParams);
-  const initialized = useRef(false);
-  
+
   useEffect(() => {
-    if (initialized.current) return;
-    
-    const params = new URLSearchParams(window.location.search);
-    const odbcName = params.get('odbcName');
-    const jobNum = params.get('jobNum');
-
-    if (!odbcName || !jobNum) {
-      console.error('Missing required URL parameters');
-      return;
-    }
-
     setSessionParams({
-      odbcName,
-      jobNumber: parseInt(jobNum)
+      odbcName: 'BRNGU1ADEV',
+      jobNumber: 28677
     });
-    
-    initialized.current = true;
-  }, []); // Empty dependency array
+  }, [setSessionParams]);
 
   return (
-    <div dir="rtl">
+    <main className="min-h-screen bg-gray-50">
       <RetroForm />
-    </div>
+    </main>
   );
 };
 
