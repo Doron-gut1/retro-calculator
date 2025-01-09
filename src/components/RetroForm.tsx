@@ -17,7 +17,9 @@ export const RetroForm: React.FC = () => {
     setStartDate,
     setEndDate,
     searchProperty,
-    calculateRetro
+    calculateRetro,
+    addSize,
+    deleteSize
   } = useRetroStore();
 
   const handleSearch = useCallback(async (propertyCode: string) => {
@@ -69,7 +71,11 @@ export const RetroForm: React.FC = () => {
         {/* Sizes Table */}
         {property && (
           <div className="mt-6">
-            <SizesTable property={property} />
+            <SizesTable 
+              property={property}
+              onDeleteSize={deleteSize}
+              onAddSize={addSize}
+            />
           </div>
         )}
       </div>
