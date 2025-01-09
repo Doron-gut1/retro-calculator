@@ -2,12 +2,15 @@ import { create } from 'zustand';
 import { Property, RetroState, SessionParams } from './types';
 
 const initialState = {
-  odbcName: null,
-  jobNumber: null,
+  sessionParams: {
+    odbcName: null,
+    jobNumber: null
+  },
   property: null,
   selectedChargeTypes: [],
   startDate: null,
   endDate: null,
+  results: [],
   isLoading: false,
   error: null,
   success: null
@@ -49,21 +52,20 @@ interface ApiPropertyResponse {
 export const useRetroStore = create<RetroState>((set, get) => ({
   ...initialState,
 
-  setSessionParams: (params) => set({
-    odbcName: params.odbcName,
-    jobNumber: params.jobNumber
+  setSessionParams: (params: SessionParams) => set({
+    sessionParams: params
   }),
 
-  searchProperty: async (propertyCode) => {
+  searchProperty: async (propertyCode: string) => {
     const state = get();
-    if (!state.odbcName) {
+    if (!state.sessionParams.odbcName) {
       set({ error: 'Missing ODBC connection' });
       return;
     }
 
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch(`https://localhost:5001/api/Property/${propertyCode}?odbcName=${state.odbcName}`);
+      const response = await fetch(`https://localhost:5001/api/Property/${propertyCode}?odbcName=${state.sessionParams.odbcName}`);
       if (!response.ok) {
         throw new Error(`Failed to fetch property: ${response.statusText}`);
       }
@@ -77,28 +79,28 @@ export const useRetroStore = create<RetroState>((set, get) => ({
         fullname: data.payerName,
         godel: data.size1,
         mas: data.tariff1,
-        mas_name: data.tariff1Name,
+        masName: data.tariff1Name,
         gdl2: data.size2,
         mas2: data.tariff2,
-        mas2_name: data.tariff2Name,
+        mas2Name: data.tariff2Name,
         gdl3: data.size3,
         mas3: data.tariff3,
-        mas3_name: data.tariff3Name,
+        mas3Name: data.tariff3Name,
         gdl4: data.size4,
         mas4: data.tariff4,
-        mas4_name: data.tariff4Name,
+        mas4Name: data.tariff4Name,
         gdl5: data.size5,
         mas5: data.tariff5,
-        mas5_name: data.tariff5Name,
+        mas5Name: data.tariff5Name,
         gdl6: data.size6,
         mas6: data.tariff6,
-        mas6_name: data.tariff6Name,
+        mas6Name: data.tariff6Name,
         gdl7: data.size7,
         mas7: data.tariff7,
-        mas7_name: data.tariff7Name,
+        mas7Name: data.tariff7Name,
         gdl8: data.size8,
         mas8: data.tariff8,
-        mas8_name: data.tariff8Name
+        mas8Name: data.tariff8Name
       };
 
       set({ property });
@@ -110,11 +112,11 @@ export const useRetroStore = create<RetroState>((set, get) => ({
     }
   },
 
-  setSelectedChargeTypes: (types) => set({ selectedChargeTypes: types }),
+  setSelectedChargeTypes: (types: number[]) => set({ selectedChargeTypes: types }),
 
-  setStartDate: (date) => set({ startDate: date }),
+  setStartDate: (date: string) => set({ startDate: date }),
 
-  setEndDate: (date) => set({ endDate: date }),
+  setEndDate: (date: string) => set({ endDate: date }),
 
   calculateRetro: async () => {
     const state = get();
@@ -131,13 +133,12 @@ export const useRetroStore = create<RetroState>((set, get) => ({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          odbcName: state.odbcName,
-          jobNumber: state.jobNumber,
-          propertyId: state.property.code,
+          odbcName: state.sessionParams.odbcName,
+          jobNumber: state.sessionParams.jobNumber,
+          propertyId: state.property.hskod,
           startDate: state.startDate,
           endDate: state.endDate,
-          chargeTypes: state.selectedChargeTypes,
-          sizes: state.property.sizes
+          chargeTypes: state.selectedChargeTypes
         })
       });
 
@@ -146,8 +147,10 @@ export const useRetroStore = create<RetroState>((set, get) => ({
       }
 
       const result = await response.json();
-      set({ success: 'Calculation completed successfully' });
-      return result;
+      set({ 
+        success: 'Calculation completed successfully',
+        results: result
+      });
 
     } catch (error) {
       set({ 
