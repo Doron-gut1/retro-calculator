@@ -6,10 +6,16 @@ const App = () => {
   const setSessionParams = useRetroStore(state => state.setSessionParams);
 
   useEffect(() => {
-    setSessionParams({
-      odbcName: 'BRNGU1ADEV',
-      jobNumber: 28677
-    });
+    const urlParams = new URLSearchParams(window.location.search);
+    const odbcName = urlParams.get('odbcName');
+    const jobNumber = Number(urlParams.get('jobNum'));
+
+    if (odbcName && jobNumber) {
+      setSessionParams({
+        odbcName,
+        jobNumber
+      });
+    }
   }, [setSessionParams]);
 
   return (
