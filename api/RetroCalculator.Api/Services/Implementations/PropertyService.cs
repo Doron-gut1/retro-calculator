@@ -73,18 +73,18 @@ public class PropertyService : IPropertyService
         {
             PropertyId = reader["hskod"].ToString() ?? string.Empty,
             PayerId = reader.IsDBNull(reader.GetOrdinal("mspkod")) ? 0 : (int)reader["mspkod"],
-            PayerNumber = reader.IsDBNull(reader.GetOrdinal("maintz")) ? 0 : Convert.ToDouble(reader["maintz"]),
+            PayerNumber = reader.IsDBNull(reader.GetOrdinal("maintz")) ? 0 : Convert.ToDecimal(reader["maintz"]),
             PayerName = reader.IsDBNull(reader.GetOrdinal("fullname")) ? string.Empty : reader["fullname"].ToString() ?? string.Empty,
             
             // גדלים
-            Size1 = reader.IsDBNull(reader.GetOrdinal("godel")) ? 0 : Convert.ToDouble(reader["godel"]),
-            Size2 = reader.IsDBNull(reader.GetOrdinal("gdl2")) ? 0 : Convert.ToDouble(reader["gdl2"]),
-            Size3 = reader.IsDBNull(reader.GetOrdinal("gdl3")) ? 0 : Convert.ToDouble(reader["gdl3"]),
-            Size4 = reader.IsDBNull(reader.GetOrdinal("gdl4")) ? 0 : Convert.ToDouble(reader["gdl4"]),
-            Size5 = reader.IsDBNull(reader.GetOrdinal("gdl5")) ? 0 : Convert.ToDouble(reader["gdl5"]),
-            Size6 = reader.IsDBNull(reader.GetOrdinal("gdl6")) ? 0 : Convert.ToDouble(reader["gdl6"]),
-            Size7 = reader.IsDBNull(reader.GetOrdinal("gdl7")) ? 0 : Convert.ToDouble(reader["gdl7"]),
-            Size8 = reader.IsDBNull(reader.GetOrdinal("gdl8")) ? 0 : Convert.ToDouble(reader["gdl8"]),
+            Size1 = reader.IsDBNull(reader.GetOrdinal("godel")) ? 0 : Convert.ToDecimal(reader["godel"]),
+            Size2 = reader.IsDBNull(reader.GetOrdinal("gdl2")) ? 0 : Convert.ToDecimal(reader["gdl2"]),
+            Size3 = reader.IsDBNull(reader.GetOrdinal("gdl3")) ? 0 : Convert.ToDecimal(reader["gdl3"]),
+            Size4 = reader.IsDBNull(reader.GetOrdinal("gdl4")) ? 0 : Convert.ToDecimal(reader["gdl4"]),
+            Size5 = reader.IsDBNull(reader.GetOrdinal("gdl5")) ? 0 : Convert.ToDecimal(reader["gdl5"]),
+            Size6 = reader.IsDBNull(reader.GetOrdinal("gdl6")) ? 0 : Convert.ToDecimal(reader["gdl6"]),
+            Size7 = reader.IsDBNull(reader.GetOrdinal("gdl7")) ? 0 : Convert.ToDecimal(reader["gdl7"]),
+            Size8 = reader.IsDBNull(reader.GetOrdinal("gdl8")) ? 0 : Convert.ToDecimal(reader["gdl8"]),
             
             // תעריפים
             Tariff1 = reader.IsDBNull(reader.GetOrdinal("mas")) ? 0 : (int)reader["mas"],
