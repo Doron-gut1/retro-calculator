@@ -1,3 +1,4 @@
+using System.Data;
 using System.Data.SqlClient;
 using RetroCalculator.Api.Models.DTOs;
 using RetroCalculator.Api.Services.Interfaces;
@@ -57,16 +58,8 @@ public class PropertyService : IPropertyService
         using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync();
 
-        var propertyCommand = new SqlCommand(
-            @"SELECT h.hskod, h.mspkod, h.godel, h.mas, h.gdl2, h.mas2, 
-                     h.gdl3, h.mas3, h.gdl4, h.mas4, h.gdl5, h.mas5, 
-                     h.gdl6, h.mas6, h.gdl7, h.mas7, h.gdl8, h.mas8, 
-                     h.valdate, h.valdatesof,
-                     m.maintz, m.fullname
-              FROM hs h
-              LEFT JOIN msp m ON h.mspkod = m.mspkod
-              WHERE h.hskod = @hskod", connection);
-
+        var propertyCommand = new SqlCommand("GetPropertyDetails", connection);
+        propertyCommand.CommandType = CommandType.StoredProcedure;
         propertyCommand.Parameters.AddWithValue("@hskod", id);
 
         using var reader = await propertyCommand.ExecuteReaderAsync();
@@ -102,6 +95,16 @@ public class PropertyService : IPropertyService
             Tariff6 = reader.IsDBNull(reader.GetOrdinal("mas6")) ? 0 : (int)reader["mas6"],
             Tariff7 = reader.IsDBNull(reader.GetOrdinal("mas7")) ? 0 : (int)reader["mas7"],
             Tariff8 = reader.IsDBNull(reader.GetOrdinal("mas8")) ? 0 : (int)reader["mas8"],
+
+            // תעריפים - שמות
+            Tariff1Name = reader.IsDBNull(reader.GetOrdinal("mas1_name")) ? string.Empty : reader["mas1_name"].ToString(),
+            Tariff2Name = reader.IsDBNull(reader.GetOrdinal("mas2_name")) ? string.Empty : reader["mas2_name"].ToString(),
+            Tariff3Name = reader.IsDBNull(reader.GetOrdinal("mas3_name")) ? string.Empty : reader["mas3_name"].ToString(),
+            Tariff4Name = reader.IsDBNull(reader.GetOrdinal("mas4_name")) ? string.Empty : reader["mas4_name"].ToString(),
+            Tariff5Name = reader.IsDBNull(reader.GetOrdinal("mas5_name")) ? string.Empty : reader["mas5_name"].ToString(),
+            Tariff6Name = reader.IsDBNull(reader.GetOrdinal("mas6_name")) ? string.Empty : reader["mas6_name"].ToString(),
+            Tariff7Name = reader.IsDBNull(reader.GetOrdinal("mas7_name")) ? string.Empty : reader["mas7_name"].ToString(),
+            Tariff8Name = reader.IsDBNull(reader.GetOrdinal("mas8_name")) ? string.Empty : reader["mas8_name"].ToString(),
 
             // תאריכי תוקף
             ValidFrom = reader.IsDBNull(reader.GetOrdinal("valdate")) ? null : reader.GetDateTime(reader.GetOrdinal("valdate")),
