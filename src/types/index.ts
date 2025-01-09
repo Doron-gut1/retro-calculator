@@ -12,20 +12,28 @@ export interface Property {
     sughs: number;
     godel: number;
     mas: number;
+    masName: string;
     gdl2?: number;
     mas2?: number;
+    mas2Name?: string;
     gdl3?: number;
     mas3?: number;
+    mas3Name?: string;
     gdl4?: number;
     mas4?: number;
+    mas4Name?: string;
     gdl5?: number;
     mas5?: number;
+    mas5Name?: string;
     gdl6?: number;
     mas6?: number;
+    mas6Name?: string;
     gdl7?: number;
     mas7?: number;
+    mas7Name?: string;
     gdl8?: number;
     mas8?: number;
+    mas8Name?: string;
 }
 
 export interface RetroResult {
