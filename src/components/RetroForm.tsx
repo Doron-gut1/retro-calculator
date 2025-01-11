@@ -23,7 +23,7 @@ export const RetroForm: React.FC = () => {
     
   } = useRetroStore();
 
-  const odbcName = useRetroStore.getState().getSessionOdbcName();
+  //const odbcName = useRetroStore.getState().getSessionOdbcName();
 
   const handleSearch = useCallback(async (propertyCode: string) => {
     await searchProperty(propertyCode);
@@ -78,7 +78,7 @@ export const RetroForm: React.FC = () => {
               property={property}
               onDeleteSize={deleteSize}
               onAddSize={addSize}
-              odbcName={odbcName}  // הוסף זאת
+              odbcName={"brngviadev"}  // הוסף זאת
             />
           </div>
         )}
