@@ -1,9 +1,8 @@
 // Main Components
-export { RetroCalculator } from './RetroCalculator.DEL';
 export { RetroForm } from './RetroForm';
 
 // Feature Components
-export * from './PropertySearch';
+//export * from './PropertySearch';
 export * from './buttons';
 export * from './results';
 export * from './SizesAndTariffs';

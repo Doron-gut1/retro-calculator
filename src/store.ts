@@ -7,6 +7,7 @@ type SessionParams = {
   jobNumber: number | null;
 };
 
+
 export interface TariffDto {
   kodln: string;  // קוד התעריף
   teur: string;   // תיאור התעריף
@@ -123,6 +124,8 @@ const initialState: State = {
   error: null,
   success: null
 };
+ 
+
 
 export const useRetroStore = create<State & Actions>((set, get) => ({
   ...initialState,
@@ -136,11 +139,7 @@ export const useRetroStore = create<State & Actions>((set, get) => ({
     const state = get();
     console.log('Searching property with state:', state);
     
-    if (!state.sessionParams.odbcName) {
-      set({ error: 'Missing ODBC connection' });
-      return;
-    }
-
+   
     set({ isLoading: true, error: null });
     try {
       const url = `https://localhost:5001/api/Property/${propertyCode}`;
@@ -244,7 +243,7 @@ export const useRetroStore = create<State & Actions>((set, get) => ({
       set({ isLoading: false });
     }
   },
-  
+   
   clearError: () => set({ error: null }),
 
   clearSuccess: () => set({ success: null }),
