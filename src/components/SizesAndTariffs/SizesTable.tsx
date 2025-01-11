@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Property } from '../../types';
-import { Trash2, Edit, Save, X, ChevronDown } from 'lucide-react';
+import { Trash2, Edit, Save, X } from 'lucide-react';
 import { useTariffStore } from '../../store';
 
 interface SizesTableProps {
   property: Property;
+  odbcName?: string;
   onDeleteSize?: (index: number) => void;
   onAddSize?: () => void;
   onUpdateSize?: (index: number, newSize: number) => void;
-  onUpdateTariff?: (index: number, kodln: string, teur: string) => void;
-  odbcName: string;
+  onUpdateTariff?: (index: number, tariffKodln: string, tariffName: string) => void;
 }
 
 interface SizeRow {
@@ -21,23 +21,24 @@ interface SizeRow {
 
 export const SizesTable: React.FC<SizesTableProps> = ({ 
   property, 
+  odbcName,
   onDeleteSize, 
   onAddSize, 
   onUpdateSize,
-  onUpdateTariff,
-  odbcName
+  onUpdateTariff
 }) => {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editValue, setEditValue] = useState<number | string>('');
-  const [editingTariffIndex, setEditingTariffIndex] = useState<number | null>(null);
+  
+  // הוספת שימוש בstore של התעריפים
+  const { tariffs, isLoading: tariffsLoading, fetchTariffs } = useTariffStore();
 
-  // הבאת התעריפים מהסטור
-  const { tariffs, fetchTariffs, isLoading } = useTariffStore();
-
-  // טעינת התעריפים כאשר הקומפוננטה נטענת
+  // טעינת התעריפים בעת טעינת הקומפוננטה
   useEffect(() => {
-    fetchTariffs(odbcName);
-  }, [fetchTariffs, odbcName]);
+    if (odbcName) {
+      fetchTariffs(odbcName);
+    }
+  }, [odbcName, fetchTariffs]);
 
   const sizes: SizeRow[] = [
     { index: 1, size: property.godel || 0, code: property.mas || 0, name: property.masName || null },
@@ -72,20 +73,16 @@ export const SizesTable: React.FC<SizesTableProps> = ({
     }
   };
 
-  const handleTariffEditStart = (index: number) => {
-    setEditingTariffIndex(index);
-  };
-
-  const handleTariffEditCancel = () => {
-    setEditingTariffIndex(null);
-  };
-
-  const handleTariffChange = (kodln: string, teur: string) => {
-    if (editingTariffIndex !== null && onUpdateTariff) {
-      onUpdateTariff(editingTariffIndex, kodln, teur);
-      handleTariffEditCancel();
+  const handleTariffChange = (index: number, tariffKodln: string) => {
+    const selectedTariff = tariffs.find(t => t.kodln === tariffKodln);
+    if (selectedTariff && onUpdateTariff) {
+      onUpdateTariff(index, selectedTariff.kodln, selectedTariff.teur);
     }
   };
+
+  if (tariffsLoading) {
+    return <div className="text-center p-4">טוען תעריפים...</div>;
+  }
 
   return (
     <div className="mt-6 space-y-4">
@@ -154,52 +151,18 @@ export const SizesTable: React.FC<SizesTableProps> = ({
                   )}
                 </td>
                 <td className="p-2">
-                  {editingTariffIndex === row.index ? (
-                    <div className="relative">
-                      <select 
-                        className="w-full p-1 border rounded appearance-none"
-                        onChange={(e) => {
-                          const [kodln, teur] = e.target.value.split('|');
-                          handleTariffChange(kodln, teur);
-                        }}
-                        defaultValue=""
-                      >
-                        <option value="" disabled>בחר תעריף</option>
-                        {tariffs.map((tariff) => (
-                          <option 
-                            key={tariff.kodln} 
-                            value={`${tariff.kodln}|${tariff.teur}`}
-                          >
-                            {`${tariff.kodln} - ${tariff.teur}`}
-                          </option>
-                        ))}
-                      </select>
-                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                        <ChevronDown size={16} />
-                      </div>
-                      <button 
-                        onClick={handleTariffEditCancel} 
-                        className="absolute right-full top-0 mr-2 text-red-600 hover:text-red-800"
-                      >
-                        <X size={16} />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <input 
-                        type="text" 
-                        className="w-20 p-1 border rounded" 
-                        value={row.code}
-                        readOnly
-                      />
-                      <button 
-                        onClick={() => handleTariffEditStart(row.index)}
-                        className="text-blue-600 hover:text-blue-800"
-                      >
-                        <Edit size={16} />
-                      </button>
-                    </div>
-                  )}
+                  <select
+                    className="w-24 p-1 border rounded"
+                    value={row.code.toString()}
+                    onChange={(e) => handleTariffChange(row.index, e.target.value)}
+                  >
+                    <option value="">בחר תעריף</option>
+                    {tariffs.map((tariff) => (
+                      <option key={tariff.kodln} value={tariff.kodln}>
+                        {tariff.kodln}
+                      </option>
+                    ))}
+                  </select>
                 </td>
                 <td className="p-2">
                   <input 
