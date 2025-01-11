@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { RetroState ,Property} from './types';
+import { RetroState ,Property,TariffResponse} from './types';
 import axios from 'axios';
 
 type SessionParams = {
@@ -26,12 +26,13 @@ export const useTariffStore = create<TariffState>((set) => ({
   tariffs: [],
   isLoading: false,
   error: null,
+  selectedTariff: null,
 
   fetchTariffs: async (odbcName) => {
     set({ isLoading: true, error: null });
     
     try {
-      const response = await axios.get(`/api/property/tariffs`, {
+      const response = await axios.get(`https://localhost:5001/api/Property/tariffs?odbcName=${odbcName}`, {
         params: { odbcName }
       });
       
@@ -46,11 +47,14 @@ export const useTariffStore = create<TariffState>((set) => ({
           : 'Failed to fetch tariffs', 
         isLoading: false 
       });
+      console.error('Error fetching tariffs:', error);
     }
   },
 
-  clearTariffs: () => set({ tariffs: [], error: null })
+  clearTariffs: () => set({ tariffs: [], error: null }),
+  //setSelectedTariff: (kodln) => set({ selectedTariff: kodln })
 }));
+
 interface ApiPropertyResponse {
   propertyId: string;
   payerId: number;
@@ -108,9 +112,8 @@ type Actions = {
   reset: () => void;
   addSize: () => void;
   deleteSize: (index: number) => void;
-  setAvailableTariffs: (tariffs: TariffResponse[]) => void;  // עדכון רשימת התעריפים
-  fetchTariffs: (odbcName: string) => Promise<void>;  // טעינת התעריפים מהשרת
-}
+  updateTariff: (index: number, tariffKodln: string, tariffName: string) => void;
+};
 
 const initialState: State = {
   sessionParams: {
@@ -141,7 +144,11 @@ export const useRetroStore = create<State & Actions>((set, get) => ({
     const state = get();
     console.log('Searching property with state:', state);
     
-   
+    if (!state.sessionParams.odbcName) {
+      set({ error: 'Missing ODBC connection' });
+      return;
+    }
+
     set({ isLoading: true, error: null });
     try {
       const url = `https://localhost:5001/api/Property/${propertyCode}`;
@@ -286,5 +293,34 @@ export const useRetroStore = create<State & Actions>((set, get) => ({
     delete newProperty[`mas${baseProp}Name` as keyof Property];
     
     set({ property: newProperty });
-  }
+  },
+
+  updateTariff: (index: number, tariffKodln: string, tariffName: string) => {
+    const { property } = get();
+    if (!property) return;
+
+    const newProperty = { ...property };
+    const baseProp = index === 1 ? '' : index;
+
+    // Update tariff code and name
+    (newProperty as any)[`mas${baseProp}`] = parseInt(tariffKodln, 10);
+    (newProperty as any)[`mas${baseProp}Name`] = tariffName;
+
+    set({ property: newProperty });
+  },
+  /* setAvailableTariffs: (tariffs: TariffDto[]) => {
+    set({ availableTariffs: tariffs });
+  },
+
+  fetchTariffs: async (odbcName: string) => {
+    try {
+      const response = await axios.get('/api/property/tariffs', {
+        params: { odbcName }
+      });
+      set({ availableTariffs: response.data });
+    } catch (error) {
+      console.error('Error fetching tariffs:', error);
+      set({ error: 'Failed to fetch tariffs' });
+    }
+  } */
 }));

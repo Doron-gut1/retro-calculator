@@ -13,20 +13,17 @@ export const RetroForm: React.FC = () => {
     selectedChargeTypes,
     isLoading,
     error,
+    sessionParams,
     setSelectedChargeTypes,
     setStartDate,
     setEndDate,
     searchProperty,
     calculateRetro,
     addSize,
-    deleteSize
-    
+    deleteSize,
+    updateTariff
   } = useRetroStore();
-  
-  const odbcName = useRetroStore(state => state.sessionParams.odbcName ?? '');
 
-  //const odbcName = useRetroStore(state => state.getSessionOdbcName());
-  
   const handleSearch = useCallback(async (propertyCode: string) => {
     await searchProperty(propertyCode);
   }, [searchProperty]);
@@ -39,6 +36,10 @@ export const RetroForm: React.FC = () => {
   const handleChargeTypesChange = useCallback((types: string[]) => {
     setSelectedChargeTypes(types.map(Number));
   }, [setSelectedChargeTypes]);
+
+  const handleUpdateTariff = useCallback((index: number, tariffKodln: string, tariffName: string) => {
+    updateTariff(index, tariffKodln, tariffName);
+  }, [updateTariff]);
 
   return (
     <div className="flex flex-col gap-4 p-4 bg-gray-50 min-h-screen">
@@ -80,7 +81,8 @@ export const RetroForm: React.FC = () => {
               property={property}
               onDeleteSize={deleteSize}
               onAddSize={addSize}
-              odbcName={odbcName}  // הוסף זאת
+              onUpdateTariff={handleUpdateTariff}
+              odbcName={sessionParams.odbcName || undefined}
             />
           </div>
         )}
