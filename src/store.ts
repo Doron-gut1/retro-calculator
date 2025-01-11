@@ -108,6 +108,8 @@ type Actions = {
   reset: () => void;
   addSize: () => void;
   deleteSize: (index: number) => void;
+  setAvailableTariffs: (tariffs: TariffResponse[]) => void;  // עדכון רשימת התעריפים
+  fetchTariffs: (odbcName: string) => Promise<void>;  // טעינת התעריפים מהשרת
 }
 
 const initialState: State = {
