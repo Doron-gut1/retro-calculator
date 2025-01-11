@@ -130,4 +130,32 @@ public class PropertyService : IPropertyService
         var result = await command.ExecuteScalarAsync();
         return result != null;
     }
+
+  
+    public async Task<List<TariffDto>> GetTariffsAsync(string odbcName)
+    {
+        SetConnectionString(odbcName);
+        using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+        var command = new SqlCommand("SELECT distinct kodln, teur FROM mas", connection);
+
+        using var reader = await command.ExecuteReaderAsync();
+
+        var tariffs = new List<TariffDto>();
+        while (await reader.ReadAsync())
+        {
+            tariffs.Add(new TariffDto
+            {
+                Kodln = reader.IsDBNull(reader.GetOrdinal("kodln")) ? 0 : (int)reader["kodln"] ,// reader.GetString(reader.GetOrdinal("kodln")),
+                Teur = reader.GetString(reader.GetOrdinal("teur"))
+            });
+        }
+
+        if (tariffs.Count == 0)
+        {
+            throw new KeyNotFoundException("No tariffs found");
+        }
+
+        return tariffs;
+    }
 }

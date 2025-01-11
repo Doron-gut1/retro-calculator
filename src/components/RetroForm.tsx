@@ -20,7 +20,10 @@ export const RetroForm: React.FC = () => {
     calculateRetro,
     addSize,
     deleteSize
+    
   } = useRetroStore();
+
+  const odbcName = useRetroStore.getState().getSessionOdbcName();
 
   const handleSearch = useCallback(async (propertyCode: string) => {
     await searchProperty(propertyCode);
@@ -67,7 +70,7 @@ export const RetroForm: React.FC = () => {
             />
           </div>
         </div>
-
+       
         {/* Sizes Table */}
         {property && (
           <div className="mt-6">
@@ -75,6 +78,7 @@ export const RetroForm: React.FC = () => {
               property={property}
               onDeleteSize={deleteSize}
               onAddSize={addSize}
+              odbcName={odbcName}  // הוסף זאת
             />
           </div>
         )}

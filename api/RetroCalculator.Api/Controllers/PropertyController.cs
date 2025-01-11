@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using RetroCalculator.Api.Models.DTOs;
 using RetroCalculator.Api.Services.Interfaces;
+using System.Data.SqlClient;
 
 namespace RetroCalculator.Api.Controllers;
 
@@ -45,6 +46,22 @@ public class PropertyController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, $"Error validating property {id} with ODBC {odbcName}");
+            return StatusCode(500, "Internal Server Error");
+        }
+    }
+    //GetTariffs
+    [HttpGet("tariffs")]
+    public async Task<IActionResult> GetTariffs([FromQuery] string odbcName)
+    {
+        try
+        {
+            _logger.LogInformation($"Retrieving tariffs with ODBC {odbcName}");
+            var tariffs = await _propertyService.GetTariffsAsync(odbcName);
+            return Ok(tariffs);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error retrieving tariffs with ODBC {odbcName}");
             return StatusCode(500, "Internal Server Error");
         }
     }

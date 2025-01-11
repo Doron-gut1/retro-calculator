@@ -48,4 +48,10 @@ public class RetroCalculationRequestDto
     public required DateTime EndDate { get; set; }
     public required List<int> ChargeTypes { get; set; } = new();
     public int JobNumber { get; set; }
+    public int Hkarn { get; set; } = 0;
+}
+public class TariffDto
+{
+    public int Kodln { get; set; }
+    public string Teur { get; set; }
 }
