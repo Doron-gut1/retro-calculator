@@ -116,8 +116,10 @@ public class RetroService : IRetroService, IDisposable
         {
             // Check if property is locked
             using var lockCheckCommand = new SqlCommand(
-                "SELECT 1 FROM Temparnmforat WHERE hs = @hskod AND moneln <> 0", connection);
+                "SELECT 1 FROM Temparnmforat WHERE hs = @hskod AND moneln <> 0 and jobnum <> @jobnum", connection);
             lockCheckCommand.Parameters.AddWithValue("@hskod", request.PropertyId);
+            lockCheckCommand.Parameters.AddWithValue("@jobnum", request.JobNumber);
+
             var isLocked = await lockCheckCommand.ExecuteScalarAsync() != null;
 
             if (isLocked)

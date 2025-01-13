@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { RetroState ,Property,TariffResponse} from './types';
+import { RetroState, Property, RetroResult } from './types';
 import axios from 'axios';
 
 type SessionParams = {
@@ -7,17 +7,16 @@ type SessionParams = {
   jobNumber: number | null;
 };
 
-
 export interface TariffDto {
   kodln: string | number;  // קוד התעריף
   teur: string;   // תיאור התעריף
 }
+
 interface TariffState {
-  tariffs: TariffDto[];         // מערך התעריפים
-  isLoading: boolean;           // מצב טעינה
-  error: string | null;         // הודעות שגיאה
+  tariffs: TariffDto[];         
+  isLoading: boolean;           
+  error: string | null;         
   
-  // פונקציות לניהול התעריפים
   fetchTariffs: (odbcName: string) => Promise<void>;
   clearTariffs: () => void;
 }
@@ -32,27 +31,18 @@ export const useTariffStore = create<TariffState>((set) => ({
     set({ isLoading: true, error: null });
     
     try {
-      const response = await axios.get(`https://localhost:5001/api/Property/tariffs?odbcName=${odbcName}`, {
-        params: { odbcName }
-      });
-      
-      set({ 
-        tariffs: response.data, 
-        isLoading: false 
-      });
+      const response = await axios.get(`https://localhost:5001/api/Property/tariffs?odbcName=${odbcName}`);
+      set({ tariffs: response.data, isLoading: false });
     } catch (error) {
       set({ 
-        error: error instanceof Error 
-          ? error.message 
-          : 'Failed to fetch tariffs', 
+        error: error instanceof Error ? error.message : 'Failed to fetch tariffs', 
         isLoading: false 
       });
       console.error('Error fetching tariffs:', error);
     }
   },
 
-  clearTariffs: () => set({ tariffs: [], error: null }),
-  //setSelectedTariff: (kodln) => set({ selectedTariff: kodln })
+  clearTariffs: () => set({ tariffs: [], error: null })
 }));
 
 interface ApiPropertyResponse {
@@ -98,6 +88,11 @@ type State = {
   isLoading: boolean;
   error: string | null;
   success: string | null;
+  calculationResults: {
+    success: boolean;
+    results?: RetroResult[];
+    error?: string;
+  } | null;
 }
 
 type Actions = {
@@ -109,10 +104,12 @@ type Actions = {
   calculateRetro: () => Promise<void>;
   clearError: () => void;
   clearSuccess: () => void;
+  clearResults: () => void;
   reset: () => void;
   addSize: () => void;
   deleteSize: (index: number) => void;
   updateTariff: (index: number, tariffKodln: string, tariffName: string) => void;
+  updateSize: (index: number, newSize: number) => void;
 };
 
 const initialState: State = {
@@ -127,10 +124,9 @@ const initialState: State = {
   results: [],
   isLoading: false,
   error: null,
-  success: null
+  success: null,
+  calculationResults: null
 };
- 
-
 
 export const useRetroStore = create<State & Actions>((set, get) => ({
   ...initialState,
@@ -142,8 +138,6 @@ export const useRetroStore = create<State & Actions>((set, get) => ({
   
   searchProperty: async (propertyCode: string) => {
     const state = get();
-    console.log('Searching property with state:', state);
-    
     if (!state.sessionParams.odbcName) {
       set({ error: 'Missing ODBC connection' });
       return;
@@ -152,18 +146,11 @@ export const useRetroStore = create<State & Actions>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const url = `https://localhost:5001/api/Property/${propertyCode}`;
-      console.log('Fetching from URL:', url);
-      
       const response = await axios.get(url, {
-        params: { 
-          odbcName: state.sessionParams.odbcName 
-        }
+        params: { odbcName: state.sessionParams.odbcName }
       });
       
       const apiData: ApiPropertyResponse = response.data;
-      console.log('Received data:', apiData);
-      
-      // מיפוי הנתונים למבנה הנכון
       const property = {
         hskod: apiData.propertyId,
         ktovet: apiData.address || '',
@@ -198,9 +185,7 @@ export const useRetroStore = create<State & Actions>((set, get) => ({
       };
       
       set({ property });
-      console.log('Updated store state:', get());
     } catch (error) {
-      console.error('Error in searchProperty:', error);
       set({
         error: error instanceof Error ? error.message : 'Failed to fetch property',
         property: null
@@ -211,111 +196,78 @@ export const useRetroStore = create<State & Actions>((set, get) => ({
   },
 
   setSelectedChargeTypes: (types: number[]) => set({ selectedChargeTypes: types }),
-
   setStartDate: (date: Date | null) => set({ startDate: date }),
-
   setEndDate: (date: Date | null) => set({ endDate: date }),
 
-  // בתוך src/store.ts
   calculateRetro: async () => {
     const state = get();
-    
-    console.log('Starting calculation with state:', {
-      property: state.property?.hskod,
-      dates: { 
-        start: state.startDate, 
-        end: state.endDate 
-      },
-      chargeTypes: state.selectedChargeTypes,
-      odbcName: state.sessionParams.odbcName
-    });
+    if (!state.property || !state.startDate || !state.endDate || state.selectedChargeTypes.length === 0) {
+      set({ error: 'Please fill all required fields before calculation' });
+      return;
+    }
 
-
-    // ולידציה מורחבת
-    if (!state.property) {
-      set({ error: 'נא לבחור נכס' });
-      return;
-    }
-    if (!state.startDate || !state.endDate) {
-      set({ error: 'נא להזין תאריך התחלה וסיום' });
-      return;
-    }
-    if (!state.selectedChargeTypes?.length) {
-      set({ error: 'נא לבחור לפחות סוג חיוב אחד' });
-      return;
-    }
-    if (state.startDate > state.endDate) {
-      set({ error: 'תאריך התחלה חייב להיות לפני תאריך סיום' });
-      return;
-    }
-  
     set({ isLoading: true, error: null });
     try {
-      // בניית מערך הגדלים לפי הפורמט החדש
-      const sizes = [
-        { index: 1, size: state.property.godel || 0, tariffCode: state.property.mas || 0 },
-        { index: 2, size: state.property.gdl2 || 0, tariffCode: state.property.mas2 || 0 },
-        { index: 3, size: state.property.gdl3 || 0, tariffCode: state.property.mas3 || 0 },
-        { index: 4, size: state.property.gdl4 || 0, tariffCode: state.property.mas4 || 0 },
-        { index: 5, size: state.property.gdl5 || 0, tariffCode: state.property.mas5 || 0 },
-        { index: 6, size: state.property.gdl6 || 0, tariffCode: state.property.mas6 || 0 },
-        { index: 7, size: state.property.gdl7 || 0, tariffCode: state.property.mas7 || 0 },
-        { index: 8, size: state.property.gdl8 || 0, tariffCode: state.property.mas8 || 0 }
-      ].filter(size => size.size > 0 && size.tariffCode > 0); // שולח רק גדלים ותעריפים תקינים
-      //const url = `https://localhost:5001/api/Retro/calculate?odbcName=${odbcName}`;
-    console.log('Filtered sizes:', sizes);
-
-    const requestUrl = `/api/Retro/calculate`;
-    const requestBody = {
-      propertyId: state.property.hskod,
-      startDate: state.startDate,
-      endDate: state.endDate,
-      chargeTypes: state.selectedChargeTypes,
-      jobNumber: state.sessionParams.jobNumber || 0,
-      hkarn: 0,
-      sizes
-    };
-    const requestConfig = {
-      params: {
-        odbcName: state.sessionParams.odbcName
+      const sizes = [];
+      for (let i = 1; i <= 8; i++) {
+        const sizeKey = i === 1 ? 'godel' : `gdl${i}`;
+        const tariffKey = i === 1 ? 'mas' : `mas${i}`;
+        const size = state.property[sizeKey as keyof typeof state.property];
+        const tariff = state.property[tariffKey as keyof typeof state.property];
+        
+        if (size !== undefined && size !== null) {
+          sizes.push({
+            index: i,
+            size: size,
+            tariffCode: tariff || 0
+          });
+        }
       }
-    };
 
-    console.log('Making API request:', {
-      url: requestUrl,
-      body: requestBody,
-      config: requestConfig
-    });
-
-    const response = await axios.post(requestUrl, requestBody, requestConfig);
-
-    console.log('Received API response:', response.data);
-
-    if (response.data) {
-      set({ 
-        results: response.data,
-        success: 'החישוב הושלם בהצלחה' 
+      const response = await fetch(`https://localhost:5001/api/Retro/calculate?odbcName=${state.sessionParams.odbcName}`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'accept': '*/*'
+        },
+        body: JSON.stringify({
+          propertyId: state.property.hskod,
+          startDate: state.startDate.toISOString(),
+          endDate: state.endDate.toISOString(),
+          chargeTypes: state.selectedChargeTypes,
+          jobNumber: state.sessionParams.jobNumber,
+          hkarn: 0,
+          sizes: sizes
+        })
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to calculate retro');
+      }
+
+      const data = await response.json();
+      set({ 
+        calculationResults: {
+          success: true,
+          results: data.rows
+        },
+        success: 'Calculation completed successfully'
+      });
+    } catch (error) {
+      set({
+        calculationResults: {
+          success: false,
+          error: error instanceof Error ? error.message : 'Failed to calculate retro'
+        }
+      });
+    } finally {
+      set({ isLoading: false });
     }
-  } catch (error) {
-    console.error('Detailed error in calculateRetro:', {
-      error,
-      message: error instanceof Error ? error.message : 'Unknown error',
-      //response: error.response?.data, // אם יש תגובת שגיאה מהשרת
-      //status: error.response?.status
-    });
-    set({
-      error: error instanceof Error ? error.message : 'שגיאה בחישוב רטרו'
-    });
-  } finally {
-    set({ isLoading: false });
-  }
-},
-   
+  },
+
   clearError: () => set({ error: null }),
-
   clearSuccess: () => set({ success: null }),
-
+  clearResults: () => set({ calculationResults: null }),
   reset: () => set(initialState),
 
   addSize: () => {
@@ -332,14 +284,14 @@ export const useRetroStore = create<State & Actions>((set, get) => ({
   
     const newProperty = { ...property };
     const prop = sizeProps[emptyIndex];
-    newProperty[prop] = 0;  // נאתחל ב-0 במקום null
+    newProperty[prop] = 0;
     
     const tariffProp = `mas${emptyIndex === 0 ? '' : emptyIndex + 1}` as const;
-    (newProperty as any)[tariffProp] = 0;  // נאתחל ב-0 במקום null
+    (newProperty as any)[tariffProp] = 0;
     
     set({ property: newProperty });
   },
-  
+
   deleteSize: (index: number) => {
     const { property } = get();
     if (!property) return;
@@ -355,45 +307,26 @@ export const useRetroStore = create<State & Actions>((set, get) => ({
   },
 
   updateTariff: (index: number, tariffKodln: string, tariffName: string) => {
-    console.log('Store updateTariff called:', { index, tariffKodln, tariffName });
-    
     const { property } = get();
-    if (!property) {
-      console.log('No property found');
-      return;
-    }
+    if (!property) return;
   
     const newProperty = { ...property };
     const baseProp = index === 1 ? '' : index;
     
-    console.log('Updating property:', {
-      masKey: `mas${baseProp}`,
-      nameKey: `mas${baseProp}Name`,
-      //currentValue: property[`mas${baseProp}`],
-      newCode: parseInt(tariffKodln, 10),
-      newName: tariffName
-    });
-  
-    // Update tariff code and name
     (newProperty as any)[`mas${baseProp}`] = parseInt(tariffKodln, 10);
     (newProperty as any)[`mas${baseProp}Name`] = tariffName;
   
-    console.log('Property after update:', newProperty);
+    set({ property: newProperty });
+  },
+  
+  updateSize: (index: number, newSize: number) => {
+    const { property } = get();
+    if (!property) return;
+  
+    const newProperty = { ...property };
+    const prop = index === 1 ? 'godel' : `gdl${index}`;
+    (newProperty as any)[prop] = newSize;
+    
     set({ property: newProperty });
   }
-  /* setAvailableTariffs: (tariffs: TariffDto[]) => {
-    set({ availableTariffs: tariffs });
-  },
-
-  fetchTariffs: async (odbcName: string) => {
-    try {
-      const response = await axios.get('/api/property/tariffs', {
-        params: { odbcName }
-      });
-      set({ availableTariffs: response.data });
-    } catch (error) {
-      console.error('Error fetching tariffs:', error);
-      set({ error: 'Failed to fetch tariffs' });
-    }
-  } */
 }));

@@ -1,1 +1,1 @@
-export { default as CalculationResults } from './CalculationResults';
+export { default as ResultsTable } from './ResultsTable';

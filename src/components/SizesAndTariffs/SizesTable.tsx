@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Property } from '../../types';
-import { Trash2, Edit, Save, X } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { useTariffStore } from '../../store';
 
 interface SizesTableProps {
@@ -27,9 +27,6 @@ export const SizesTable: React.FC<SizesTableProps> = ({
   onUpdateSize,
   onUpdateTariff
 }) => {
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
-  const [editValue, setEditValue] = useState<number | string>('');
-  
   const { tariffs, isLoading: tariffsLoading, fetchTariffs } = useTariffStore();
 
   useEffect(() => {
@@ -51,23 +48,10 @@ export const SizesTable: React.FC<SizesTableProps> = ({
 
   const totalSize = sizes.reduce((sum, row) => sum + row.size, 0);
 
-  const handleEditStart = (index: number, currentSize: number) => {
-    setEditingIndex(index);
-    setEditValue(currentSize);
-  };
-
-  const handleEditCancel = () => {
-    setEditingIndex(null);
-    setEditValue('');
-  };
-
-  const handleEditSave = () => {
-    if (editingIndex !== null) {
-      const numValue = Number(editValue);
-      if (!isNaN(numValue) && onUpdateSize) {
-        onUpdateSize(editingIndex, numValue);
-      }
-      handleEditCancel();
+  const handleSizeChange = (index: number, newValue: string) => {
+    const numValue = Number(newValue);
+    if (!isNaN(numValue) && onUpdateSize) {
+      onUpdateSize(index, numValue);
     }
   };
 
@@ -114,7 +98,7 @@ export const SizesTable: React.FC<SizesTableProps> = ({
             <tr>
               <th className="p-2 text-right border-b">מס׳</th>
               <th className="p-2 text-right border-b">גודל</th>
-              <th className="p-2 text-right border-b"> קוד תעריף ושם תעריף</th>
+              <th className="p-2 text-right border-b">קוד תעריף ושם תעריף</th>
               <th className="p-2 text-right border-b">פעולות</th>
             </tr>
           </thead>
@@ -123,62 +107,30 @@ export const SizesTable: React.FC<SizesTableProps> = ({
               <tr key={row.index} className="hover:bg-gray-50">
                 <td className="p-2">{row.index}</td>
                 <td className="p-2">
-                  {editingIndex === row.index ? (
-                    <div className="flex items-center gap-2">
-                      <input 
-                        type="number" 
-                        className="w-20 p-1 border rounded" 
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        autoFocus
-                      />
-                      <button 
-                        onClick={handleEditSave} 
-                        className="text-green-600 hover:text-green-800"
-                      >
-                        <Save size={16} />
-                      </button>
-                      <button 
-                        onClick={handleEditCancel} 
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        <X size={16} />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <input 
-                        type="number" 
-                        className="w-20 p-1 border rounded" 
-                        value={row.size}
-                        readOnly
-                      />
-                      <button 
-                        onClick={() => handleEditStart(row.index, row.size)}
-                        className="text-blue-600 hover:text-blue-800"
-                      >
-                        <Edit size={16} />
-                      </button>
-                    </div>
-                  )}
+                  <input 
+                    type="number" 
+                    className="w-20 p-1 border rounded" 
+                    value={row.size}
+                    onChange={(e) => handleSizeChange(row.index, e.target.value)}
+                  />
                 </td>
                 <td className="p-2">
-                <select
-                  className="w-80 p-1 border rounded"
-                  value={row.code ? row.code.toString() : ""}
-                  onChange={(e) => handleTariffChange(row.index, e.target.value)}
-                >
-                  <option value="">בחר תעריף</option>
-                  {tariffs.map((tariff) => {
-                    // המרה בטוחה לstring
-                    const displayValue = tariff.kodln.toString();
-                    return (
-                      <option key={displayValue} value={displayValue}>
-                        {`${displayValue} - ${tariff.teur}`}
-                      </option>
-                    );
-                  })}
-                </select>
+                  <select
+                    className="w-80 p-1 border rounded"
+                    value={row.code ? row.code.toString() : ""}
+                    onChange={(e) => handleTariffChange(row.index, e.target.value)}
+                  >
+                    <option value="">בחר תעריף</option>
+                    {tariffs.map((tariff) => {
+                      // המרה בטוחה לstring
+                      const displayValue = tariff.kodln.toString();
+                      return (
+                        <option key={displayValue} value={displayValue}>
+                          {`${displayValue} - ${tariff.teur}`}
+                        </option>
+                      );
+                    })}
+                  </select>
                 </td>
                 <td className="p-2">
                   <button 

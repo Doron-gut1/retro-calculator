@@ -6,6 +6,8 @@ import { DateRangeSelect, ChargeTypesSelect } from './inputs';
 import { CalculationButtons } from './buttons';
 import { AnimatedAlert } from './UX';
 import { LoadingSpinner } from './UX';
+import { ResultsTable } from './results';
+
 
 export const RetroForm: React.FC = () => {
   const {
@@ -23,8 +25,13 @@ export const RetroForm: React.FC = () => {
     deleteSize,
     updateTariff,
     startDate,
-    endDate
+    endDate,
+    updateSize,
+     calculationResults,
+    clearResults
   } = useRetroStore();
+  
+
   
   const isCalculateDisabled = 
   !property || 
@@ -58,13 +65,17 @@ export const RetroForm: React.FC = () => {
     setEndDate(endDate);
   }, [setStartDate, setEndDate]);
 
-  const handleChargeTypesChange = useCallback((types: string[]) => {
+  /* const handleChargeTypesChange = useCallback((types: string[]) => {
     setSelectedChargeTypes(types.map(Number));
   }, [setSelectedChargeTypes]);
-
+ */
   const handleUpdateTariff = useCallback((index: number, tariffKodln: string, tariffName: string) => {
     updateTariff(index, tariffKodln, tariffName);
   }, [updateTariff]);
+
+  const handleUpdateSize = useCallback((index: number, newSize: number) => {
+    updateSize(index, newSize);
+  }, [updateSize]);
 
   return (
     <div className="flex flex-col gap-4 p-4 bg-gray-50 min-h-screen">
@@ -103,12 +114,13 @@ export const RetroForm: React.FC = () => {
         {property && (
           <div className="mt-6">
             <SizesTable 
-              property={property}
-              onDeleteSize={deleteSize}
-              onAddSize={addSize}
-              onUpdateTariff={handleUpdateTariff}
-              odbcName={sessionParams.odbcName || undefined}
-            />
+                property={property}
+                onDeleteSize={deleteSize}
+                onAddSize={addSize}
+                onUpdateSize={handleUpdateSize}  // הוספה חדשה
+                onUpdateTariff={handleUpdateTariff}
+                odbcName={sessionParams.odbcName || undefined}
+              />
           </div>
         )}
       </div>
@@ -119,6 +131,13 @@ export const RetroForm: React.FC = () => {
           <LoadingSpinner size="lg" />
         </div>
       )}
+
+      {calculationResults && (
+          <ResultsTable 
+            results={calculationResults} 
+            onClose={clearResults}
+          />
+        )}
 
       {/* Error Messages */}
       {error && (
