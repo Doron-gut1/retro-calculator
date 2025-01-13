@@ -49,6 +49,14 @@ public class RetroCalculationRequestDto
     public required List<int> ChargeTypes { get; set; } = new();
     public int JobNumber { get; set; }
     public int Hkarn { get; set; } = 0;
+    public List<PropertySizeDto> Sizes { get; set; }
+
+}
+public class PropertySizeDto
+{
+    public int Index { get; set; }        // 1-8
+    public decimal Size { get; set; }     // godel/gdl2/etc
+    public int TariffCode { get; set; }   // mas/mas2/etc
 }
 public class TariffDto
 {

@@ -77,7 +77,7 @@ public class RetroService : IRetroService, IDisposable
     private async Task CleanupTempData(SqlConnection connection, string propertyId, int jobNum)
     {
         using var cleanupCommand = new SqlCommand(
-            "DELETE FROM Temparnmforat WHERE jobnum = @jobnum OR (hs = @hs AND jobnum = 0)",
+            "DELETE FROM Temparnmforat WHERE (jobnum = @jobnum AND hs = @hs) OR (hs = @hs AND jobnum = 0)",
             connection);
         cleanupCommand.Parameters.AddWithValue("@jobnum", jobNum);
         cleanupCommand.Parameters.AddWithValue("@hs", propertyId);
@@ -151,10 +151,19 @@ public class RetroService : IRetroService, IDisposable
             insertCommand.Parameters.AddWithValue("@valdatesof", DBNull.Value);
             insertCommand.Parameters.AddWithValue("@hkarn", 0); // Default to no special arrangement
 
+            // אתחול כל הפרמטרים כ-DBNull.Value תחילה
+            // אתחול כל הפרמטרים כ-DBNull.Value תחילה
             for (var i = 1; i <= 8; i++)
             {
-                insertCommand.Parameters.AddWithValue($"@gdl{i}", 0);
-                insertCommand.Parameters.AddWithValue($"@trf{i}", 0);
+                insertCommand.Parameters.AddWithValue($"@gdl{i}", DBNull.Value);
+                insertCommand.Parameters.AddWithValue($"@trf{i}", DBNull.Value);
+            }
+
+            // הכנסת רק הגדלים והתעריפים הרלוונטיים מהבקשה
+            foreach (var size in request.Sizes.Where(s => s.Size > 0))
+            {
+                insertCommand.Parameters["@gdl" + size.Index].Value = size.Size;
+                insertCommand.Parameters["@trf" + size.Index].Value = size.TariffCode;
             }
 
             await insertCommand.ExecuteNonQueryAsync();

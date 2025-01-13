@@ -9,7 +9,7 @@ type SessionParams = {
 
 
 export interface TariffDto {
-  kodln: string;  // קוד התעריף
+  kodln: string | number;  // קוד התעריף
   teur: string;   // תיאור התעריף
 }
 interface TariffState {
@@ -216,42 +216,101 @@ export const useRetroStore = create<State & Actions>((set, get) => ({
 
   setEndDate: (date: Date | null) => set({ endDate: date }),
 
+  // בתוך src/store.ts
   calculateRetro: async () => {
     const state = get();
-    if (!state.property || !state.startDate || !state.endDate || state.selectedChargeTypes.length === 0) {
-      set({ error: 'Please fill all required fields before calculation' });
+    
+    console.log('Starting calculation with state:', {
+      property: state.property?.hskod,
+      dates: { 
+        start: state.startDate, 
+        end: state.endDate 
+      },
+      chargeTypes: state.selectedChargeTypes,
+      odbcName: state.sessionParams.odbcName
+    });
+
+
+    // ולידציה מורחבת
+    if (!state.property) {
+      set({ error: 'נא לבחור נכס' });
       return;
     }
-
+    if (!state.startDate || !state.endDate) {
+      set({ error: 'נא להזין תאריך התחלה וסיום' });
+      return;
+    }
+    if (!state.selectedChargeTypes?.length) {
+      set({ error: 'נא לבחור לפחות סוג חיוב אחד' });
+      return;
+    }
+    if (state.startDate > state.endDate) {
+      set({ error: 'תאריך התחלה חייב להיות לפני תאריך סיום' });
+      return;
+    }
+  
     set({ isLoading: true, error: null });
     try {
-      const response = await fetch('https://localhost:5001/api/Retro/calculate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          odbcName: state.sessionParams.odbcName,
-          jobNumber: state.sessionParams.jobNumber,
-          propertyId: state.property.hskod,
-          startDate: state.startDate,
-          endDate: state.endDate,
-          chargeTypes: state.selectedChargeTypes
-        })
-      });
+      // בניית מערך הגדלים לפי הפורמט החדש
+      const sizes = [
+        { index: 1, size: state.property.godel || 0, tariffCode: state.property.mas || 0 },
+        { index: 2, size: state.property.gdl2 || 0, tariffCode: state.property.mas2 || 0 },
+        { index: 3, size: state.property.gdl3 || 0, tariffCode: state.property.mas3 || 0 },
+        { index: 4, size: state.property.gdl4 || 0, tariffCode: state.property.mas4 || 0 },
+        { index: 5, size: state.property.gdl5 || 0, tariffCode: state.property.mas5 || 0 },
+        { index: 6, size: state.property.gdl6 || 0, tariffCode: state.property.mas6 || 0 },
+        { index: 7, size: state.property.gdl7 || 0, tariffCode: state.property.mas7 || 0 },
+        { index: 8, size: state.property.gdl8 || 0, tariffCode: state.property.mas8 || 0 }
+      ].filter(size => size.size > 0 && size.tariffCode > 0); // שולח רק גדלים ותעריפים תקינים
+      //const url = `https://localhost:5001/api/Retro/calculate?odbcName=${odbcName}`;
+    console.log('Filtered sizes:', sizes);
 
-      if (!response.ok) {
-        throw new Error('Failed to calculate retro');
+    const requestUrl = `/api/Retro/calculate`;
+    const requestBody = {
+      propertyId: state.property.hskod,
+      startDate: state.startDate,
+      endDate: state.endDate,
+      chargeTypes: state.selectedChargeTypes,
+      jobNumber: state.sessionParams.jobNumber || 0,
+      hkarn: 0,
+      sizes
+    };
+    const requestConfig = {
+      params: {
+        odbcName: state.sessionParams.odbcName
       }
+    };
 
-      const results = await response.json();
-      set({ results, success: 'Calculation completed successfully' });
-    } catch (error) {
-      set({
-        error: error instanceof Error ? error.message : 'Failed to calculate retro'
+    console.log('Making API request:', {
+      url: requestUrl,
+      body: requestBody,
+      config: requestConfig
+    });
+
+    const response = await axios.post(requestUrl, requestBody, requestConfig);
+
+    console.log('Received API response:', response.data);
+
+    if (response.data) {
+      set({ 
+        results: response.data,
+        success: 'החישוב הושלם בהצלחה' 
       });
-    } finally {
-      set({ isLoading: false });
     }
-  },
+  } catch (error) {
+    console.error('Detailed error in calculateRetro:', {
+      error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      //response: error.response?.data, // אם יש תגובת שגיאה מהשרת
+      //status: error.response?.status
+    });
+    set({
+      error: error instanceof Error ? error.message : 'שגיאה בחישוב רטרו'
+    });
+  } finally {
+    set({ isLoading: false });
+  }
+},
    
   clearError: () => set({ error: null }),
 
@@ -264,7 +323,7 @@ export const useRetroStore = create<State & Actions>((set, get) => ({
     if (!property) return;
   
     const sizeProps = ['godel', 'gdl2', 'gdl3', 'gdl4', 'gdl5', 'gdl6', 'gdl7', 'gdl8'] as const;
-    const emptyIndex = sizeProps.findIndex(prop => property[prop] === undefined);
+    const emptyIndex = sizeProps.findIndex(prop => !property[prop] && property[prop] !== 0);
     
     if (emptyIndex === -1) {
       set({ error: 'לא ניתן להוסיף יותר גדלים' });
@@ -273,14 +332,14 @@ export const useRetroStore = create<State & Actions>((set, get) => ({
   
     const newProperty = { ...property };
     const prop = sizeProps[emptyIndex];
-    newProperty[prop] = null;
+    newProperty[prop] = 0;  // נאתחל ב-0 במקום null
     
     const tariffProp = `mas${emptyIndex === 0 ? '' : emptyIndex + 1}` as const;
-    (newProperty as any)[tariffProp] = null;
+    (newProperty as any)[tariffProp] = 0;  // נאתחל ב-0 במקום null
     
     set({ property: newProperty });
   },
-
+  
   deleteSize: (index: number) => {
     const { property } = get();
     if (!property) return;
@@ -296,18 +355,32 @@ export const useRetroStore = create<State & Actions>((set, get) => ({
   },
 
   updateTariff: (index: number, tariffKodln: string, tariffName: string) => {
+    console.log('Store updateTariff called:', { index, tariffKodln, tariffName });
+    
     const { property } = get();
-    if (!property) return;
-
+    if (!property) {
+      console.log('No property found');
+      return;
+    }
+  
     const newProperty = { ...property };
     const baseProp = index === 1 ? '' : index;
-
+    
+    console.log('Updating property:', {
+      masKey: `mas${baseProp}`,
+      nameKey: `mas${baseProp}Name`,
+      //currentValue: property[`mas${baseProp}`],
+      newCode: parseInt(tariffKodln, 10),
+      newName: tariffName
+    });
+  
     // Update tariff code and name
     (newProperty as any)[`mas${baseProp}`] = parseInt(tariffKodln, 10);
     (newProperty as any)[`mas${baseProp}Name`] = tariffName;
-
+  
+    console.log('Property after update:', newProperty);
     set({ property: newProperty });
-  },
+  }
   /* setAvailableTariffs: (tariffs: TariffDto[]) => {
     set({ availableTariffs: tariffs });
   },

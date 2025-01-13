@@ -47,7 +47,7 @@ export const SizesTable: React.FC<SizesTableProps> = ({
     { index: 6, size: property.gdl6 || 0, code: property.mas6 || 0, name: property.mas6Name || null },
     { index: 7, size: property.gdl7 || 0, code: property.mas7 || 0, name: property.mas7Name || null },
     { index: 8, size: property.gdl8 || 0, code: property.mas8 || 0, name: property.mas8Name || null },
-  ].filter(row => row.size > 0);
+  ].filter(row => row.size != null);
 
   const totalSize = sizes.reduce((sum, row) => sum + row.size, 0);
 

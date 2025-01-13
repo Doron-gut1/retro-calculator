@@ -21,9 +21,34 @@ export const RetroForm: React.FC = () => {
     calculateRetro,
     addSize,
     deleteSize,
-    updateTariff
+    updateTariff,
+    startDate,
+    endDate
   } = useRetroStore();
+  
+  const isCalculateDisabled = 
+  !property || 
+  !startDate  || 
+  !endDate  || 
+  !selectedChargeTypes?.length ||  // בודק שיש סוגי חיוב כלשהם שנבחרו
+  endDate < startDate ;
+  
+  console.log('Calculation button state:', {
+    property: !!property,
+    startDate: !!setStartDate,
+    endDate: !!setEndDate,
+    chargeTypes: selectedChargeTypes.length,
+    isDisabled: isCalculateDisabled
+  });
 
+  console.log('Date types:', {
+    startDate: setStartDate instanceof Date,
+    endDate: setEndDate instanceof Date,
+    startDateType: typeof setStartDate,
+    endDateType: typeof setEndDate,
+    startDateValue: setStartDate,
+    endDateValue: setEndDate
+});
   const handleSearch = useCallback(async (propertyCode: string) => {
     await searchProperty(propertyCode);
   }, [searchProperty]);
@@ -60,8 +85,8 @@ export const RetroForm: React.FC = () => {
           <div className="space-y-4">
             <DateRangeSelect onChange={handleDateChange} />
             <ChargeTypesSelect 
-              selected={selectedChargeTypes.map(String)}
-              onChange={handleChargeTypesChange}
+              selected={selectedChargeTypes} 
+              onChange={setSelectedChargeTypes}
             />
           </div>
 
@@ -69,7 +94,7 @@ export const RetroForm: React.FC = () => {
           <div className="flex flex-col justify-end gap-2">
             <CalculationButtons
               onCalculate={calculateRetro}
-              disabled={isLoading || !property}
+              disabled={isCalculateDisabled}
             />
           </div>
         </div>
