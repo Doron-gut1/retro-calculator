@@ -232,8 +232,8 @@ export const useRetroStore = create<State & Actions>((set, get) => ({
         },
         body: JSON.stringify({
           propertyId: state.property.hskod,
-          startDate: state.startDate.toISOString(),
-          endDate: state.endDate.toISOString(),
+          startDate: state.startDate,
+          endDate: state.endDate,
           chargeTypes: state.selectedChargeTypes,
           jobNumber: state.sessionParams.jobNumber,
           hkarn: 0,

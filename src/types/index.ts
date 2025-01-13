@@ -48,6 +48,7 @@ export interface Property {
 }
 
 // תוצאות החישוב כפי שחוזרות מהAPI
+// src/types/index.ts
 export interface RetroResult {
   moneln: string;
   mnt: string;
@@ -62,6 +63,10 @@ export interface RetroResult {
   dtgv: string;
   hesber: string;
   TASHREM: string;
+  sumhk: string;
+  hdtme: string;
+  hdtad: string;
+  payername: string;
 }
 
 
