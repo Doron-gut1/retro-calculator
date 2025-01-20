@@ -1,14 +1,13 @@
 import React, { useCallback, useState } from 'react';
 import { useRetroStore } from '../store';
 import PropertySearch from './PropertySearch';
-//import PayerInfo from './PayerInfo';
+import PayerInfo from './PayerInfo';
 import { SizesTable } from './SizesAndTariffs';
 import { DateRangeSelect, ChargeTypesSelect } from './inputs';
-import { CalculationButtons } from './buttons';
 import { AnimatedAlert } from './UX';
 import { LoadingSpinner } from './UX';
 import { ResultsTable } from './results';
-import { RetroResult } from '../types';
+import { CalculatorIcon, CheckCircle2 } from 'lucide-react';
 
 export const RetroForm: React.FC = () => {
   const {
@@ -38,23 +37,6 @@ export const RetroForm: React.FC = () => {
     !endDate  || 
     !selectedChargeTypes?.length ||
     endDate < startDate;
-
-  console.log('Calculation button state:', {
-    property: !!property,
-    startDate: !!setStartDate,
-    endDate: !!setEndDate,
-    chargeTypes: selectedChargeTypes.length,
-    isDisabled: isCalculateDisabled
-  });
-
-  console.log('Date types:', {
-    startDate: setStartDate instanceof Date,
-    endDate: setEndDate instanceof Date,
-    startDateType: typeof setStartDate,
-    endDateType: typeof setEndDate,
-    startDateValue: setStartDate,
-    endDateValue: setEndDate
-  });
 
   const handleSearch = useCallback(async (propertyCode: string) => {
     await searchProperty(propertyCode);
@@ -86,25 +68,25 @@ export const RetroForm: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-4 p-4 bg-gray-50 min-h-screen">
+    <div className="flex flex-col gap-4 p-4 bg-gradient-to-b from-gray-50 to-white min-h-screen">
       {/* Header */}
-      <div className="bg-blue-600 text-white p-4 rounded-lg shadow">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-500 text-white p-6 rounded-lg shadow-md">
         <h1 className="text-2xl font-semibold">חישוב רטרו</h1>
       </div>
 
       {/* Main Form */}
-      <div className="bg-white rounded-lg shadow p-4 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Property Search */}
-          <div className="space-y-4">
+      <div className="bg-white rounded-lg shadow-lg p-6 space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {/* Property Search and Payer Info */}
+          <div className="space-y-6">
             <PropertySearch onSearch={handleSearch} />
-         {/*    {property && (
-              <PayerInfo property={property} />
-            )} */}
+            <div className={`transition-all duration-500 ease-in-out ${property ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform -translate-y-4'}`}>
+              {property && <PayerInfo />}
+            </div>
           </div>
 
           {/* Dates & Charge Types */}
-          <div className="space-y-4">
+          <div className="space-y-6">
             <DateRangeSelect onChange={handleDateChange} />
             <ChargeTypesSelect 
               selected={selectedChargeTypes}
@@ -113,24 +95,35 @@ export const RetroForm: React.FC = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col justify-end gap-2">
-            <CalculationButtons
-              onCalculate={handleCalculate}
-              disabled={isCalculateDisabled}
-            />
+          <div className="flex flex-col justify-end gap-4">
             <button
-              className={`bg-gray-400 text-white p-3 rounded flex items-center justify-center gap-2 hover:bg-gray-500 ${isConfirmDisabled ? 'cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'}`}
+              onClick={handleCalculate}
+              disabled={isCalculateDisabled}
+              className={`flex items-center justify-center gap-2 p-4 rounded-lg text-white font-medium transition-all duration-200
+                ${isCalculateDisabled 
+                  ? 'bg-gray-300 cursor-not-allowed' 
+                  : 'bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg'}`}
+            >
+              <CalculatorIcon className="w-5 h-5" />
+              חשב
+            </button>
+            <button
               onClick={handleConfirm}
               disabled={isConfirmDisabled}
+              className={`flex items-center justify-center gap-2 p-4 rounded-lg text-white font-medium transition-all duration-200
+                ${isConfirmDisabled
+                  ? 'bg-gray-300 cursor-not-allowed'
+                  : 'bg-green-600 hover:bg-green-700 shadow-md hover:shadow-lg'}`}
             >
+              <CheckCircle2 className="w-5 h-5" />
               אשר
             </button>
           </div>
         </div>
-       
+
         {/* Sizes Table */}
-        {property && (
-          <div className="mt-6">
+        <div className={`transition-all duration-500 ease-in-out ${property ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-4 hidden'}`}>
+          {property && (
             <SizesTable
               property={property}
               onDeleteSize={deleteSize}
@@ -139,17 +132,18 @@ export const RetroForm: React.FC = () => {
               onUpdateTariff={handleUpdateTariff}
               odbcName={sessionParams.odbcName || undefined}
             />
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Loading Indicator */}
       {isLoading && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center">
           <LoadingSpinner size="lg" />
         </div>
       )}
 
+      {/* Results Table */}
       {calculationResults && (
         <ResultsTable
           results={calculationResults}
@@ -171,3 +165,5 @@ export const RetroForm: React.FC = () => {
     </div>
   );
 };
+
+export default RetroForm;
