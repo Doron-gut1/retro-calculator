@@ -82,73 +82,71 @@ export const SizesTable: React.FC<SizesTableProps> = ({
   };
 
   return (
-    <div className="mt-6 space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="font-medium">גדלים ותעריפים</h3>
+    <div className="bg-white rounded-lg shadow">
+      <div className="bg-blue-500 text-white p-4 rounded-t">
+        <h3 className="font-bold">גדלים ותעריפים</h3>
         <button 
           onClick={() => onAddSize?.()} 
-          className="text-sm text-blue-600 hover:text-blue-800">
+          className="text-white hover:bg-blue-600 text-sm flex items-center gap-1">
           + הוסף גודל חדש
         </button>
       </div>
       
-      <div className="border rounded">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-600">
-            <tr>
-              <th className="p-2 text-right border-b">מס׳</th>
-              <th className="p-2 text-right border-b">גודל</th>
-              <th className="p-2 text-right border-b">קוד תעריף ושם תעריף</th>
-              <th className="p-2 text-right border-b">פעולות</th>
+      <table className="w-full text-sm">
+        <thead className="bg-blue-100 text-blue-800">
+          <tr>
+            <th className="p-2 text-right border-b">מס׳</th>
+            <th className="p-2 text-right border-b">גודל</th>
+            <th className="p-2 text-right border-b">קוד תעריף ושם תעריף</th>
+            <th className="p-2 text-right border-b">פעולות</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y">
+          {sizes.map((row) => (
+            <tr key={row.index} className="hover:bg-blue-50">
+              <td className="p-2">{row.index}</td>
+              <td className="p-2">
+                <input 
+                  type="number" 
+                  className="w-20 p-2 border rounded" 
+                  value={row.size}
+                  onChange={(e) => handleSizeChange(row.index, e.target.value)}
+                />
+              </td>
+              <td className="p-2">
+                <select
+                  className="w-full p-2 border rounded"
+                  value={row.code ? row.code.toString() : ""}
+                  onChange={(e) => handleTariffChange(row.index, e.target.value)}
+                >
+                  <option value="">בחר תעריף</option>
+                  {tariffs.map((tariff) => {
+                    // המרה בטוחה לstring
+                    const displayValue = tariff.kodln.toString();
+                    return (
+                      <option key={displayValue} value={displayValue}>
+                        {`${displayValue} - ${tariff.teur}`}
+                      </option>
+                    );
+                  })}
+                </select>
+              </td>
+              <td className="p-2">
+                <button 
+                  onClick={() => onDeleteSize?.(row.index)}
+                  className="text-red-600 hover:text-red-800 flex items-center gap-1">
+                  <Trash2 size={16} />
+                  מחק
+                </button>
+              </td>
             </tr>
-          </thead>
-          <tbody className="divide-y">
-            {sizes.map((row) => (
-              <tr key={row.index} className="hover:bg-gray-50">
-                <td className="p-2">{row.index}</td>
-                <td className="p-2">
-                  <input 
-                    type="number" 
-                    className="w-20 p-1 border rounded" 
-                    value={row.size}
-                    onChange={(e) => handleSizeChange(row.index, e.target.value)}
-                  />
-                </td>
-                <td className="p-2">
-                  <select
-                    className="w-80 p-1 border rounded"
-                    value={row.code ? row.code.toString() : ""}
-                    onChange={(e) => handleTariffChange(row.index, e.target.value)}
-                  >
-                    <option value="">בחר תעריף</option>
-                    {tariffs.map((tariff) => {
-                      // המרה בטוחה לstring
-                      const displayValue = tariff.kodln.toString();
-                      return (
-                        <option key={displayValue} value={displayValue}>
-                          {`${displayValue} - ${tariff.teur}`}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </td>
-                <td className="p-2">
-                  <button 
-                    onClick={() => onDeleteSize?.(row.index)}
-                    className="text-red-600 hover:text-red-800 flex items-center gap-1">
-                    <Trash2 size={16} />
-                    מחק
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </tbody>
+      </table>
 
-      <div className="text-sm bg-gray-50 p-2 rounded flex justify-between">
+      <div className="bg-blue-100 p-3 rounded-b flex justify-between items-center">
         <span>סה"כ שטח:</span>
-        <span className="font-medium">{totalSize} מ"ר</span>
+        <span className="font-medium text-blue-800">{totalSize} מ"ר</span>
       </div>
     </div>
   );

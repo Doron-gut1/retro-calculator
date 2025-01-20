@@ -18,7 +18,7 @@ interface RetroResult {
   TASHREM: string;
   hdtme: string;
   hdtad: string;
-  payername: string;
+  payer_name: string;
 }
 
 interface ResultsTableProps {
@@ -38,14 +38,14 @@ interface ExplanationDialogProps {
 
 const ExplanationDialog: React.FC<ExplanationDialogProps> = ({ isOpen, onClose, explanation }) => (
   <Dialog open={isOpen} onOpenChange={onClose}>
-    <div className="bg-blue-50 p-6 rounded-lg max-w-2xl max-h-[80vh] overflow-y-auto">
+    <div className="bg-blue-500 text-white p-6 rounded-lg max-w-2xl max-h-[80vh] overflow-y-auto">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-medium text-blue-900">פירוט חישוב</h3>
-        <button onClick={onClose} className="text-blue-600 hover:text-blue-800">
+        <h3 className="text-lg font-bold">פירוט חישוב</h3>
+        <button onClick={onClose} className="text-white hover:text-gray-200">
           <X size={20} />
         </button>
       </div>
-      <pre className="whitespace-pre-wrap font-mono text-sm text-blue-900">{explanation}</pre>
+      <pre className="whitespace-pre-wrap font-mono text-sm">{explanation}</pre>
     </div>
   </Dialog>
 );
@@ -57,8 +57,8 @@ export const ResultsTable: React.FC<ResultsTableProps> = ({ results, onClose }) 
     return (
       <div className="bg-white rounded-lg shadow p-4">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-medium text-red-600">שגיאה בחישוב</h2>
-          <button onClick={onClose} className="p-2 text-red-600 hover:bg-red-50 rounded">
+          <h2 className="text-xl font-bold text-red-600">שגיאה בחישוב</h2>
+          <button onClick={onClose} className="p-2 text-red-600 hover:bg-red-100 rounded">
             <X size={20} />
           </button>
         </div>
@@ -73,60 +73,62 @@ export const ResultsTable: React.FC<ResultsTableProps> = ({ results, onClose }) 
 
   const formatDate = (dateStr: string) => {
     if (!dateStr || dateStr === 'Invalid Date') return '';
-    return dateStr.split(' ')[0];  // רק מסיר את השעה אם קיימת
+    return dateStr.split(' ')[0];
   };
 
+  const totalPaysum = results.results.reduce((sum, row) => sum + parseFloat(row.paysum), 0);
+  const totalSumhk = results.results.reduce((sum, row) => sum + (row.sumhk ? parseFloat(row.sumhk) : 0), 0);
 
   return (
     <div className="bg-white rounded-lg shadow p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-medium">תוצאות החישוב</h2>
+      <div className="bg-blue-500 text-white p-4 rounded-t-lg flex justify-between items-center">
+        <h2 className="text-2xl font-bold">תוצאות החישוב</h2>
         <div className="flex gap-2">
-          <button className="p-2 text-blue-600 hover:bg-blue-50 rounded">
+          <button className="p-2 text-white hover:bg-blue-600 rounded">
             <FileText size={20} />
           </button>
-          <button onClick={onClose} className="p-2 text-red-600 hover:bg-red-50 rounded">
+          <button onClick={onClose} className="p-2 text-white hover:bg-blue-600 rounded">
             <X size={20} />
           </button>
         </div>
       </div>
-      
+
       <div className="overflow-x-auto">
-      <table className="w-full text-sm border-collapse border">
-          <thead className="bg-gray-100">
+        <table className="w-full text-sm border-collapse border">
+          <thead className="bg-blue-50">
             <tr>
-              <th className="p-2 text-right border">תקופה</th>
-              <th className="p-2 text-right border">ת.התחלה</th>
-              <th className="p-2 text-right border">ת.סיום</th>
-              <th className="p-2 text-right border">משלם</th>
-              <th className="p-2 text-right border">קוד חיוב</th>
-              <th className="p-2 text-right border">שם חיוב</th>
-              <th className="p-2 text-right border">תיאור</th>
-              <th className="p-2 text-right border">סכום</th>
-              <th className="p-2 text-right border">סכום הסדר</th>
-              <th className="p-2 text-right border">ת.גביה</th>
-              <th className="p-2 text-right border">ת.ערך</th>
-              <th className="p-2 text-right border">פירוט</th>
+              <th className="p-2 text-right border font-bold">תקופה</th>
+              <th className="p-2 text-right border font-bold">ת.התחלה</th>
+              <th className="p-2 text-right border font-bold">ת.סיום</th>
+              <th className="p-2 text-right border font-bold">משלם</th>
+              <th className="p-2 text-right border font-bold">קוד חיוב</th>
+              <th className="p-2 text-right border font-bold">שם חיוב</th>
+              <th className="p-2 text-right border font-bold">תיאור</th>
+              <th className="p-2 text-right border font-bold">סכום</th>
+              <th className="p-2 text-right border font-bold">סכום הסדר</th>
+              <th className="p-2 text-right border font-bold">ת.גביה</th>
+              <th className="p-2 text-right border font-bold">ת.ערך</th>
+              <th className="p-2 text-right border font-bold">פירוט</th>
             </tr>
           </thead>
           <tbody>
             {results.results.map((row: RetroResult) => (
-              <tr key={row.moneln} className="hover:bg-gray-50 border-b">
+              <tr key={row.moneln} className="hover:bg-blue-50 border-b">
                 <td className="p-2 border">{row.mnt_display}</td>
                 <td className="p-2 border">{formatDate(row.hdtme)}</td>
                 <td className="p-2 border">{formatDate(row.hdtad)}</td>
-                <td className="p-2 border">{row.payername}</td>
+                <td className="p-2 border">{row.payer_name}</td>
                 <td className="p-2 border">{row.sugts}</td>
                 <td className="p-2 border">{row.sugtsname}</td>
                 <td className="p-2 border">{row.TASHREM}</td>
-                <td className="p-2 border text-left">₪{parseFloat(row.paysum).toFixed(2)}</td>
-                <td className="p-2 border text-left">{row.sumhk ? `₪${parseFloat(row.sumhk).toFixed(2)}` : ''}</td>
+                <td className="p-2 border text-left text-blue-500 font-bold">₪{parseFloat(row.paysum).toFixed(2)}</td>
+                <td className="p-2 border text-left text-blue-500 font-bold">{row.sumhk ? `₪${parseFloat(row.sumhk).toFixed(2)}` : ''}</td>
                 <td className="p-2 border">{formatDate(row.dtgv)}</td>
                 <td className="p-2 border">{formatDate(row.dtval)}</td>
                 <td className="p-2 border">
                   <button 
                     onClick={() => handleShowExplanation(row.hesber)}
-                    className="text-blue-670 hover:text-blue-800 flex items-center gap-1"
+                    className="text-blue-500 hover:text-blue-600 flex items-center gap-1"
                   >
                     <Info size={16} />
                     פירוט
@@ -135,6 +137,14 @@ export const ResultsTable: React.FC<ResultsTableProps> = ({ results, onClose }) 
               </tr>
             ))}
           </tbody>
+          <tfoot className="bg-blue-50 font-bold">
+            <tr>
+              <td colSpan={7} className="p-2 border-t text-right">סה"כ:</td>
+              <td className="p-2 border-t text-left text-blue-500">₪{totalPaysum.toFixed(2)}</td>
+              <td className="p-2 border-t text-left text-blue-500">₪{totalSumhk.toFixed(2)}</td>
+              <td colSpan={4} className="p-2 border-t"></td>
+            </tr>
+          </tfoot>
         </table>
       </div>
 

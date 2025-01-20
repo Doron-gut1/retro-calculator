@@ -1,13 +1,14 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useRetroStore } from '../store';
 import PropertySearch from './PropertySearch';
+//import PayerInfo from './PayerInfo';
 import { SizesTable } from './SizesAndTariffs';
 import { DateRangeSelect, ChargeTypesSelect } from './inputs';
 import { CalculationButtons } from './buttons';
 import { AnimatedAlert } from './UX';
 import { LoadingSpinner } from './UX';
 import { ResultsTable } from './results';
-
+import { RetroResult } from '../types';
 
 export const RetroForm: React.FC = () => {
   const {
@@ -27,19 +28,17 @@ export const RetroForm: React.FC = () => {
     startDate,
     endDate,
     updateSize,
-     calculationResults,
+    calculationResults,
     clearResults
   } = useRetroStore();
-  
 
-  
   const isCalculateDisabled = 
-  !property || 
-  !startDate  || 
-  !endDate  || 
-  !selectedChargeTypes?.length ||  // בודק שיש סוגי חיוב כלשהם שנבחרו
-  endDate < startDate ;
-  
+    !property || 
+    !startDate  || 
+    !endDate  || 
+    !selectedChargeTypes?.length ||
+    endDate < startDate;
+
   console.log('Calculation button state:', {
     property: !!property,
     startDate: !!setStartDate,
@@ -55,7 +54,8 @@ export const RetroForm: React.FC = () => {
     endDateType: typeof setEndDate,
     startDateValue: setStartDate,
     endDateValue: setEndDate
-});
+  });
+
   const handleSearch = useCallback(async (propertyCode: string) => {
     await searchProperty(propertyCode);
   }, [searchProperty]);
@@ -65,10 +65,6 @@ export const RetroForm: React.FC = () => {
     setEndDate(endDate);
   }, [setStartDate, setEndDate]);
 
-  /* const handleChargeTypesChange = useCallback((types: string[]) => {
-    setSelectedChargeTypes(types.map(Number));
-  }, [setSelectedChargeTypes]);
- */
   const handleUpdateTariff = useCallback((index: number, tariffKodln: string, tariffName: string) => {
     updateTariff(index, tariffKodln, tariffName);
   }, [updateTariff]);
@@ -76,6 +72,18 @@ export const RetroForm: React.FC = () => {
   const handleUpdateSize = useCallback((index: number, newSize: number) => {
     updateSize(index, newSize);
   }, [updateSize]);
+
+  const [isConfirmDisabled, setIsConfirmDisabled] = useState(true);
+
+  const handleCalculate = async () => {
+    await calculateRetro();
+    setIsConfirmDisabled(false);
+  };
+
+  const handleConfirm = () => {
+    // Add logic to confirm the calculation
+    console.log('Confirm button clicked');
+  };
 
   return (
     <div className="flex flex-col gap-4 p-4 bg-gray-50 min-h-screen">
@@ -90,13 +98,16 @@ export const RetroForm: React.FC = () => {
           {/* Property Search */}
           <div className="space-y-4">
             <PropertySearch onSearch={handleSearch} />
+         {/*    {property && (
+              <PayerInfo property={property} />
+            )} */}
           </div>
 
           {/* Dates & Charge Types */}
           <div className="space-y-4">
             <DateRangeSelect onChange={handleDateChange} />
             <ChargeTypesSelect 
-              selected={selectedChargeTypes} 
+              selected={selectedChargeTypes}
               onChange={setSelectedChargeTypes}
             />
           </div>
@@ -104,23 +115,30 @@ export const RetroForm: React.FC = () => {
           {/* Action Buttons */}
           <div className="flex flex-col justify-end gap-2">
             <CalculationButtons
-              onCalculate={calculateRetro}
+              onCalculate={handleCalculate}
               disabled={isCalculateDisabled}
             />
+            <button
+              className={`bg-gray-400 text-white p-3 rounded flex items-center justify-center gap-2 hover:bg-gray-500 ${isConfirmDisabled ? 'cursor-not-allowed' : 'bg-green-500 hover:bg-green-600'}`}
+              onClick={handleConfirm}
+              disabled={isConfirmDisabled}
+            >
+              אשר
+            </button>
           </div>
         </div>
        
         {/* Sizes Table */}
         {property && (
           <div className="mt-6">
-            <SizesTable 
-                property={property}
-                onDeleteSize={deleteSize}
-                onAddSize={addSize}
-                onUpdateSize={handleUpdateSize}  // הוספה חדשה
-                onUpdateTariff={handleUpdateTariff}
-                odbcName={sessionParams.odbcName || undefined}
-              />
+            <SizesTable
+              property={property}
+              onDeleteSize={deleteSize}
+              onAddSize={addSize}
+              onUpdateSize={handleUpdateSize}
+              onUpdateTariff={handleUpdateTariff}
+              odbcName={sessionParams.odbcName || undefined}
+            />
           </div>
         )}
       </div>
@@ -133,11 +151,11 @@ export const RetroForm: React.FC = () => {
       )}
 
       {calculationResults && (
-          <ResultsTable 
-            results={calculationResults} 
-            onClose={clearResults}
-          />
-        )}
+        <ResultsTable
+          results={calculationResults}
+          onClose={clearResults}
+        />
+      )}
 
       {/* Error Messages */}
       {error && (
