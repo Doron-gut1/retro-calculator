@@ -65,4 +65,19 @@ public class PropertyController : ControllerBase
             return StatusCode(500, "Internal Server Error");
         }
     }
+
+    [HttpGet("payers")]
+    public async Task<ActionResult<List<PayerDto>>> GetPayers([FromQuery] string odbcName)
+    {
+        try
+        {
+            var payers = await _propertyService.GetPayersAsync(odbcName);
+            return Ok(payers);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Error retrieving payers with ODBC {odbcName}");
+            return StatusCode(500, "Internal Server Error");
+        }
+    }
 }

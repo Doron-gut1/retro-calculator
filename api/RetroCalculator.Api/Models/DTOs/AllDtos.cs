@@ -36,9 +36,9 @@ public class PropertyDto
 
 public class PayerDto
 {
-    public int PayerId { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public double MainTz { get; set; }
+    public int MspKod { get; set; }
+    public double Maintz { get; set; }
+    public string FullName { get; set; }
 }
 
 public class RetroCalculationRequestDto

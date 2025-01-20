@@ -1,5 +1,7 @@
+// src/store.ts
+
 import { create } from 'zustand';
-import { RetroState, Property, RetroResult } from './types';
+import { RetroState, Property, RetroResult, PayerDto } from './types';
 import axios from 'axios';
 
 type SessionParams = {
@@ -93,6 +95,8 @@ type State = {
     results?: RetroResult[];
     error?: string;
   } | null;
+  availablePayers: PayerDto[];
+  selectedPayer: PayerDto | null;
 }
 
 type Actions = {
@@ -110,6 +114,9 @@ type Actions = {
   deleteSize: (index: number) => void;
   updateTariff: (index: number, tariffKodln: string, tariffName: string) => void;
   updateSize: (index: number, newSize: number) => void;
+  fetchPayers: () => Promise<void>;
+  setSelectedPayer: (payer: PayerDto) => void;
+  changePayer: (payerId: number) => Promise<void>;
 };
 
 const initialState: State = {
@@ -125,7 +132,9 @@ const initialState: State = {
   isLoading: false,
   error: null,
   success: null,
-  calculationResults: null
+  calculationResults: null,
+  availablePayers: [],
+  selectedPayer: null
 };
 
 export const useRetroStore = create<State & Actions>((set, get) => ({
@@ -328,5 +337,60 @@ export const useRetroStore = create<State & Actions>((set, get) => ({
     (newProperty as any)[prop] = newSize;
     
     set({ property: newProperty });
+  },
+
+  fetchPayers: async () => {
+    const state = get();
+    if (!state.sessionParams.odbcName) {
+      set({ error: 'Missing ODBC connection' });
+      return;
+    }
+
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.get(`https://localhost:5001/api/Property/payers`, {
+        params: { odbcName: state.sessionParams.odbcName }
+      });
+      set({ availablePayers: response.data });
+    } catch (error) {
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to fetch payers',
+        availablePayers: [] 
+      });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  setSelectedPayer: (payer: PayerDto) => {
+    set({ selectedPayer: payer });
+  },
+
+  changePayer: async (payerId: number) => {
+    const state = get();
+    if (!state.property || !state.sessionParams.odbcName) return;
+
+    set({ isLoading: true, error: null });
+    try {
+      const selectedPayer = state.availablePayers.find(p => p.mspKod === payerId);
+      if (!selectedPayer) {
+        throw new Error('משלם לא נמצא');
+      }
+
+      const newProperty = { ...state.property };
+      newProperty.mspkod = selectedPayer.mspKod;
+      newProperty.maintz = selectedPayer.maintz.toString();
+      newProperty.fullname = selectedPayer.fullName;
+
+      set({ 
+        property: newProperty,
+        selectedPayer
+      });
+
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'שגיאה בהחלפת משלם' });
+    } finally {
+      set({ isLoading: false });
+    }
   }
 }));

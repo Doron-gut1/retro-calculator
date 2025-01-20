@@ -158,4 +158,32 @@ public class PropertyService : IPropertyService
 
         return tariffs;
     }
+
+    public async Task<List<PayerDto>> GetPayersAsync(string odbcName)
+    {
+        SetConnectionString(odbcName);
+        using var connection = new SqlConnection(_connectionString);
+        await connection.OpenAsync();
+        var command = new SqlCommand("SELECT DISTINCT  top 100 msp.maintz, msp.fullname, msp.mspkod FROM msp WHERE msp.archion=0 ORDER BY msp.maintz", connection);
+
+        using var reader = await command.ExecuteReaderAsync(); 
+
+        var payers = new List<PayerDto>();
+        //await connection.OpenAsync();
+
+        //using var command = new SqlCommand(query, connection);
+        //using var reader = await command.ExecuteReaderAsync();
+
+        while (await reader.ReadAsync())
+        {
+            payers.Add(new PayerDto
+            {
+                MspKod = reader.GetInt32(reader.GetOrdinal("mspkod")),
+                Maintz = reader.GetDouble(reader.GetOrdinal("maintz")),
+                FullName = reader.GetString(reader.GetOrdinal("fullname"))
+            });
+        }
+
+        return payers;
+    }
 }
